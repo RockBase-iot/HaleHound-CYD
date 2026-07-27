@@ -4183,7 +4183,9 @@ void setup() {
         digitalWrite(NRF24_CSN, HIGH);
         digitalWrite(CC1101_CS, HIGH);
         digitalWrite(SD_CS, HIGH);
+        #ifdef PN532_CS
         digitalWrite(PN532_CS, HIGH);
+        #endif
 
         SPI.begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI);
         delay(150);  // PA+LNA settling time
@@ -4216,7 +4218,9 @@ void setup() {
         digitalWrite(NRF24_CSN, HIGH);
         digitalWrite(CC1101_CS, HIGH);
         digitalWrite(SD_CS, HIGH);
+        #ifdef PN532_CS
         digitalWrite(PN532_CS, HIGH);
+        #endif
 
         if (!nrfFound) {
             // NRF24 not responding on compiled pin config — likely wrong firmware

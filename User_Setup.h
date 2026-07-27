@@ -22,7 +22,14 @@
   #endif
 #endif
 
-#if !defined(CYD_28) && !defined(CYD_35)
+// NM-CYD-C5
+#ifdef NM_CYD_C5
+  #ifndef CYD_C5
+    #define CYD_C5
+  #endif
+#endif
+
+#if !defined(CYD_28) && !defined(CYD_35) && !defined(CYD_C5)
   #define CYD_28    // Default: ESP32-2432S028 - 2.8" 320x240 ILI9341
 #endif
 
@@ -52,24 +59,43 @@
   #define CYD_BOARD_NAME "E32R35T 3.5\" (QDtech E32R35T)"
 #endif
 
+#ifdef CYD_C5
+  // NM-CYD-C5 2.8" uses ILI9341
+  #define ST7789_DRIVER  // ST7789 driver works with ILI9341 on C5 - matches Bruce's config
+  #define TFT_WIDTH  240
+  #define TFT_HEIGHT 320
+  #define CYD_BOARD_NAME "NM-CYD-C5 2.8\" (ESP32-C5)"
+#endif
+
 // ═══════════════════════════════════════════════════════════════════════════
 // SECTION 2: DISPLAY SPI PINS (HSPI)
 // Same for both boards
 // ═══════════════════════════════════════════════════════════════════════════
 
-#define TFT_MISO 12
-#define TFT_MOSI 13
-#define TFT_SCLK 14
-#define TFT_CS   15
-#define TFT_DC    2
-#define TFT_RST  -1   // Connected to EN/RST on both boards
+#ifdef CYD_C5
+  #define TFT_MISO  2
+  #define TFT_MOSI  7
+  #define TFT_SCLK  6
+  #define TFT_CS   23
+  #define TFT_DC   24
+  #define TFT_RST  -1   // Connected to EN/RST
+  #define TFT_BL   25   // C5 backlight on GPIO25
+  #define TOUCH_CS 1
+#else
+  #define TFT_MISO 12
+  #define TFT_MOSI 13
+  #define TFT_SCLK 14
+  #define TFT_CS   15
+  #define TFT_DC    2
+  #define TFT_RST  -1   // Connected to EN/RST on both boards
 
-// Backlight pin differs between boards
-#ifdef CYD_28
-  #define TFT_BL   21   // 2.8" backlight on GPIO21
-#endif
-#ifdef CYD_35
-  #define TFT_BL   27   // 3.5" backlight on GPIO27
+  // Backlight pin differs between boards
+  #ifdef CYD_28
+    #define TFT_BL   21   // 2.8" backlight on GPIO21
+  #endif
+  #ifdef CYD_35
+    #define TFT_BL   27   // 3.5" backlight on GPIO27
+  #endif
 #endif
 
 #define TFT_BACKLIGHT_ON HIGH
@@ -81,21 +107,30 @@
 // Touch chip select — XPT2046 on all boards
 // CYD 2.8": separate SPI bus (bit-banged)
 // E32R35T 3.5": shared HSPI with LCD (TFT_eSPI built-in driver)
-#define TOUCH_CS 33
-
-#ifdef CYD_28
-  // 2.8" has DEDICATED touch SPI bus (separate from display)
-  #define CYD_TOUCH_IRQ   36
-  #define CYD_TOUCH_MOSI  32
-  #define CYD_TOUCH_MISO  39
-  #define CYD_TOUCH_CLK   25
-  #define CYD_TOUCH_SEPARATE_SPI 1
-#endif
-
-#ifdef CYD_35
-  // E32R35T: XPT2046 resistive touch shares HSPI with LCD (GPIO 14/13/12)
-  // TFT_eSPI built-in driver handles touch via TOUCH_CS define above
+#ifdef CYD_C5
+  #define TOUCH_CS 1
+  #define CYD_TOUCH_IRQ  -1
+  #define CYD_TOUCH_MOSI TFT_MOSI
+  #define CYD_TOUCH_MISO TFT_MISO
+  #define CYD_TOUCH_CLK  TFT_SCLK
   #define CYD_TOUCH_SEPARATE_SPI 0
+#else
+  #define TOUCH_CS 33
+
+  #ifdef CYD_28
+    // 2.8" has DEDICATED touch SPI bus (separate from display)
+    #define CYD_TOUCH_IRQ   36
+    #define CYD_TOUCH_MOSI  32
+    #define CYD_TOUCH_MISO  39
+    #define CYD_TOUCH_CLK   25
+    #define CYD_TOUCH_SEPARATE_SPI 1
+  #endif
+
+  #ifdef CYD_35
+    // E32R35T: XPT2046 resistive touch shares HSPI with LCD (GPIO 14/13/12)
+    // TFT_eSPI built-in driver handles touch via TOUCH_CS define above
+    #define CYD_TOUCH_SEPARATE_SPI 0
+  #endif
 #endif
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -122,6 +157,9 @@
 #endif
 #ifdef CYD_35
   #define SPI_FREQUENCY  40000000  // 40MHz for ST7796 (more conservative)
+#endif
+#ifdef CYD_C5
+  #define SPI_FREQUENCY  40000000  // 40MHz for ILI9341 on C5
 #endif
 
 // Touch SPI frequency (XPT2046 requires slower speed)
@@ -173,10 +211,10 @@
 // BOARD VALIDATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-#if !defined(CYD_28) && !defined(CYD_35)
-  #error "You must define either CYD_28 or CYD_35 at the top of User_Setup.h"
+#if !defined(CYD_28) && !defined(CYD_35) && !defined(CYD_C5)
+  #error "You must define either CYD_28, CYD_35 or CYD_C5 at the top of User_Setup.h"
 #endif
 
-#if defined(CYD_28) && defined(CYD_35)
-  #error "You cannot define both CYD_28 and CYD_35 - choose one board"
+#if (defined(CYD_28) + defined(CYD_35) + defined(CYD_C5)) > 1
+  #error "You cannot define multiple CYD boards - choose one"
 #endif

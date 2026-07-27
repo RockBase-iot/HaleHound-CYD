@@ -214,14 +214,16 @@ static bool nrfInit() {
     // Hat: CC1101_CS == NRF24_CSN == GPIO 27 — already deselected above via NRF_CSN
     pinMode(SD_CS, OUTPUT);
     digitalWrite(SD_CS, HIGH);   // Deselect SD card
-    // Also deselect PN532 in case RFID module left it active
+    // Also deselect PN532 in case RFID module left it active (SPI mode only)
+    #ifdef PN532_CS
     pinMode(PN532_CS, OUTPUT);
     digitalWrite(PN532_CS, HIGH);
+    #endif
 
     // Reset SPI bus with proper settle time between end/begin
     SPI.end();
     delay(10);
-    SPI.begin(18, 19, 23);  // NO CS pin - manual control with digitalWrite
+    SPI.begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI);  // NO CS pin - manual control with digitalWrite
     SPI.setDataMode(SPI_MODE0);
     SPI.setFrequency(4000000);  // 4MHz — conservative for reliable detection
     SPI.setBitOrder(MSBFIRST);

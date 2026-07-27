@@ -377,19 +377,29 @@ static void drawWiringText() {
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setCursor(10, y);  tft.print("VCC  = 3.3V     GND = GND");
     y += lineH;
+    #ifdef PN532_CS
     tft.setCursor(10, y);  tft.printf("CS   = GPIO %-3d SCK = GPIO %d", PN532_CS, VSPI_SCK);
     y += lineH;
     tft.setCursor(10, y);  tft.printf("MOSI = GPIO %-3d MISO= GPIO %d", VSPI_MOSI, VSPI_MISO);
     y += lineH;
-
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
     tft.setCursor(10, y);  tft.print("DIP: Both switches SPI mode");
+    #elif defined(PN532_SDA) && defined(PN532_SCL)
+    tft.setCursor(10, y);  tft.printf("SDA  = GPIO %-3d SCL = GPIO %d", PN532_SDA, PN532_SCL);
+    y += lineH;
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.setCursor(10, y);  tft.print("I2C mode");
+    #endif
     y += lineH + 4;
 
     // Shared SPI note
     tft.setTextColor(HALEHOUND_HOTPINK, TFT_BLACK);
     tft.setCursor(10, y);
+    #ifdef PN532_CS
     tft.printf("All radios + SD + PN532 = VSPI  SD CS=%d", SD_CS);
+    #else
+    tft.printf("Radios + SD on VSPI  SD CS=%d", SD_CS);
+    #endif
 
     drawPageNav(0, WIRING_NUM_PAGES);
 }
@@ -653,16 +663,24 @@ static void drawPN532Diagram() {
     int py = boxY + 22;
     drawPinTrace(py, "3.3V",  "VCC",  TFT_RED,            false);  py += pinSpace;
     drawPinTrace(py, "GND",   "GND",  TFT_WHITE,          false);  py += pinSpace;
+    #ifdef PN532_CS
     { char csLabel[8]; snprintf(csLabel, sizeof(csLabel), "IO%d", PN532_CS);
     drawPinTrace(py, csLabel, "SS",   HALEHOUND_MAGENTA,  false); }  py += pinSpace;
     drawPinTrace(py, "IO18",  "SCK",  TFT_CYAN,           false);  py += pinSpace;
     drawPinTrace(py, "IO23",  "MOSI", TFT_CYAN,           false);  py += pinSpace;
     drawPinTrace(py, "IO19",  "MISO", TFT_CYAN,           false);
+    #else
+    { char sdaLabel[8]; snprintf(sdaLabel, sizeof(sdaLabel), "IO%d", PN532_SDA);
+    drawPinTrace(py, sdaLabel, "SDA", HALEHOUND_MAGENTA,  false); }  py += pinSpace;
+    { char sclLabel[8]; snprintf(sclLabel, sizeof(sclLabel), "IO%d", PN532_SCL);
+    drawPinTrace(py, sclLabel, "SCL", TFT_CYAN,           false); }
+    #endif
 
     // Notes
     int noteY = boxY + boxH + 6;
     tft.setTextColor(TFT_RED, TFT_BLACK);
     tft.setCursor(5, noteY);
+    #ifdef PN532_CS
     tft.print("DIP: Both switches to SPI mode");
     noteY += 14;
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
@@ -676,6 +694,17 @@ static void drawPN532Diagram() {
     tft.setTextColor(HALEHOUND_HOTPINK, TFT_BLACK);
     tft.setCursor(5, noteY);
     tft.printf("CS=GPIO %d (was NRF24 IRQ, unused)", PN532_CS);
+    #else
+    tft.print("DIP: Both switches to I2C mode");
+    noteY += 14;
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.setCursor(5, noteY);
+    tft.print("I2C bus");
+    noteY += 14;
+    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.setCursor(5, noteY);
+    tft.print("Does not share VSPI bus");
+    #endif
 
     drawPageNav(5, WIRING_NUM_PAGES);
 }

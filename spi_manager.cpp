@@ -32,7 +32,7 @@ static void deselectAllCS() {
     digitalWrite(NRF24_CSN, HIGH);
     #endif
 
-    #if CYD_HAS_PN532
+    #if CYD_HAS_PN532 && defined(PN532_CS)
     digitalWrite(PN532_CS, HIGH);
     #endif
 }
@@ -59,7 +59,7 @@ static void selectCS(SPIDevice device) {
             break;
 
         case SPI_DEVICE_PN532:
-            #if CYD_HAS_PN532
+            #if CYD_HAS_PN532 && defined(PN532_CS)
             digitalWrite(PN532_CS, LOW);
             #endif
             break;
@@ -109,11 +109,11 @@ void spiManagerSetup() {
     #endif
     #endif
 
-    #if CYD_HAS_PN532
+    #if CYD_HAS_PN532 && defined(PN532_CS)
     pinMode(PN532_CS, OUTPUT);
     digitalWrite(PN532_CS, HIGH);
     #if CYD_DEBUG
-    Serial.println("[SPI]   PN532 CS (GPIO 17) configured");
+    Serial.printf("[SPI]   PN532 CS (GPIO %d) configured\n", PN532_CS);
     #endif
     #endif
 
@@ -126,7 +126,7 @@ void spiManagerSetup() {
 
     #if CYD_DEBUG
     Serial.println("[SPI] SPI bus manager ready");
-    Serial.println("[SPI]   VSPI: SCK=18, MISO=19, MOSI=23");
+    Serial.printf("[SPI]   VSPI: SCK=%d, MISO=%d, MOSI=%d\n", VSPI_SCK, VSPI_MISO, VSPI_MOSI);
     #endif
 }
 
@@ -356,8 +356,8 @@ void spiPrintStatus() {
     Serial.println("  NRF24:    DISABLED");
     #endif
 
-    #if CYD_HAS_PN532
-    Serial.print("  PN532 (GPIO 17):   ");
+    #if CYD_HAS_PN532 && defined(PN532_CS)
+    Serial.printf("  PN532 (GPIO %d):   ", PN532_CS);
     Serial.println(digitalRead(PN532_CS) == LOW ? "SELECTED" : "idle");
     #else
     Serial.println("  PN532:    DISABLED");

@@ -26,7 +26,14 @@
   #endif
 #endif
 
-#if !defined(CYD_28) && !defined(CYD_35)
+#ifdef NM_CYD_C5
+#ifndef CYD_C5
+#define CYD_C5 1
+#endif
+#endif
+
+
+#if !defined(CYD_28) && !defined(CYD_35) && !defined(CYD_C5)
   #define CYD_28    // Default: ESP32-2432S028 - 2.8" 320x240 ILI9341
 #endif
 
@@ -45,6 +52,9 @@
 #elif defined(CYD_E32R28T)
   #define FW_EDITION   "E32R28T Edition"
   #define FW_DEVICE    "HaleHound-E32R28T"
+#elif defined(CYD_C5)
+  #define FW_EDITION   "NM-CYD-C5 Edition"
+  #define FW_DEVICE    "HaleHound-CYD-C5"
 #else
   #define FW_EDITION   "CYD Edition"
   #define FW_DEVICE    "HaleHound-CYD"
@@ -78,6 +88,22 @@
   #define CYD_TFT_BL        27    // Backlight on GPIO27
 #endif
 
+#ifdef CYD_C5
+  #undef  CYD_BOARD_NAME
+  #define CYD_BOARD_NAME    "NM-CYD-C5 2.8\""
+  #define CYD_SCREEN_WIDTH  240
+  #define CYD_SCREEN_HEIGHT 320
+  #define CYD_TFT_BL        25    // Backlight on GPIO25
+#endif
+
+#ifdef CYD_C5
+#define CYD_TFT_MISO    2
+#define CYD_TFT_MOSI    7
+#define CYD_TFT_SCLK    6
+#define CYD_TFT_CS      23
+#define CYD_TFT_DC      24
+#define CYD_TFT_RST     -1    // Connected to EN reset
+#else
 // ═══════════════════════════════════════════════════════════════════════════
 // DISPLAY PINS (HSPI) - Same for both boards
 // ═══════════════════════════════════════════════════════════════════════════
@@ -87,13 +113,18 @@
 #define CYD_TFT_CS      15
 #define CYD_TFT_DC       2
 #define CYD_TFT_RST     -1    // Connected to EN reset
+#endif
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TOUCH CONTROLLER (XPT2046)
 // ═══════════════════════════════════════════════════════════════════════════
-
+#ifdef CYD_C5
+#define CYD_TOUCH_CS    1
+#define CYD_TOUCH_IRQ   -1    // Same on both boards
+#else
 #define CYD_TOUCH_CS    33
 #define CYD_TOUCH_IRQ   36    // Same on both boards
+#endif
 
 #ifdef CYD_28
   // 2.8" has SEPARATE touch SPI bus
@@ -112,9 +143,15 @@
 // SHARED SPI BUS (VSPI) - SD Card, CC1101, and NRF24L01 share this bus
 // Each device has its own CS pin - only one active at a time!
 // ═══════════════════════════════════════════════════════════════════════════
+#ifdef CYD_C5
+#define VSPI_SCK        6    // Shared SPI Clock
+#define VSPI_MOSI       7    // Shared SPI MOSI
+#define VSPI_MISO       2    // Shared SPI MISO
+#else
 #define VSPI_SCK        18    // Shared SPI Clock
 #define VSPI_MOSI       23    // Shared SPI MOSI
 #define VSPI_MISO       19    // Shared SPI MISO
+#endif
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SD CARD (Shares VSPI bus with radios)
@@ -137,8 +174,11 @@
 // Perfect for storing DuckyScript payloads!
 //
 // ═══════════════════════════════════════════════════════════════════════════
-
-#define SD_CS            5    // SD Card Chip Select (built-in slot)
+#ifdef CYD_C5
+#define SD_CS            10    // SD Card Chip Select (built-in slot)
+#else
+#define SD_CS            5     // SD Card Chip Select (GPIO5)
+#endif
 #define SD_SCK          VSPI_SCK
 #define SD_MOSI         VSPI_MOSI
 #define SD_MISO         VSPI_MISO
@@ -210,12 +250,17 @@
 
 #ifdef CYD_35
   #define CC1101_CS     21    // Chip Select - SPI peripheral connector (E32R35T)
+#elif CYD_C5
+  #define CC1101_CS     9    // Chip Select - GPIO9 (ESP32-CYD-C5)
 #else
   #define CC1101_CS     27    // Chip Select - CN1 connector
 #endif
-#define CC1101_GDO0     22    // TX data TO radio - P3 connector
+
+#define CC1101_GDO0     8    // TX data TO radio - P3 connector
 #ifdef NMRF_HAT
   #define CC1101_GDO2   22    // Hat: no GDO2 wire — GDO0 outputs same RX data
+#elif CYD_C5
+  #define CC1101_GDO2   -1    //  ESP32-CYD-C5 - no GDO2 wire, GDO0 outputs same RX data  
 #else
   #define CC1101_GDO2   35    // RX data FROM radio - P3 connector (INPUT ONLY)
 #endif
@@ -227,8 +272,13 @@
 
 // RCSwitch compatibility (HaleHound pin naming)
 // REMEMBER: CiferTech had TX/RX swapped - we fixed it!
+#ifdef CYD_C5
+#define TX_PIN         11
+#define RX_PIN         12
+#else
 #define TX_PIN          CC1101_GDO0   // GPIO22 - enableTransmit()
 #define RX_PIN          CC1101_GDO2   // GPIO35 - enableReceive()
+#endif
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CC1101 PA MODULE SUPPORT (E07-433M20S)
@@ -315,6 +365,9 @@
   // NM-RF-Hat: physical switch selects CC1101 or NRF24 on same two GPIOs
   #define NRF24_CSN     27    // Shared with CC1101_CS via hat switch
   #define NRF24_CE      22    // Shared with CC1101_GDO0 via hat switch
+#elif CYD_C5
+  #define NRF24_CSN     9    // Chip Select - GPIO9 (ESP32-CYD-C5)
+  #define NRF24_CE      8    // Chip Enable - GPIO8
 #elif defined(CYD_E32R28T) || defined(CYD_E32R35T)
   // E32R28T/E32R35T: GPIO 4 used for CC1101_TX_EN (amp enable), NRF24_CSN moves to GPIO 26
   // GPIO 26 = DAC pad — coupling cap to SC8002B amp input (amp shut down = tiny load)
@@ -326,6 +379,7 @@
   #define NRF24_CE      16    // Chip Enable - was RGB Green
   #define NRF24_IRQ     17    // Interrupt - was RGB Blue (OPTIONAL)
 #endif
+
 
 // SPI bus aliases
 #define NRF24_SCK       RADIO_SPI_SCK
@@ -357,13 +411,16 @@
 // ensures only one device is active at a time.
 //
 // ═══════════════════════════════════════════════════════════════════════════
-
+#ifdef CYD_C5
+#define PN532_SDA 9  // PN532 with I2C mode, NM-RF-HAT
+#define PN532_SCL 8
+#else
 #define PN532_CS        17    // Chip Select - was NRF24 IRQ (RGB Blue LED, unused)
-
 // SPI bus aliases
 #define PN532_SCK       RADIO_SPI_SCK
 #define PN532_MOSI      RADIO_SPI_MOSI
 #define PN532_MISO      RADIO_SPI_MISO
+#endif
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GPS NEO-6M MODULE (Software Serial)
@@ -387,8 +444,13 @@
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
+#ifdef CYD_C5
+#define GPS_RX_PIN      4    // P1 RX pin - ESP32 receives from GPS TX
+#define GPS_TX_PIN      5    // Not used - GPS is receive-only
+#else
 #define GPS_RX_PIN       3    // P1 RX pin - ESP32 receives from GPS TX
 #define GPS_TX_PIN      -1    // Not used - GPS is receive-only
+#endif
 #define GPS_BAUD      9600    // GT-U7 default baud rate
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -440,7 +502,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // For 2.8" (240x320):
-#ifdef CYD_28
+#if defined(CYD_28) || defined(CYD_C5)
   // UP button - top left
   #define TOUCH_BTN_UP_X1      0
   #define TOUCH_BTN_UP_Y1      0
@@ -679,7 +741,7 @@
 // VALIDATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-#if !defined(CYD_28) && !defined(CYD_35)
+#if !defined(CYD_28) && !defined(CYD_35) && !defined(CYD_C5)
   #error "CYD_CONFIG: Define either CYD_28 or CYD_35 at the top of cyd_config.h"
 #endif
 
