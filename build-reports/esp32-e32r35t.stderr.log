@@ -1,0 +1,428 @@
+In file included from .pio/libdeps/esp32-e32r35t/RF24/RF24.h:18,
+                 from include/nrf24_config.h:11,
+                 from src/legacy/nrf24_config.cpp:7:
+.pio/libdeps/esp32-e32r35t/RF24/RF24_config.h:23: warning: "FAILURE_HANDLING" redefined
+ #define FAILURE_HANDLING
+ 
+<command-line>: note: this is the location of the previous definition
+In file included from .pio/libdeps/esp32-e32r35t/RF24/RF24.h:18,
+                 from include/nrf24_config.h:11,
+                 from src/legacy/nrf24_attacks.cpp:19:
+.pio/libdeps/esp32-e32r35t/RF24/RF24_config.h:23: warning: "FAILURE_HANDLING" redefined
+ #define FAILURE_HANDLING
+ 
+<command-line>: note: this is the location of the previous definition
+In file included from .pio/libdeps/esp32-e32r35t/RF24/RF24.h:18,
+                 from include/nrf24_config.h:11,
+                 from src/legacy/bluetooth_attacks.cpp:12:
+.pio/libdeps/esp32-e32r35t/RF24/RF24_config.h:23: warning: "FAILURE_HANDLING" redefined
+ #define FAILURE_HANDLING
+ 
+<command-line>: note: this is the location of the previous definition
+In file included from .pio/libdeps/esp32-e32r35t/RF24/RF24.h:18,
+                 from include/nrf24_config.h:11,
+                 from src/app/LegacyApp.inc:33,
+                 from src/app/LegacyApp.cpp:1:
+.pio/libdeps/esp32-e32r35t/RF24/RF24_config.h:23: warning: "FAILURE_HANDLING" redefined
+ #define FAILURE_HANDLING
+ 
+<command-line>: note: this is the location of the previous definition
+src/legacy/gps_module.cpp: In function 'bool isGPSBackTapped()':
+src/legacy/gps_module.cpp:62:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM && tx >= 10 && tx < 30) {
+src/legacy/loot_manager.cpp: In function 'bool LootManager::isLMBackTapped()':
+src/legacy/loot_manager.cpp:199:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM && tx >= 10 && tx < 30) {
+src/legacy/nrf24_attacks.cpp: In function 'int checkNrfIconTouch()':
+src/legacy/nrf24_attacks.cpp:96:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'void Scanner::scannerLoop()':
+src/legacy/nrf24_attacks.cpp:713:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'void Analyzer::scanAllChannels()':
+src/legacy/nrf24_attacks.cpp:1043:50: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+     if (getTouchPoint(&tx, &ty) && tx < 40 && ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'void Analyzer::analyzerLoop()':
+src/legacy/nrf24_attacks.cpp:1232:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'int WLANJammer::checkJamIconTouch()':
+src/legacy/nrf24_attacks.cpp:1457:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'void WLANJammer::wlanjammerLoop()':
+src/legacy/nrf24_attacks.cpp:1848:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'int ProtoKill::checkPkIconTouch()':
+src/legacy/nrf24_attacks.cpp:2111:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'void ProtoKill::prokillLoop()':
+src/legacy/nrf24_attacks.cpp:2519:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'void NrfSniffer::drawPacketList()':
+src/legacy/nrf24_attacks.cpp:3050:16: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     tft.printf("DEV:%d  FRAMES:%lu  CH:%s",
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+         (int)snPacketCount, snTotalFrames,
+                             ~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp: In function 'void NrfSniffer::loop()':
+src/legacy/nrf24_attacks.cpp:3267:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'void MouseJack::loop()':
+src/legacy/nrf24_attacks.cpp:4270:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/nrf24_attacks.cpp: In function 'void MouseJack::mjTxTask(void*)':
+src/legacy/nrf24_attacks.cpp:3503:22: warning: 'char* strncpy(char*, const char*, size_t)' output truncated copying 255 bytes from a string of length 325 [-Wstringop-truncation]
+             strncpy_P(payloadBuf, MJ_PS_REVSHELL, sizeof(payloadBuf) - 1);
+src/legacy/nrf24_attacks.cpp:3513:22: warning: 'char* strncpy(char*, const char*, size_t)' output truncated copying 255 bytes from a string of length 595 [-Wstringop-truncation]
+             strncpy_P(payloadBuf, MJ_CRED_HARVEST_CMD, sizeof(payloadBuf) - 1);
+src/legacy/nrf24_attacks.cpp:3518:22: warning: 'char* strncpy(char*, const char*, size_t)' output truncated copying 255 bytes from a string of length 263 [-Wstringop-truncation]
+             strncpy_P(payloadBuf, MJ_WIFI_EXFIL_CMD, sizeof(payloadBuf) - 1);
+src/legacy/nrf24_attacks.cpp: At global scope:
+src/legacy/nrf24_attacks.cpp:2370:13: warning: 'void ProtoKill::pkDrawFreeFont(int, const char*, uint16_t, const GFXfont*)' defined but not used [-Wunused-function]
+ static void pkDrawFreeFont(int y, const char* text, uint16_t color, const GFXfont* font) {
+             ^~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:2128:12: warning: 'int ProtoKill::processPkIconAnim()' defined but not used [-Wunused-function]
+ static int processPkIconAnim() {
+            ^~~~~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:2108:12: warning: 'int ProtoKill::checkPkIconTouch()' defined but not used [-Wunused-function]
+ static int checkPkIconTouch() {
+            ^~~~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:1474:12: warning: 'int WLANJammer::processJamIconAnim()' defined but not used [-Wunused-function]
+ static int processJamIconAnim() {
+            ^~~~~~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:1454:12: warning: 'int WLANJammer::checkJamIconTouch()' defined but not used [-Wunused-function]
+ static int checkJamIconTouch() {
+            ^~~~~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:1025:13: warning: 'void Analyzer::scanAllChannels()' defined but not used [-Wunused-function]
+ static void scanAllChannels() {
+             ^~~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:849:17: warning: 'uint16_t Analyzer::getSkullColor(uint8_t)' defined but not used [-Wunused-function]
+ static uint16_t getSkullColor(uint8_t level) {
+                 ^~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:616:13: warning: 'void Scanner::scanDisplay()' defined but not used [-Wunused-function]
+ static void scanDisplay() {
+             ^~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:186:13: warning: 'void nrfSetTX()' defined but not used [-Wunused-function]
+ static void nrfSetTX() {
+             ^~~~~~~~
+src/legacy/nrf24_attacks.cpp:150:13: warning: 'void nrfSetRegisterMulti(byte, const byte*, byte)' defined but not used [-Wunused-function]
+ static void nrfSetRegisterMulti(byte r, const byte* data, byte len) {
+             ^~~~~~~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:114:12: warning: 'int processNrfIconAnim()' defined but not used [-Wunused-function]
+ static int processNrfIconAnim() {
+            ^~~~~~~~~~~~~~~~~~
+src/legacy/nrf24_attacks.cpp:93:12: warning: 'int checkNrfIconTouch()' defined but not used [-Wunused-function]
+ static int checkNrfIconTouch() {
+            ^~~~~~~~~~~~~~~~~
+src/legacy/rfid_attacks.cpp:196:13: warning: 'void drawHexByte(int, int, uint8_t, uint16_t)' defined but not used [-Wunused-function]
+ static void drawHexByte(int x, int y, uint8_t val, uint16_t color) {
+             ^~~~~~~~~~~
+src/legacy/saved_captures.cpp: In function 'bool SavedCaptures::isSCBackTapped()':
+src/legacy/saved_captures.cpp:135:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM && tx >= 10 && tx < 30) {
+src/legacy/saved_captures.cpp: In function 'void SavedCaptures::drawViewScreen()':
+src/legacy/saved_captures.cpp:888:70: warning: suggest parentheses around '&&' within '||' [-Wparentheses]
+         } else if (viewLines[i][0] == ' ' && (viewLines[i][1] >= '0' && viewLines[i][1] <= '9' ||
+                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~
+src/legacy/jam_detect.cpp: In function 'bool isJdBackTapped()':
+src/legacy/jam_detect.cpp:144:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM && tx >= 10 && tx < 26) {
+src/legacy/iot_recon.cpp: In function 'void iotScanTask(void*)':
+src/legacy/iot_recon.cpp:1112:46: warning: variable 'topic' set but not used [-Wunused-but-set-variable]
+                                         char topic[128];
+                                              ^~~~~
+src/legacy/eapol_capture.cpp: In function 'void EapolCapture::drawAPList()':
+src/legacy/eapol_capture.cpp:803:40: warning: '%d' directive output may be truncated writing between 1 and 10 bytes into a region of size between 1 and 11 [-Wformat-truncation=]
+         snprintf(pgBuf, sizeof(pgBuf), "Pg %d/%d", ecCurrentPage + 1, totalPages);
+                                        ^~~~~~~~~~
+src/legacy/eapol_capture.cpp:803:40: note: directive argument in the range [-178956969, 178956970]
+src/legacy/eapol_capture.cpp:803:17: note: 'snprintf' output between 7 and 26 bytes into a destination of size 16
+         snprintf(pgBuf, sizeof(pgBuf), "Pg %d/%d", ecCurrentPage + 1, totalPages);
+         ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/legacy/subghz_attacks.cpp: In function 'void ReplayAttack::loop()':
+src/legacy/subghz_attacks.cpp:944:20: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+             if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+In file included from .pio/libdeps/esp32-e32r35t/TFT_eSPI/TFT_eSPI.h:30,
+                 from src/legacy/jam_detect.cpp:15:
+src/legacy/jam_detect.cpp: In function 'void FullSpectrum::loop()':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison of unsigned expression < 0 is always false [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/jam_detect.cpp:1912:26: note: in expansion of macro 'constrain'
+         int overallPct = constrain(((now - calPhaseStart) * 100) / totalDuration, 0, 100);
+                          ^~~~~~~~~
+src/legacy/subghz_attacks.cpp: In function 'void SubJammer::loop()':
+src/legacy/subghz_attacks.cpp:2080:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/subghz_attacks.cpp: In function 'void SubBrute::updateDisplay()':
+src/legacy/subghz_attacks.cpp:2615:20: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+         tft.printf("Code: %lu/%lu", currentCode, endCode);
+                    ^~~~~~~~~~~~~~~  ~~~~~~~~~~~
+src/legacy/subghz_attacks.cpp:2615:20: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+src/legacy/subghz_attacks.cpp: In function 'void SubBrute::loop()':
+src/legacy/subghz_attacks.cpp:2850:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/subghz_attacks.cpp: In function 'void SubAnalyzer::loop()':
+src/legacy/subghz_attacks.cpp:3719:20: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+             if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/eapol_capture.cpp: In function 'void EapolCapture::loop()':
+src/legacy/eapol_capture.cpp:881:23: warning: array subscript 18 is above array bounds of 'char [17]' [-Warray-bounds]
+     titleSSID[maxTitle] = '\0';
+     ~~~~~~~~~~~~~~~~~~^
+src/legacy/subghz_attacks.cpp: At global scope:
+src/legacy/subghz_attacks.cpp:2698:13: warning: 'void SubBrute::runDeBruijnBrute(const SubBrute::ProtocolDef&)' defined but not used [-Wunused-function]
+ static void runDeBruijnBrute(const ProtocolDef& proto) {
+             ^~~~~~~~~~~~~~~~
+src/legacy/subghz_attacks.cpp:2647:13: warning: 'void SubBrute::runSequentialBrute(const SubBrute::ProtocolDef&)' defined but not used [-Wunused-function]
+ static void runSequentialBrute(const ProtocolDef& proto) {
+             ^~~~~~~~~~~~~~~~~~
+src/legacy/subghz_attacks.cpp:393:13: warning: 'void ReplayAttack::doSamplingFFT()' defined but not used [-Wunused-function]
+ static void doSamplingFFT() {
+             ^~~~~~~~~~~~~
+In function 'void EapolCapture::drawCaptureScreen()',
+    inlined from 'void EapolCapture::loop()' at src/legacy/eapol_capture.cpp:1245:30:
+src/legacy/eapol_capture.cpp:880:12: warning: 'char* strncpy(char*, const char*, size_t)' forming offset 18 is out of the bounds [0, 17] of object 'titleSSID' with type 'char [17]' [-Warray-bounds]
+     strncpy(titleSSID, apList[selectedAP].ssid, maxTitle);
+     ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/legacy/eapol_capture.cpp: In function 'void EapolCapture::loop()':
+src/legacy/eapol_capture.cpp:878:10: note: 'titleSSID' declared here
+     char titleSSID[17];
+          ^~~~~~~~~
+src/legacy/rfid_attacks.cpp: In function 'void drawScrollBar(int, int, int)':
+src/legacy/rfid_attacks.cpp:266:32: warning: '%d' directive output may be truncated writing between 1 and 11 bytes into a region of size between 4 and 14 [-Wformat-truncation=]
+     snprintf(buf, sizeof(buf), "%d-%d / %d", offset + 1, endIdx, total);
+                                ^~~~~~~~~~~~
+src/legacy/rfid_attacks.cpp:266:32: note: directive argument in the range [-2147483631, 2147483647]
+src/legacy/rfid_attacks.cpp:266:32: note: directive argument in the range [18, 2147483647]
+src/legacy/rfid_attacks.cpp:266:13: note: 'snprintf' output between 9 and 37 bytes into a destination of size 16
+     snprintf(buf, sizeof(buf), "%d-%d / %d", offset + 1, endIdx, total);
+     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from include/touch_buttons.h:13,
+                 from src/legacy/touch_buttons.cpp:10:
+src/legacy/touch_buttons.cpp: In function 'void runTouchTest()':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:275:27: note: in expansion of macro 'constrain'
+             int screenX = constrain((int)tx, 0, sw - 1);
+                           ^~~~~~~~~
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:276:27: note: in expansion of macro 'constrain'
+             int screenY = constrain((int)ty, 0, sh - 1);
+                           ^~~~~~~~~
+src/legacy/touch_buttons.cpp: In function 'bool peekTouchPoint(uint16_t*, uint16_t*)':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:381:20: note: in expansion of macro 'constrain'
+     *x = (uint16_t)constrain((int)tx, 0, CYD_SCREEN_WIDTH - 1);
+                    ^~~~~~~~~
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:382:20: note: in expansion of macro 'constrain'
+     *y = (uint16_t)constrain((int)ty, 0, CYD_SCREEN_HEIGHT - 1);
+                    ^~~~~~~~~
+src/legacy/touch_buttons.cpp: In function 'bool getTouchPoint(uint16_t*, uint16_t*)':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:396:20: note: in expansion of macro 'constrain'
+     *x = (uint16_t)constrain((int)tx, 0, CYD_SCREEN_WIDTH - 1);
+                    ^~~~~~~~~
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:397:20: note: in expansion of macro 'constrain'
+     *y = (uint16_t)constrain((int)ty, 0, CYD_SCREEN_HEIGHT - 1);
+                    ^~~~~~~~~
+src/legacy/touch_buttons.cpp: In function 'int getTouchX()':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:438:12: note: in expansion of macro 'constrain'
+     return constrain((int)tx, 0, CYD_SCREEN_WIDTH - 1);
+            ^~~~~~~~~
+src/legacy/touch_buttons.cpp: In function 'int getTouchY()':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:454:12: note: in expansion of macro 'constrain'
+     return constrain((int)ty, 0, CYD_SCREEN_HEIGHT - 1);
+            ^~~~~~~~~
+src/legacy/touch_buttons.cpp: In function 'int getTouchedMenuItem(int, int, int)':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:470:19: note: in expansion of macro 'constrain'
+     int screenY = constrain((int)ty, 0, CYD_SCREEN_HEIGHT - 1);
+                   ^~~~~~~~~
+src/legacy/touch_buttons.cpp: In function 'bool isBackButtonTapped()':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:512:19: note: in expansion of macro 'constrain'
+     int screenX = constrain((int)tx, 0, CYD_SCREEN_WIDTH - 1);
+                   ^~~~~~~~~
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:513:19: note: in expansion of macro 'constrain'
+     int screenY = constrain((int)ty, 0, CYD_SCREEN_HEIGHT - 1);
+                   ^~~~~~~~~
+src/legacy/touch_buttons.cpp: In function 'bool isTouchInArea(int, int, int, int)':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:544:19: note: in expansion of macro 'constrain'
+     int screenX = constrain((int)tx, 0, CYD_SCREEN_WIDTH - 1);
+                   ^~~~~~~~~
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:545:19: note: in expansion of macro 'constrain'
+     int screenY = constrain((int)ty, 0, CYD_SCREEN_HEIGHT - 1);
+                   ^~~~~~~~~
+src/legacy/touch_buttons.cpp: In function 'bool isBackPressed()':
+.pio/matrix/classic/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:76:39: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+                                  ~~~~~^~~~~~
+src/legacy/touch_buttons.cpp:754:27: note: in expansion of macro 'constrain'
+             int screenY = constrain((int)ty, 0, CYD_SCREEN_HEIGHT - 1);
+                           ^~~~~~~~~
+In file included from src/app/LegacyApp.cpp:1:
+src/app/LegacyApp.inc: In function 'bool isInoBackTapped()':
+src/app/LegacyApp.inc:471:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM && tx >= 10 && tx < 26) {
+src/legacy/bluetooth_attacks.cpp: In function 'void BleSpoofer::drawCounter()':
+src/legacy/bluetooth_attacks.cpp:997:38: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     snprintf(cntBuf, sizeof(cntBuf), "%lu", packetCount);
+                                      ^~~~~  ~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void BleSpoofer::doBroadcast()':
+src/legacy/bluetooth_attacks.cpp:1162:23: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+         Serial.printf("[BLESPOOF] TX #%lu mode=%d len=%d addr=%02X:%02X:%02X\n",
+                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+             packetCount, broadcastMode, (int)payload.length(), addr[0], addr[1], addr[2]);
+             ~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void BleBeacon::bcnDrawHeader()':
+src/legacy/bluetooth_attacks.cpp:1684:42: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+         snprintf(cntBuf, sizeof(cntBuf), "%lu pkt", packetCount);
+                                          ^~~~~~~~~  ~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void BleBeacon::bcnDrawRate()':
+src/legacy/bluetooth_attacks.cpp:1722:42: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+         snprintf(cntBuf, sizeof(cntBuf), "%lu pkt", packetCount);
+                                          ^~~~~~~~~  ~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void BleBeacon::bcnDrawCounter()':
+src/legacy/bluetooth_attacks.cpp:1771:38: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     snprintf(cntBuf, sizeof(cntBuf), "%lu", packetCount);
+                                      ^~~~~  ~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void BleBeacon::doBroadcast()':
+src/legacy/bluetooth_attacks.cpp:2029:23: warning: format '%lu' expects argument of type 'long unsigned int', but argument 3 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+         Serial.printf("[BEACON] TX #%lu mode=%d len=%d addr=%02X:%02X:%02X\n",
+                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+             packetCount, currentMode, pktLen, addr[0], addr[1], addr[2]);
+             ~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void PhantomFlood::pfDrawHeader()':
+src/legacy/bluetooth_attacks.cpp:3968:34: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     snprintf(cBuf, sizeof(cBuf), "#%lu", phantomCount);
+                                  ^~~~~~  ~~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void PhantomFlood::pfDrawActivity()':
+src/legacy/bluetooth_attacks.cpp:4046:36: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+         snprintf(buf, sizeof(buf), "[+] Phantoms: %-8lu(%d/s)  ", phantomCount, currentRate);
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void PhantomFlood::pfDrawCounter()':
+src/legacy/bluetooth_attacks.cpp:4173:38: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     snprintf(cntBuf, sizeof(cntBuf), "%lu", phantomCount);
+                                      ^~~~~  ~~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void AirTagReplay::arDrawDynamicReplay()':
+src/legacy/bluetooth_attacks.cpp:4962:32: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     snprintf(buf, sizeof(buf), "[+] TX: %-8lu (%d/s)  ", S->replayCount, S->replayRate);
+                                ^~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void AirTagReplay::arDrawCounterBar()':
+src/legacy/bluetooth_attacks.cpp:5032:38: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     snprintf(cntBuf, sizeof(cntBuf), "%lu", S->replayCount);
+                                      ^~~~~  ~~~~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void BleDucky::loop()':
+src/legacy/bluetooth_attacks.cpp:9199:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= ICON_BAR_TOUCH_TOP && ty <= ICON_BAR_TOUCH_BOTTOM) {
+src/legacy/wardriving.cpp: In function 'bool wardrivingLogNetwork(const uint8_t*, const char*, int, int, int)':
+src/legacy/wardriving.cpp:292:48: warning: '%02d' directive output may be truncated writing between 2 and 11 bytes into a region of size between 0 and 7 [-Wformat-truncation=]
+         snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d",
+                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/legacy/wardriving.cpp:292:17: note: 'snprintf' output between 20 and 71 bytes into a destination of size 24
+         snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d",
+         ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  gpsData.year, gpsData.month, gpsData.day,
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  gpsData.hour, gpsData.minute, gpsData.second);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp: In function 'void BleDucky::injectPayload()':
+src/legacy/bluetooth_attacks.cpp:8947:22: warning: 'char* strncpy(char*, const char*, size_t)' output truncated copying 255 bytes from a string of length 325 [-Wstringop-truncation]
+             strncpy_P(payloadBuf, BD_PS_CMD, sizeof(payloadBuf) - 1);
+src/legacy/bluetooth_attacks.cpp: At global scope:
+src/legacy/bluetooth_attacks.cpp:5719:13: warning: 'void BleJammer::bjUpdateStatus()' defined but not used [-Wunused-function]
+ static void bjUpdateStatus() {
+             ^~~~~~~~~~~~~~
+src/legacy/bluetooth_attacks.cpp:699:13: warning: 'void BleSpoofer::spDrawFreeFont(int, const char*, uint16_t, const GFXfont*)' defined but not used [-Wunused-function]
+ static void spDrawFreeFont(int y, const char* text, uint16_t color, const GFXfont* font) {
+             ^~~~~~~~~~~~~~
+In file included from src/legacy/bluetooth_attacks.cpp:26:
+include/ble_database.h:652:20: warning: 'const char* lookupCompanyFromMfgData(const uint8_t*, uint8_t)' defined but not used [-Wunused-function]
+ static const char* lookupCompanyFromMfgData(const uint8_t* mfgData, uint8_t len) {
+                    ^~~~~~~~~~~~~~~~~~~~~~~~
+include/ble_database.h:577:20: warning: 'const char* lookupAppearanceDetail(uint16_t)' defined but not used [-Wunused-function]
+ static const char* lookupAppearanceDetail(uint16_t appearance) {
+                    ^~~~~~~~~~~~~~~~~~~~~~
+include/ble_database.h:413:20: warning: 'const char* lookupServiceName(uint16_t)' defined but not used [-Wunused-function]
+ static const char* lookupServiceName(uint16_t uuid) {
+                    ^~~~~~~~~~~~~~~~~
+src/legacy/wifi_attacks.cpp: In function 'void Deauther::updateAttackStats()':
+src/legacy/wifi_attacks.cpp:2039:32: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     snprintf(buf, sizeof(buf), "Packets: %lu", packetCount);
+                                ^~~~~~~~~~~~~~  ~~~~~~~~~~~
+src/legacy/wifi_attacks.cpp: In function 'void Deauther::drawAttackScreen()':
+src/legacy/wifi_attacks.cpp:2100:32: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+     snprintf(buf, sizeof(buf), "Packets: %lu", packetCount);
+                                ^~~~~~~~~~~~~~  ~~~~~~~~~~~
+src/legacy/wifi_attacks.cpp: In function 'void Deauther::loop()':
+src/legacy/wifi_attacks.cpp:2431:24: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+                 if (tx >= 0 && tx <= tabBtnW) {
+                     ~~~^~~~
+src/legacy/wifi_attacks.cpp:2506:24: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+                 if (tx >= 0 && tx <= tabBtnW) {
+                     ~~~^~~~
+src/legacy/wardriving.cpp: In function 'bool wardrivingLogBleDevice(const uint8_t*, const char*, int, const uint8_t*, uint8_t)':
+src/legacy/wardriving.cpp:404:48: warning: '%02d' directive output may be truncated writing between 2 and 11 bytes into a region of size between 0 and 7 [-Wformat-truncation=]
+         snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d",
+                                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/legacy/wardriving.cpp:404:17: note: 'snprintf' output between 20 and 71 bytes into a destination of size 24
+         snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d",
+         ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  gpsData.year, gpsData.month, gpsData.day,
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  gpsData.hour, gpsData.minute, gpsData.second);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/legacy/wifi_attacks.cpp: In function 'void DeauthDetect::loop()':
+src/legacy/wifi_attacks.cpp:4174:16: warning: comparison is always true due to limited range of data type [-Wtype-limits]
+         if (ty >= 0 && ty <= 18) {
+             ~~~^~~~
+src/legacy/wifi_attacks.cpp: At global scope:
+src/legacy/wifi_attacks.cpp:4900:13: warning: 'void WifiScan::drawDetails()' defined but not used [-Wunused-function]
+ static void drawDetails() {
+             ^~~~~~~~~~~
+src/legacy/wifi_attacks.cpp:298:13: warning: 'void PacketMonitor::doSamplingFFT()' defined but not used [-Wunused-function]
+ static void doSamplingFFT() {
+             ^~~~~~~~~~~~~
+src/legacy/wifi_attacks.cpp: In function 'void DeauthDetect::loop()':
+src/legacy/wifi_attacks.cpp:3789:32: warning: 'snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+     snprintf(key, sizeof(key), "t%d", count);
+                                ^~~~~
+src/legacy/wifi_attacks.cpp:3789:13: note: 'snprintf' output between 3 and 13 bytes into a destination of size 12
+     snprintf(key, sizeof(key), "t%d", count);
+     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from .pio/libdeps/esp32-e32r35t/RF24/RF24.cpp:10:
+.pio/libdeps/esp32-e32r35t/RF24/RF24_config.h:23: warning: "FAILURE_HANDLING" redefined
+ #define FAILURE_HANDLING
+ 
+<command-line>: note: this is the location of the previous definition

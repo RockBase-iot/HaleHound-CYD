@@ -1,0 +1,231 @@
+Processing esp32-cyd-hat (platform: espressif32@6.9.0; board: esp32dev; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+Patched SmartRC-CC1101 2.5.7 global SPI state symbol
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 5.1.0 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 43 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- TFT_eSPI @ 2.5.43
+|-- ArduinoJson @ 7.4.3
+|-- TinyGPSPlus @ 1.1.0
+|-- rc-switch @ 2.6.4
+|-- arduinoFFT @ 2.0.4
+|-- RF24 @ 1.4.11
+|-- SmartRC-CC1101-Driver-Lib @ 2.5.7
+|-- Adafruit PN532 @ 1.3.4
+|-- ESP32 BLE Keyboard @ 0.3.2
+|-- SPI @ 2.0.0
+|-- ESP32 BLE Arduino @ 2.0.0
+|-- SD @ 2.0.0
+|-- WiFi @ 2.0.0
+|-- Update @ 2.0.0
+|-- Wire @ 2.0.0
+|-- EEPROM @ 2.0.0
+|-- Preferences @ 2.0.0
+|-- DNSServer @ 2.0.0
+|-- WebServer @ 2.0.0
+Building in release mode
+Compiling .pio\build\esp32-cyd-hat\src\app\App.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\app\LegacyApp.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\CYD28_TouchscreenR.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\bluetooth_attacks.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\eapol_capture.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\firmware_update.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\gps_module.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\iot_recon.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\jam_detect.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\karma_attack.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\loot_manager.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\nrf24_attacks.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\nrf24_config.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\radio_test.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\rfid_attacks.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\saved_captures.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\serial_monitor.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\spi_manager.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\subconfig.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\subghz_attacks.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\touch_buttons.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\utils.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\wardriving.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\wardriving_screen.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\wifi_attacks.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\legacy\wp_loot_viewer.cpp.o
+Compiling .pio\build\esp32-cyd-hat\src\main.cpp.o
+Building .pio\build\esp32-cyd-hat\bootloader.bin
+Generating partitions .pio\build\esp32-cyd-hat\partitions.bin
+Warning: DEPRECATED: 'esptool.py' is deprecated. Please use 'esptool' instead. The '.py' suffix will be removed in a future major release.
+Warning: Deprecated: Option '--flash_mode' is deprecated. Use '--flash-mode' instead.
+Warning: Deprecated: Option '--flash_freq' is deprecated. Use '--flash-freq' instead.
+Warning: Deprecated: Option '--flash_size' is deprecated. Use '--flash-size' instead.
+esptool v5.1.0
+Creating ESP32 image...
+Merged 1 ELF section.
+Successfully created ESP32 image.
+Compiling .pio\build\esp32-cyd-hat\libf2a\SPI\SPI.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib699\FS\FS.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib699\FS\vfs_api.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib11a\SPIFFS\SPIFFS.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib8be\LittleFS\LittleFS.cpp.o
+Archiving .pio\build\esp32-cyd-hat\libf2a\libSPI.a
+Compiling .pio\build\esp32-cyd-hat\lib3ab\TFT_eSPI\TFT_eSPI.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib699\libFS.a
+Compiling .pio\build\esp32-cyd-hat\libabe\TinyGPSPlus\TinyGPS++.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib11a\libSPIFFS.a
+Compiling .pio\build\esp32-cyd-hat\libf54\rc-switch\RCSwitch.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib8be\libLittleFS.a
+Compiling .pio\build\esp32-cyd-hat\lib7cd\arduinoFFT\arduinoFFT.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib629\RF24\RF24.cpp.o
+Compiling .pio\build\esp32-cyd-hat\libea4\SmartRC-CC1101-Driver-Lib\ELECHOUSE_CC1101_SRC_DRV.cpp.o
+Archiving .pio\build\esp32-cyd-hat\libabe\libTinyGPSPlus.a
+Archiving .pio\build\esp32-cyd-hat\libf54\librc-switch.a
+Compiling .pio\build\esp32-cyd-hat\libca5\Wire\Wire.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib3fa\Adafruit BusIO\Adafruit_BusIO_Register.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib7cd\libarduinoFFT.a
+Compiling .pio\build\esp32-cyd-hat\lib3fa\Adafruit BusIO\Adafruit_GenericDevice.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib3fa\Adafruit BusIO\Adafruit_I2CDevice.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib3fa\Adafruit BusIO\Adafruit_SPIDevice.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib214\Adafruit PN532\Adafruit_PN532.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib629\libRF24.a
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLE2902.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLE2904.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEAddress.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEAdvertisedDevice.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEAdvertising.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEBeacon.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLECharacteristic.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLECharacteristicMap.cpp.o
+Archiving .pio\build\esp32-cyd-hat\libea4\libSmartRC-CC1101-Driver-Lib.a
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEClient.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEDescriptor.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEDescriptorMap.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEDevice.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEEddystoneTLM.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEEddystoneURL.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEExceptions.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEHIDDevice.cpp.o
+Archiving .pio\build\esp32-cyd-hat\libca5\libWire.a
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLERemoteCharacteristic.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLERemoteDescriptor.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLERemoteService.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEScan.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLESecurity.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib3fa\libAdafruit BusIO.a
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEServer.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEService.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEServiceMap.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib3ab\libTFT_eSPI.a
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEUUID.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEUtils.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib214\libAdafruit PN532.a
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\BLEValue.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\FreeRTOS.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib650\BLE\GeneralUtils.cpp.o
+Compiling .pio\build\esp32-cyd-hat\libb2b\ESP32 BLE Keyboard\BleKeyboard.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib2f0\SD\SD.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib2f0\SD\sd_diskio.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib2f0\SD\sd_diskio_crc.c.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFi.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFiAP.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFiClient.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFiGeneric.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFiMulti.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFiSTA.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFiScan.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFiServer.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib57f\WiFi\WiFiUdp.cpp.o
+Compiling .pio\build\esp32-cyd-hat\libb6f\Update\HttpsOTAUpdate.cpp.o
+Compiling .pio\build\esp32-cyd-hat\libb6f\Update\Updater.cpp.o
+Compiling .pio\build\esp32-cyd-hat\libfcd\EEPROM\EEPROM.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib2f0\libSD.a
+Archiving .pio\build\esp32-cyd-hat\libb2b\libESP32 BLE Keyboard.a
+Archiving .pio\build\esp32-cyd-hat\lib650\libBLE.a
+Compiling .pio\build\esp32-cyd-hat\lib765\Preferences\Preferences.cpp.o
+Compiling .pio\build\esp32-cyd-hat\libd07\DNSServer\DNSServer.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib089\WebServer\Parsing.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib57f\libWiFi.a
+Archiving .pio\build\esp32-cyd-hat\libb6f\libUpdate.a
+Compiling .pio\build\esp32-cyd-hat\lib089\WebServer\WebServer.cpp.o
+Compiling .pio\build\esp32-cyd-hat\lib089\WebServer\detail\mimetable.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\Esp.cpp.o
+Archiving .pio\build\esp32-cyd-hat\libfcd\libEEPROM.a
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\FirmwareMSC.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\FunctionalInterrupt.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\HWCDC.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\HardwareSerial.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\IPAddress.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\IPv6Address.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\MD5Builder.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\Print.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\Stream.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\StreamString.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\Tone.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\USB.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\USBCDC.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\USBMSC.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\WMath.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\WString.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\base64.cpp.o
+Archiving .pio\build\esp32-cyd-hat\lib765\libPreferences.a
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\cbuf.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-adc.c.o
+Archiving .pio\build\esp32-cyd-hat\libd07\libDNSServer.a
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-bt.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-cpu.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-dac.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-gpio.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-i2c-slave.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-i2c.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-ledc.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-matrix.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-misc.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-psram.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-rgb-led.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-rmt.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-sigmadelta.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-spi.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-time.c.o
+Archiving .pio\build\esp32-cyd-hat\lib089\libWebServer.a
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-timer.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-tinyusb.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-touch.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\esp32-hal-uart.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\firmware_msc_fat.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\libb64\cdecode.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\libb64\cencode.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\main.cpp.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\stdlib_noniso.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\wiring_pulse.c.o
+Compiling .pio\build\esp32-cyd-hat\FrameworkArduino\wiring_shift.c.o
+Archiving .pio\build\esp32-cyd-hat\libFrameworkArduino.a
+Linking .pio\build\esp32-cyd-hat\firmware.elf
+Retrieving maximum program size .pio\build\esp32-cyd-hat\firmware.elf
+Checking size .pio\build\esp32-cyd-hat\firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [====      ]  36.9% (used 121024 bytes from 327680 bytes)
+Flash: [========  ]  75.0% (used 2359369 bytes from 3145728 bytes)
+Building .pio\build\esp32-cyd-hat\firmware.bin
+Warning: DEPRECATED: 'esptool.py' is deprecated. Please use 'esptool' instead. The '.py' suffix will be removed in a future major release.
+Warning: Deprecated: Option '--flash_mode' is deprecated. Use '--flash-mode' instead.
+Warning: Deprecated: Option '--flash_freq' is deprecated. Use '--flash-freq' instead.
+Warning: Deprecated: Option '--flash_size' is deprecated. Use '--flash-size' instead.
+esptool v5.1.0
+Creating ESP32 image...
+Merged 27 ELF sections.
+Successfully created ESP32 image.
+========================= [SUCCESS] Took 29.61 seconds =========================
+
+Environment    Status    Duration
+-------------  --------  ------------
+esp32-cyd-hat  SUCCESS   00:00:29.610
+========================= 1 succeeded in 00:00:29.610 =========================

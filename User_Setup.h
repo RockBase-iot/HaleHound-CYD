@@ -159,17 +159,23 @@
   #define SPI_FREQUENCY  40000000  // 40MHz for ST7796 (more conservative)
 #endif
 #ifdef CYD_C5
-  #define SPI_FREQUENCY  40000000  // 40MHz for ILI9341 on C5
+  #define SPI_FREQUENCY  20000000  // 20MHz per NM-CYD-C5 reference configuration
 #endif
 
 // Touch SPI frequency (XPT2046 requires slower speed)
 #define SPI_TOUCH_FREQUENCY  2500000  // 2.5MHz
 
 // Read frequency
-#define SPI_READ_FREQUENCY  16000000  // 16MHz — matches Bruce, safer for all panel variants
+#ifdef CYD_C5
+  #define SPI_READ_FREQUENCY  20000000
+#else
+  #define SPI_READ_FREQUENCY  16000000  // 16MHz — matches Bruce, safer for classic ESP32 boards
+#endif
 
 // Use HSPI port for display
-#define USE_HSPI_PORT
+#ifndef CYD_C5
+  #define USE_HSPI_PORT
+#endif
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SECTION 5: ADDITIONAL SETTINGS

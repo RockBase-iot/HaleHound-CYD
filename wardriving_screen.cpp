@@ -19,6 +19,7 @@
 #include <esp_wifi.h>
 #include <BLEDevice.h>
 #include <esp_bt.h>
+#include <esp_arduino_version.h>
 
 // ═══════════════════════════════════════════════════════════════════════════
 // EXTERNAL OBJECTS
@@ -576,19 +577,28 @@ static void wdRunBleScan() {
         wdBleScan->stop();
     }
 
-    BLEScanResults foundDevices = wdBleScan->getResults();
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    BLEScanResults* foundDevices = wdBleScan->getResults();
+#else
+    BLEScanResults foundDevicesValue = wdBleScan->getResults();
+    BLEScanResults* foundDevices = &foundDevicesValue;
+#endif
 
     // Step 5: Process results — copy into temp buffer first
     wdBleResultCount = 0;
-    int total = foundDevices.getCount();
+    int total = foundDevices->getCount();
     int cap = (total > WD_BLE_RESULT_MAX) ? WD_BLE_RESULT_MAX : total;
 
     for (int i = 0; i < cap; i++) {
-        BLEAdvertisedDevice dev = foundDevices.getDevice(i);
+        BLEAdvertisedDevice dev = foundDevices->getDevice(i);
         WdBleResult* r = &wdBleResults[wdBleResultCount];
 
         // Copy MAC
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+        const uint8_t* addr = dev.getAddress().getNative();
+#else
         const uint8_t* addr = *dev.getAddress().getNative();
+#endif
         memcpy(r->mac, addr, 6);
 
         // Copy RSSI
@@ -604,9 +614,9 @@ static void wdRunBleScan() {
 
         // Copy manufacturer data (first 8 bytes max)
         if (dev.haveManufacturerData()) {
-            std::string mfg = dev.getManufacturerData();
+            auto mfg = dev.getManufacturerData();
             r->mfgLen = (mfg.length() > 8) ? 8 : mfg.length();
-            memcpy(r->mfgData, mfg.data(), r->mfgLen);
+            memcpy(r->mfgData, mfg.c_str(), r->mfgLen);
         } else {
             r->mfgLen = 0;
         }

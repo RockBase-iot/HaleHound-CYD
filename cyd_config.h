@@ -250,7 +250,7 @@
 
 #ifdef CYD_35
   #define CC1101_CS     21    // Chip Select - SPI peripheral connector (E32R35T)
-#elif CYD_C5
+#elif defined(CYD_C5)
   #define CC1101_CS     9    // Chip Select - GPIO9 (ESP32-CYD-C5)
 #else
   #define CC1101_CS     27    // Chip Select - CN1 connector
@@ -259,7 +259,7 @@
 #define CC1101_GDO0     8    // TX data TO radio - P3 connector
 #ifdef NMRF_HAT
   #define CC1101_GDO2   22    // Hat: no GDO2 wire — GDO0 outputs same RX data
-#elif CYD_C5
+#elif defined(CYD_C5)
   #define CC1101_GDO2   -1    //  ESP32-CYD-C5 - no GDO2 wire, GDO0 outputs same RX data  
 #else
   #define CC1101_GDO2   35    // RX data FROM radio - P3 connector (INPUT ONLY)
@@ -365,7 +365,7 @@
   // NM-RF-Hat: physical switch selects CC1101 or NRF24 on same two GPIOs
   #define NRF24_CSN     27    // Shared with CC1101_CS via hat switch
   #define NRF24_CE      22    // Shared with CC1101_GDO0 via hat switch
-#elif CYD_C5
+#elif defined(CYD_C5)
   #define NRF24_CSN     9    // Chip Select - GPIO9 (ESP32-CYD-C5)
   #define NRF24_CE      8    // Chip Enable - GPIO8
 #elif defined(CYD_E32R28T) || defined(CYD_E32R35T)

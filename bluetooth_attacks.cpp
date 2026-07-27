@@ -13,8 +13,12 @@
 #include <BLEDevice.h>
 #include <BLEAdvertising.h>
 #include <SPI.h>
-#include "esp_gap_ble_api.h"
-#include "esp_bt_main.h"
+#ifdef CYD_C5
+    #include "ble_gap_compat.h"
+#else
+    #include "esp_gap_ble_api.h"
+    #include "esp_bt_main.h"
+#endif
 #include "esp_bt.h"
 #include "esp_wifi.h"
 #include <WiFi.h>
@@ -23,6 +27,32 @@
 #include <SD.h>
 #include "spi_manager.h"
 #include "wp_loot_viewer.h"
+#include <esp_arduino_version.h>
+
+static void addBleAdvertisementBytes(BLEAdvertisementData& data, uint8_t* payload, size_t length) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    data.addData(reinterpret_cast<char*>(payload), length);
+#else
+    data.addData(std::string(reinterpret_cast<char*>(payload), length));
+#endif
+}
+
+static BLEScanResults runBleScanBlocking(BLEScan* scanner, uint32_t duration, bool continueScan = false) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    BLEScanResults* results = scanner->start(duration, continueScan);
+    return results == nullptr ? BLEScanResults() : *results;
+#else
+    return scanner->start(duration, continueScan);
+#endif
+}
+
+static void copyBleAddress(uint8_t* destination, BLEAdvertisedDevice& device) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    memcpy(destination, device.getAddress().getNative(), 6);
+#else
+    memcpy(destination, *device.getAddress().getNative(), 6);
+#endif
+}
 
 // ── Classic BT memory release ───────────────────────────────────────────
 // ESP32 Bluedroid reserves ~28KB for Classic BT by default.
@@ -30,6 +60,9 @@
 // Must be called BEFORE BLEDevice::init() triggers esp_bt_controller_init().
 static bool g_classicBtReleased = false;
 static void releaseClassicBtMemory() {
+#ifdef CYD_C5
+    g_classicBtReleased = true;
+#else
     if (!g_classicBtReleased) {
         esp_err_t err = esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
         if (err == ESP_OK) {
@@ -40,6 +73,7 @@ static void releaseClassicBtMemory() {
             // Don't set flag — try again next time
         }
     }
+#endif
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -514,7 +548,7 @@ static void getApplePopupPayload(BLEAdvertisementData& advData, int idx) {
     pkt[14] = 0x00;
     // Fill remaining 16 bytes with random data (makes each packet unique)
     esp_fill_random(&pkt[15], 16);
-    advData.addData(std::string((char*)pkt, 31));
+    addBleAdvertisementBytes(advData, pkt, 31);
 }
 
 // Sour Apple Nearby Action (Type 0x0F) - floods iOS with action modals
@@ -537,7 +571,7 @@ static void getSourApplePayload(BLEAdvertisementData& advData, int typeIdx) {
     pkt[i++] = 0x10;
     // Random tail (3 bytes)
     esp_fill_random(&pkt[i], 3);
-    advData.addData(std::string((char*)pkt, 17));
+    addBleAdvertisementBytes(advData, pkt, 17);
 }
 
 // Google Fast Pair (Service UUID 0xFE2C) - triggers Android pairing notification
@@ -562,7 +596,7 @@ static void getFastPairPayload(BLEAdvertisementData& advData, int idx) {
     pkt[i++] = model[0];
     pkt[i++] = model[1];
     pkt[i++] = model[2];
-    advData.addData(std::string((char*)pkt, 14));
+    addBleAdvertisementBytes(advData, pkt, 14);
 }
 
 // Samsung Galaxy Buds (Company ID 0x0075) - triggers Samsung EasySetup popup
@@ -590,7 +624,7 @@ static void getSamsungBudsPayload(BLEAdvertisementData& advData, int idx) {
     // Fixed EasySetup tail (10 bytes)
     memcpy(&pkt[i], SAMSUNG_BUDS_TAIL, 10);
     i += 10;
-    advData.addData(std::string((char*)pkt, 31));
+    addBleAdvertisementBytes(advData, pkt, 31);
 }
 
 // Samsung Galaxy Watch (Company ID 0x0075) - triggers Samsung Watch pairing popup
@@ -611,7 +645,7 @@ static void getSamsungWatchPayload(BLEAdvertisementData& advData, int idx) {
     i += 10;
     // Watch model ID (1 byte)
     pkt[i++] = SAMSUNG_WATCH_IDS[idx % SAMSUNG_WATCH_COUNT];
-    advData.addData(std::string((char*)pkt, 18));
+    addBleAdvertisementBytes(advData, pkt, 18);
 }
 
 // Microsoft Swift Pair (Company ID 0x0006) - triggers Windows "device found" popup
@@ -637,7 +671,7 @@ static void getSwiftPairPayload(BLEAdvertisementData& advData, int idx) {
     // Device name as ASCII
     memcpy(&pkt[i], name, nameLen);
     i += nameLen;
-    advData.addData(std::string((char*)pkt, i));
+    addBleAdvertisementBytes(advData, pkt, i);
 }
 
 
@@ -1103,8 +1137,8 @@ static void doBroadcast() {
     }
 
     // Set raw advertising data via ESP-IDF (bypasses Arduino wrapper for reliable cycling)
-    std::string payload = advData.getPayload();
-    esp_ble_gap_config_adv_data_raw((uint8_t*)payload.data(), payload.length());
+    auto payload = advData.getPayload();
+    esp_ble_gap_config_adv_data_raw((uint8_t*)payload.c_str(), payload.length());
 
     // Brief pause for data config to take effect
     delay(1);
@@ -2326,7 +2360,7 @@ static void drawDeviceList() {
         if (device.getName().length() > 0) {
             name = String(device.getName().c_str()).substring(0, 16);
         } else if (device.haveManufacturerData()) {
-            std::string mfg = device.getManufacturerData();
+            auto mfg = device.getManufacturerData();
             if (mfg.length() >= 2) {
                 uint16_t cid = (uint8_t)mfg[0] | ((uint8_t)mfg[1] << 8);
                 const char* cn = lookupCompanyName(cid);
@@ -2376,7 +2410,7 @@ static void drawDeviceDetails() {
     if (device.getName().length() > 0) {
         name = String(device.getName().c_str());
     } else if (device.haveManufacturerData()) {
-        std::string mfg = device.getManufacturerData();
+        auto mfg = device.getManufacturerData();
         if (mfg.length() >= 2) {
             uint16_t cid = (uint8_t)mfg[0] | ((uint8_t)mfg[1] << 8);
             const char* cn = lookupCompanyName(cid);
@@ -2442,7 +2476,7 @@ void startScan() {
     showScanning();
     scanning = true;
 
-    scanResults = pBleScan->start(5, false);
+    scanResults = runBleScanBlocking(pBleScan, 5);
     deviceCount = scanResults.getCount();
     currentIndex = 0;
     listStartIndex = 0;
@@ -2958,7 +2992,7 @@ static void processScanResults(BLEScanResults results) {
 
         if (!device.haveManufacturerData()) continue;
 
-        std::string mfgData = device.getManufacturerData();
+        auto mfgData = device.getManufacturerData();
         if (mfgData.length() < 4) continue;
 
         // Check for Apple company ID (0x004C) + FindMy type (0x12) + length (0x19)
@@ -2976,7 +3010,7 @@ static void processScanResults(BLEScanResults results) {
 
         // Get MAC
         uint8_t mac[6];
-        memcpy(mac, *device.getAddress().getNative(), 6);
+        copyBleAddress(mac, device);
 
         if (addOrUpdateTracker(mac, device.getRSSI(), battery, statusByte)) {
             foundNew = true;
@@ -2998,7 +3032,7 @@ static void runScan() {
     scanning = true;
     totalScans++;
 
-    BLEScanResults results = pAtScan->start(AT_SCAN_DURATION, false);
+    BLEScanResults results = runBleScanBlocking(pAtScan, AT_SCAN_DURATION);
     processScanResults(results);
     pAtScan->clearResults();
 
@@ -3553,13 +3587,13 @@ static void processScanResults(BLEScanResults results) {
         BLEAdvertisedDevice device = results.getDevice(i);
 
         uint8_t mac[6];
-        memcpy(mac, *device.getAddress().getNative(), 6);
+        copyBleAddress(mac, device);
         int rssi = device.getRSSI();
 
         // Check service data for tracker UUIDs
         if (device.haveServiceData()) {
             BLEUUID sdUUID = device.getServiceDataUUID();
-            std::string sd = device.getServiceData();
+            auto sd = device.getServiceData();
 
             // Google FMDN — UUID 0xFEAA, frame type 0x40 or 0x41
             if (sdUUID.equals(UUID_FMDN) && sd.length() >= 1) {
@@ -3621,7 +3655,7 @@ static void processScanResults(BLEScanResults results) {
 
         // Apple AirTag — Manufacturer data 0x004C, type 0x12, len 0x19
         if (device.haveManufacturerData()) {
-            std::string mfgData = device.getManufacturerData();
+            auto mfgData = device.getManufacturerData();
             if (mfgData.length() >= 4) {
                 uint8_t compLow  = (uint8_t)mfgData[0];
                 uint8_t compHigh = (uint8_t)mfgData[1];
@@ -3652,7 +3686,7 @@ static void tdRunScan() {
     scanning = true;
     totalScans++;
 
-    BLEScanResults results = pTdScan->start(TD_SCAN_DURATION, false);
+    BLEScanResults results = runBleScanBlocking(pTdScan, TD_SCAN_DURATION);
     processScanResults(results);
     pTdScan->clearResults();
 
@@ -4551,7 +4585,7 @@ static void processScanResults(BLEScanResults results) {
 
         if (!device.haveManufacturerData()) continue;
 
-        std::string mfgData = device.getManufacturerData();
+        auto mfgData = device.getManufacturerData();
         if (mfgData.length() < 27) continue;  // Need at least company(2)+type(1)+len(1)+status(1)+pk22=27
 
         // Check for Apple company ID (0x004C) + FindMy type (0x12) + OF length (0x19)
@@ -4565,7 +4599,7 @@ static void processScanResults(BLEScanResults results) {
 
         // Get MAC address
         uint8_t mac[6];
-        memcpy(mac, *device.getAddress().getNative(), 6);
+        copyBleAddress(mac, device);
 
         // Check if already captured — update RSSI only
         int existing = findCaptured(mac);
@@ -4590,7 +4624,7 @@ static void processScanResults(BLEScanResults results) {
         // Copy manufacturer data (up to 29 bytes to fill payload[2..30])
         int copyLen = mfgData.length();
         if (copyLen > 29) copyLen = 29;
-        memcpy(&tag.payload[2], mfgData.data(), copyLen);
+        memcpy(&tag.payload[2], mfgData.c_str(), copyLen);
 
         // Zero-pad if manufacturer data was shorter than 29 bytes
         if (copyLen < 29) {
@@ -4620,7 +4654,7 @@ static void processScanResults(BLEScanResults results) {
 static void runScan() {
     S->totalScans++;
 
-    BLEScanResults results = S->pArScan->start(AR_SCAN_DURATION, false);
+    BLEScanResults results = runBleScanBlocking(S->pArScan, AR_SCAN_DURATION);
     processScanResults(results);
     S->pArScan->clearResults();
 }
@@ -6508,8 +6542,7 @@ class SnifferCallbacks : public BLEAdvertisedDeviceCallbacks {
         if (pendingReady) return;  // Queue full, skip this frame
 
         // Copy MAC
-        const uint8_t* addr = *advertisedDevice.getAddress().getNative();
-        memcpy(pendingMAC, addr, 6);
+        copyBleAddress(pendingMAC, advertisedDevice);
         pendingRSSI = advertisedDevice.getRSSI();
 
         // Copy name
@@ -6524,9 +6557,9 @@ class SnifferCallbacks : public BLEAdvertisedDeviceCallbacks {
 
         // Copy manufacturer data
         if (advertisedDevice.haveManufacturerData()) {
-            std::string mfg = advertisedDevice.getManufacturerData();
+            auto mfg = advertisedDevice.getManufacturerData();
             pendingMfgLen = mfg.length() > 8 ? 8 : mfg.length();
-            memcpy(pendingMfgData, mfg.data(), pendingMfgLen);
+            memcpy(pendingMfgData, mfg.c_str(), pendingMfgLen);
         } else {
             pendingMfgLen = 0;
         }
@@ -7587,7 +7620,7 @@ static void wpDoScan() {
     tft.print(WP_SCAN_SECS);
     tft.print("s");
 
-    BLEScanResults results = pWpScan->start(WP_SCAN_SECS, false);
+    BLEScanResults results = runBleScanBlocking(pWpScan, WP_SCAN_SECS);
 
     int total = results.getCount();
     #if CYD_DEBUG
@@ -7601,7 +7634,7 @@ static void wpDoScan() {
         BLEUUID sdUUID = device.getServiceDataUUID();
         if (!sdUUID.equals(BLEUUID((uint16_t)0xFE2C))) continue;
 
-        std::string sd = device.getServiceData();
+        auto sd = device.getServiceData();
         if (sd.length() < 3) continue;
 
         // Check duplicate MAC
@@ -8471,9 +8504,9 @@ static void wpRunAttack() {
     // Model ID char
     BLERemoteCharacteristic* pMid = pSvc->getCharacteristic(uuidModelId);
     if (pMid && pMid->canRead()) {
-        std::string mv = pMid->readValue();
+        auto mv = pMid->readValue();
         if (mv.length() >= 3) {
-            memcpy(wpAtkResult.modelIdBytes, mv.data(), 3);
+            memcpy(wpAtkResult.modelIdBytes, mv.c_str(), 3);
             wpAtkResult.hasModelId = true;
             char midStr[32];
             snprintf(midStr, sizeof(midStr), "Model ID: 0x%02X%02X%02X",
@@ -8493,11 +8526,11 @@ static void wpRunAttack() {
     if (pDis) {
         BLERemoteCharacteristic* pFw = pDis->getCharacteristic(uuidFwRev);
         if (pFw && pFw->canRead()) {
-            std::string fv = pFw->readValue();
+            auto fv = pFw->readValue();
             if (fv.length() > 0) {
                 size_t copyLen = fv.length();
                 if (copyLen > 19) copyLen = 19;
-                memcpy(wpAtkResult.firmware, fv.data(), copyLen);
+                memcpy(wpAtkResult.firmware, fv.c_str(), copyLen);
                 wpAtkResult.firmware[copyLen] = '\0';
                 wpAtkResult.hasFirmware = true;
                 char fwStr[42];

@@ -21,6 +21,7 @@
 #include <WiFi.h>
 #include <BLEDevice.h>
 #include <SD.h>
+#include <esp_arduino_version.h>
 
 // HaleHound-CYD modules
 #include "cyd_config.h"
@@ -50,6 +51,59 @@
 #include "loot_manager.h"
 #include "rfid_attacks.h"
 #include "jam_detect.h"
+
+void drawInoIconBar();
+bool isInoBackTapped();
+void updateActiveSubmenu();
+void displaySubmenu();
+void displayMenu();
+void returnToSubmenu();
+void returnToMainMenu();
+void handleWiFiSubmenuTouch();
+void handleBluetoothSubmenuTouch();
+void handleAirTagHubTouch();
+void handleNRFSubmenuTouch();
+void handleSubGHzSubmenuTouch();
+void showSigintPlaceholder(const char* title);
+void handleRFIDSubmenuTouch();
+void handleJamDetectSubmenuTouch();
+void handleSIGINTSubmenuTouch();
+void handleToolsSubmenuTouch();
+void displayBrightnessControl();
+void brightnessControlLoop();
+int getTimeoutOptionIndex();
+void displayTimeoutControl();
+void screenTimeoutControlLoop();
+void displayColorSwap();
+void colorSwapLoop();
+void displayInvertScreen();
+void invertDisplayLoop();
+void colorModeScreen();
+void colorModeLoop();
+void displayRotationScreen();
+void rotationControlLoop();
+void _svcRenderDiag();
+void _svcDiagA();
+void _svcDiagB();
+void _svcRunDiag();
+void displayDeviceInfo();
+void displayCC1101ModuleScreen();
+void cc1101ModuleLoop();
+void handleSettingsSubmenuTouch();
+void handleAboutPage();
+void showPinLockScreen();
+int pinEntryScreen(const char* title);
+void pinSetupLoop();
+bool isOffensiveAllowed();
+void showBlueTeamBlockedScreen();
+bool showDisclaimerScreen();
+void recursiveDeleteSD(File dir);
+void activateValhalla();
+void handleButtons();
+void showSplash();
+void runBootDiagnostics();
+void legacySetup();
+void legacyLoop();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GLOBAL OBJECTS
@@ -350,6 +404,23 @@ bool color_order_rgb = false;  // false = BGR (default), true = RGB (swapped pan
 bool display_inverted = false; // false = normal, true = inverted (for 2USB/inverted panels)
 uint8_t color_mode = 0;       // 0 = Default, 1 = Colorblind, 2 = High Contrast
 uint8_t screen_rotation = 0;  // 0 = Standard (USB down), 2 = Flipped 180 (USB up)
+
+static void initializeBacklight() {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    ledcAttach(CYD_TFT_BL, 5000, 8);
+#else
+    ledcSetup(0, 5000, 8);
+    ledcAttachPin(CYD_TFT_BL, 0);
+#endif
+}
+
+static void writeBacklight(uint8_t level) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    ledcWrite(CYD_TFT_BL, level);
+#else
+    ledcWrite(0, level);
+#endif
+}
 
 // PIN lock
 uint16_t device_pin = 0;       // 4-digit PIN (0-9999), stored as number
@@ -1828,7 +1899,7 @@ void brightnessControlLoop() {
         // Darker button
         if (isTouchInArea(30, 180, 80, 40)) {
             brightness_level = max(10, brightness_level - 25);
-            ledcWrite(0, brightness_level);
+            writeBacklight(brightness_level);
             displayBrightnessControl();
             delay(150);
         }
@@ -1836,7 +1907,7 @@ void brightnessControlLoop() {
         // Brighter button
         if (isTouchInArea(130, 180, 80, 40)) {
             brightness_level = min(255, brightness_level + 25);
-            ledcWrite(0, brightness_level);
+            writeBacklight(brightness_level);
             displayBrightnessControl();
             delay(150);
         }
@@ -3783,7 +3854,7 @@ void handleButtons() {
     // Screen sleep check — disabled while a feature is active (jammers, attacks, etc.)
     if (screen_timeout_seconds > 0 && !screen_asleep && !feature_active) {
         if (millis() - last_interaction_time > (unsigned long)screen_timeout_seconds * 1000) {
-            ledcWrite(0, 0);
+            writeBacklight(0);
             screen_asleep = true;
             if (pin_enabled) device_locked = true;
         }
@@ -3794,7 +3865,7 @@ void handleButtons() {
         touchButtonsUpdate();
         if (isTouched() || isBootButtonPressed()) {
             screen_asleep = false;
-            ledcWrite(0, brightness_level);
+            writeBacklight(brightness_level);
             last_interaction_time = millis();
             if (device_locked) {
                 showPinLockScreen();
@@ -3851,7 +3922,7 @@ void handleButtons() {
         // Lock icon tap — manual lock (top-right corner)
         if (pin_enabled && isTouchInArea(SCREEN_WIDTH - 28, 0, 28, 22)) {
             device_locked = true;
-            ledcWrite(0, 0);
+            writeBacklight(0);
             screen_asleep = true;
             last_interaction_time = millis();
             delay(200);
@@ -4128,7 +4199,7 @@ void runBootDiagnostics() {
 // SETUP
 // ═══════════════════════════════════════════════════════════════════════════
 
-void setup() {
+void legacySetup() {
     // Initialize Serial
     Serial.begin(CYD_DEBUG_BAUD);
     delay(500);
@@ -4151,9 +4222,8 @@ void setup() {
     tft.fillScreen(HALEHOUND_BLACK);
 
     // Turn on backlight with PWM
-    ledcSetup(0, 5000, 8);
-    ledcAttachPin(CYD_TFT_BL, 0);
-    ledcWrite(0, brightness_level);
+    initializeBacklight();
+    writeBacklight(brightness_level);
 
     // Show splash screen
     showSplash();
@@ -4284,7 +4354,7 @@ void setup() {
     // Load settings from EEPROM (brightness, timeout, color order, rotation, touch cal, color mode, PIN)
     loadSettings();
 
-    ledcWrite(0, brightness_level);
+    writeBacklight(brightness_level);
     applyColorMode(color_mode);
 
     // Apply saved rotation — must happen before applyColorOrder (which needs correct MADCTL base)
@@ -4347,7 +4417,7 @@ void setup() {
 // MAIN LOOP
 // ═══════════════════════════════════════════════════════════════════════════
 
-void loop() {
+void legacyLoop() {
     handleButtons();
     delay(20);
 }
