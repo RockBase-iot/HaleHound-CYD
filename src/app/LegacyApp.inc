@@ -52,6 +52,9 @@
 #include "rfid_attacks.h"
 #include "jam_detect.h"
 #include "board/BoardProfile.h"
+#include "core/PolicyService.h"
+#include "core/BootHealthService.h"
+#include "services/MenuLayout.h"
 
 void drawInoIconBar();
 bool isInoBackTapped();
@@ -441,16 +444,6 @@ const char* timeoutLabels[] = {"30 SEC", "1 MIN", "2 MIN", "5 MIN", "10 MIN", "N
 const int numTimeoutOptions = 6;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// MENU LAYOUT CONSTANTS - MATCHES ORIGINAL
-// ═══════════════════════════════════════════════════════════════════════════
-
-const int COLUMN_WIDTH = SCREEN_WIDTH / 2;
-const int X_OFFSET_LEFT = 10;
-const int X_OFFSET_RIGHT = X_OFFSET_LEFT + COLUMN_WIDTH;
-const int Y_START = 30;
-const int Y_SPACING = (SCREEN_HEIGHT - CONTENT_Y_START - BUTTON_BAR_H) / 5;
-
-// ═══════════════════════════════════════════════════════════════════════════
 // ICON BAR HELPER - MATCHES ORIGINAL HALEHOUND
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -545,27 +538,67 @@ void updateActiveSubmenu() {
 // DISPLAY SUBMENU - MATCHES ORIGINAL STYLE
 // ═══════════════════════════════════════════════════════════════════════════
 
+static MenuLayout currentMainMenuLayout() {
+    return MenuLayout::mainMenu(tft.width(), tft.height(), NUM_MENU_ITEMS);
+}
+
+static MenuLayout currentSubmenuLayout() {
+    return MenuLayout::submenu(tft.width(), tft.height(), active_submenu_size);
+}
+
+static bool isMenuRectTouched(const MenuRect& rect) {
+    if (rect.empty()) return false;
+    return isTouchInArea(rect.x, rect.y, rect.width - 1, rect.height - 1);
+}
+
+static void drawMainMenuItem(const MenuLayout& layout, int index, bool selected) {
+    const MenuRect rect = layout.itemRect(index);
+    if (rect.empty()) return;
+
+    const uint16_t color = selected ? HALEHOUND_HOTPINK : HALEHOUND_MAGENTA;
+    tft.fillRect(rect.x, rect.y, rect.width, rect.height, TFT_BLACK);
+
+    const int contentHeight = 34;
+    const int contentY = rect.y + max(1, (rect.height - contentHeight) / 2);
+    const int iconX = rect.x + (rect.width - 16) / 2;
+    tft.drawBitmap(iconX, contentY, bitmap_icons[index], 16, 16, color);
+
+    tft.setTextColor(color, TFT_BLACK);
+    const int textWidth = tft.textWidth(menu_items[index]);
+    const int textX = rect.x + max(0, (rect.width - textWidth) / 2);
+    tft.setCursor(textX, contentY + 18);
+    tft.print(menu_items[index]);
+}
+
+static void drawSubmenuItem(const MenuLayout& layout, int index, bool selected) {
+    const MenuRect rect = layout.itemRect(index);
+    if (rect.empty() || index < 0 || index >= active_submenu_size) return;
+
+    const uint16_t color = selected ? HALEHOUND_HOTPINK : HALEHOUND_MAGENTA;
+    tft.fillRect(rect.x, rect.y, rect.width, rect.height, TFT_BLACK);
+    const int contentY = rect.y + max(0, (rect.height - 16) / 2);
+    tft.drawBitmap(rect.x + 2, contentY, active_submenu_icons[index], 16, 16, color);
+
+    tft.setTextColor(color, TFT_BLACK);
+    const int textHeight = tft.fontHeight();
+    tft.setCursor(rect.x + 22, rect.y + max(0, (rect.height - textHeight) / 2));
+    if (index < active_submenu_size - 1) tft.print("| ");
+    tft.print(active_submenu_items[index]);
+}
+
 void displaySubmenu() {
     menu_initialized = false;
     last_menu_index = -1;
 
-    tft.setTextFont(2);
+    const MenuLayout layout = currentSubmenuLayout();
+    tft.setTextFont(tft.width() > tft.height() ? 1 : 2);
     tft.setTextSize(TEXT_SIZE_BODY);
 
     if (!submenu_initialized) {
         tft.fillScreen(TFT_BLACK);
 
         for (int i = 0; i < active_submenu_size; i++) {
-            int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-            if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-            tft.setTextColor(HALEHOUND_MAGENTA, TFT_BLACK);
-            tft.drawBitmap(10, yPos, active_submenu_icons[i], 16, 16, HALEHOUND_MAGENTA);
-            tft.setCursor(30, yPos);
-            if (i < active_submenu_size - 1) {
-                tft.print("| ");
-            }
-            tft.print(active_submenu_items[i]);
+            drawSubmenuItem(layout, i, false);
         }
 
         submenu_initialized = true;
@@ -576,29 +609,11 @@ void displaySubmenu() {
     if (last_submenu_index != current_submenu_index) {
         // Unhighlight previous
         if (last_submenu_index >= 0) {
-            int prev_yPos = SUBMENU_Y_START + last_submenu_index * SUBMENU_Y_SPACING;
-            if (last_submenu_index == active_submenu_size - 1) prev_yPos += SUBMENU_LAST_GAP;
-
-            tft.setTextColor(HALEHOUND_MAGENTA, TFT_BLACK);
-            tft.drawBitmap(10, prev_yPos, active_submenu_icons[last_submenu_index], 16, 16, HALEHOUND_MAGENTA);
-            tft.setCursor(30, prev_yPos);
-            if (last_submenu_index < active_submenu_size - 1) {
-                tft.print("| ");
-            }
-            tft.print(active_submenu_items[last_submenu_index]);
+            drawSubmenuItem(layout, last_submenu_index, false);
         }
 
         // Highlight current
-        int new_yPos = SUBMENU_Y_START + current_submenu_index * SUBMENU_Y_SPACING;
-        if (current_submenu_index == active_submenu_size - 1) new_yPos += SUBMENU_LAST_GAP;
-
-        tft.setTextColor(HALEHOUND_HOTPINK, TFT_BLACK);
-        tft.drawBitmap(10, new_yPos, active_submenu_icons[current_submenu_index], 16, 16, HALEHOUND_HOTPINK);
-        tft.setCursor(30, new_yPos);
-        if (current_submenu_index < active_submenu_size - 1) {
-            tft.print("| ");
-        }
-        tft.print(active_submenu_items[current_submenu_index]);
+        drawSubmenuItem(layout, current_submenu_index, true);
 
         last_submenu_index = current_submenu_index;
     }
@@ -615,30 +630,23 @@ void displayMenu() {
     last_submenu_index = -1;
     tft.setTextFont(2);
     tft.setTextSize(TEXT_SIZE_BODY);
+    const MenuLayout layout = currentMainMenuLayout();
+    const int screenWidth = tft.width();
+    const int screenHeight = tft.height();
 
     if (!menu_initialized) {
         // Black background with skull in magenta
         tft.fillScreen(TFT_BLACK);
 
         // Flaming skulls watermark - pushed down behind menu
-        tft.drawBitmap(0, 0, skull_bg_bitmap, SKULL_BG_WIDTH, SKULL_BG_HEIGHT, 0x2945);  // Dark cyan watermark
+        const int backgroundX = max(0, (screenWidth - SKULL_BG_WIDTH) / 2);
+        const int backgroundY = max(0, (screenHeight - SKULL_BG_HEIGHT) / 2);
+        tft.drawBitmap(backgroundX, backgroundY, skull_bg_bitmap,
+                       SKULL_BG_WIDTH, SKULL_BG_HEIGHT, 0x2945);
 
         // Draw menu buttons — left column (0-4): 5 items, right column (5-9): 5 items
         for (int i = 0; i < NUM_MENU_ITEMS; i++) {
-            int column = (i < 5) ? 0 : 1;
-            int row = (i < 5) ? i : (i - 5);
-            int x_position = (column == 0) ? X_OFFSET_LEFT : X_OFFSET_RIGHT;
-            int y_position = Y_START + row * Y_SPACING;
-
-            // Button - icon and text only, no border
-            tft.drawBitmap(x_position + MENU_ICON_OFFSET_X, y_position + 10, bitmap_icons[i], 16, 16, HALEHOUND_MAGENTA);
-
-            tft.setTextColor(HALEHOUND_MAGENTA);
-            int textWidth = TEXT_CHAR_W * strlen(menu_items[i]);
-            int textX = x_position + (MENU_BTN_W - textWidth) / 2;
-            int textY = y_position + MENU_TEXT_OFFSET_Y;
-            tft.setCursor(textX, textY);
-            tft.print(menu_items[i]);
+            drawMainMenuItem(layout, i, false);
         }
         menu_initialized = true;
         last_menu_index = -1;
@@ -646,61 +654,34 @@ void displayMenu() {
 
     // Highlight current selection
     if (last_menu_index != current_menu_index) {
-        for (int i = 0; i < NUM_MENU_ITEMS; i++) {
-            int column = (i < 5) ? 0 : 1;
-            int row = (i < 5) ? i : (i - 5);
-            int x_position = (column == 0) ? X_OFFSET_LEFT : X_OFFSET_RIGHT;
-            int y_position = Y_START + row * Y_SPACING;
-
-            if (i == last_menu_index) {
-                // Deselected - redraw icon in cyan (no border)
-                tft.fillRoundRect(x_position, y_position, MENU_BTN_W, MENU_BTN_H, 5, TFT_BLACK);
-                tft.drawBitmap(x_position + MENU_ICON_OFFSET_X, y_position + 10, bitmap_icons[last_menu_index], 16, 16, HALEHOUND_MAGENTA);
-                tft.setTextColor(HALEHOUND_MAGENTA);
-                int textWidth = TEXT_CHAR_W * strlen(menu_items[last_menu_index]);
-                int textX = x_position + (MENU_BTN_W - textWidth) / 2;
-                int textY = y_position + MENU_TEXT_OFFSET_Y;
-                tft.setCursor(textX, textY);
-                tft.print(menu_items[last_menu_index]);
-            }
+        if (last_menu_index >= 0) {
+            drawMainMenuItem(layout, last_menu_index, false);
         }
 
         // Highlight current
-        int column = (current_menu_index < 5) ? 0 : 1;
-        int row = (current_menu_index < 5) ? current_menu_index : (current_menu_index - 5);
-        int x_position = (column == 0) ? X_OFFSET_LEFT : X_OFFSET_RIGHT;
-        int y_position = Y_START + row * Y_SPACING;
-
-        // Selected button - hot pink icon and text (no border)
-        tft.drawBitmap(x_position + MENU_ICON_OFFSET_X, y_position + 10, bitmap_icons[current_menu_index], 16, 16, HALEHOUND_HOTPINK);
-        tft.setTextColor(HALEHOUND_HOTPINK);
-        int textWidth = TEXT_CHAR_W * strlen(menu_items[current_menu_index]);
-        int textX = x_position + (MENU_BTN_W - textWidth) / 2;
-        int textY = y_position + MENU_TEXT_OFFSET_Y;
-        tft.setCursor(textX, textY);
-        tft.print(menu_items[current_menu_index]);
+        drawMainMenuItem(layout, current_menu_index, true);
 
         last_menu_index = current_menu_index;
     }
 
     // VALHALLA / BLUE TEAM banner — bottom of home screen
     {
-        int barY = SCREEN_HEIGHT - 22;
+        int barY = screenHeight - 22;
         int barH = 20;
-        bool btm = blue_team_mode;
+        bool btm = !isOffensiveAllowed();
         uint16_t borderOuter = btm ? VALHALLA_BLUE : HALEHOUND_MAGENTA;
         uint16_t borderInner = btm ? VALHALLA_BLUE : HALEHOUND_VIOLET;
 
         // Bar background + double border
-        tft.fillRect(2, barY, SCREEN_WIDTH - 4, barH, HALEHOUND_DARK);
-        tft.drawRect(2, barY, SCREEN_WIDTH - 4, barH, borderOuter);
-        tft.drawRect(4, barY + 2, SCREEN_WIDTH - 8, barH - 4, borderInner);
+        tft.fillRect(2, barY, screenWidth - 4, barH, HALEHOUND_DARK);
+        tft.drawRect(2, barY, screenWidth - 4, barH, borderOuter);
+        tft.drawRect(4, barY + 2, screenWidth - 8, barH - 4, borderInner);
 
         // Nosifer 10pt glitch text centered
         const char* label = btm ? "BLUE TEAM" : "VALHALLA";
         tft.setFreeFont(&Nosifer_Regular10pt7b);
         int tw = tft.textWidth(label);
-        int tx = (SCREEN_WIDTH - tw) / 2;
+        int tx = (screenWidth - tw) / 2;
         int ty = barY + 16;
 
         // Glitch pass 1
@@ -723,7 +704,7 @@ void displayMenu() {
 
     // Lock icon — top-right corner, only when PIN is enabled
     if (pin_enabled) {
-        tft.drawBitmap(SCREEN_WIDTH - 20, 2, bitmap_icon_eye2, 16, 16, HALEHOUND_HOTPINK);
+        tft.drawBitmap(screenWidth - 20, 2, bitmap_icon_eye2, 16, 16, HALEHOUND_HOTPINK);
     }
 
     drawStatusBar();
@@ -768,11 +749,9 @@ void handleWiFiSubmenuTouch() {
     }
 
     // Touch on submenu items
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -986,11 +965,9 @@ void handleBluetoothSubmenuTouch() {
         return;
     }
 
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -1146,11 +1123,9 @@ void handleAirTagHubTouch() {
             break;
         }
 
+        const MenuLayout layout = currentSubmenuLayout();
         for (int i = 0; i < airtag_NUM_SUBMENU_ITEMS; i++) {
-            int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-            if (i == airtag_NUM_SUBMENU_ITEMS - 1) yPos += SUBMENU_LAST_GAP;
-
-            if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+            if (isMenuRectTouched(layout.itemRect(i))) {
                 current_submenu_index = i;
                 last_interaction_time = millis();
                 displaySubmenu();
@@ -1246,11 +1221,9 @@ void handleNRFSubmenuTouch() {
         return;
     }
 
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -1361,11 +1334,9 @@ void handleSubGHzSubmenuTouch() {
         return;
     }
 
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -1486,11 +1457,9 @@ void handleRFIDSubmenuTouch() {
         return;
     }
 
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -1601,11 +1570,9 @@ void handleJamDetectSubmenuTouch() {
         return;
     }
 
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -1685,11 +1652,9 @@ void handleSIGINTSubmenuTouch() {
         return;
     }
 
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -1789,11 +1754,9 @@ void handleToolsSubmenuTouch() {
         return;
     }
 
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -2233,8 +2196,10 @@ void colorModeLoop() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 void displayRotationScreen() {
-    int sw = tft.width();
-    int sh = tft.height();
+    const int sw = tft.width();
+    const int sh = tft.height();
+    const bool landscape = sw > sh;
+    const MenuLayout layout = MenuLayout::rotationOptions(sw, sh, 4);
 
     tft.fillScreen(TFT_BLACK);
     tft.drawRect(2, 2, sw - 4, sh - 4, HALEHOUND_HOTPINK);
@@ -2258,35 +2223,42 @@ void displayRotationScreen() {
     const uint8_t rotVals[] = {0, 2, 1, 3};
     const char* rotLabels[] = {"Standard", "Flipped 180", "90 CW", "90 CCW"};
     const char* rotDescs[] = {"USB at bottom", "USB at top", "USB at left", "USB at right"};
-    int boxW = sw - 40;
-    int boxH = 35;
-    int startY = 88;
-    int gap = 4;
 
     for (int i = 0; i < 4; i++) {
-        int y = startY + i * (boxH + gap);
-        uint16_t col = (screen_rotation == rotVals[i]) ? HALEHOUND_HOTPINK : HALEHOUND_MAGENTA;
-        tft.drawRect(20, y, boxW, boxH, col);
+        const MenuRect rect = layout.itemRect(i);
+        if (rect.empty()) continue;
+
+        const uint16_t col = (screen_rotation == rotVals[i])
+                                 ? HALEHOUND_HOTPINK
+                                 : HALEHOUND_MAGENTA;
+        const int labelSize = landscape ? 1 : 2;
+        const int labelY = rect.y + max(2, (rect.height - 28) / 2);
+        const int descY = min(rect.bottom() - 9,
+                              labelY + (landscape ? 12 : 18));
+        tft.drawRect(rect.x, rect.y, rect.width, rect.height, col);
         tft.setTextColor(col);
-        tft.setTextSize(2);
-        tft.setCursor(30, y + 4);
+        tft.setTextSize(labelSize);
+        tft.setCursor(rect.x + 10, labelY);
         tft.print(rotLabels[i]);
         tft.setTextSize(1);
         tft.setTextColor(TFT_WHITE);
-        tft.setCursor(30, y + 22);
+        tft.setCursor(rect.x + 10, descY);
         tft.print(rotDescs[i]);
     }
 
     // Info text
-    int infoY = startY + 4 * (boxH + gap) + 4;
+    const int infoY = layout.contentBottom() + 6;
     tft.setTextColor(HALEHOUND_VIOLET);
     tft.setTextSize(1);
     tft.setCursor(15, infoY);
-    tft.print("Touch recal runs after change.");
-
-    tft.setTextColor(TFT_DARKGREY);
-    tft.setCursor(15, infoY + 16);
-    tft.print("BOOT button = back");
+    if (landscape) {
+        tft.print("Touch recal after change. BOOT=back");
+    } else {
+        tft.print("Touch recal runs after change.");
+        tft.setTextColor(TFT_DARKGREY);
+        tft.setCursor(15, infoY + 16);
+        tft.print("BOOT button = back");
+    }
 }
 
 static void applyNewRotation(uint8_t newRot) {
@@ -2307,11 +2279,7 @@ static void applyNewRotation(uint8_t newRot) {
 void rotationControlLoop() {
     displayRotationScreen();
 
-    int sw = tft.width();
-    int boxW = sw - 40;
-    int boxH = 35;
-    int startY = 88;
-    int gap = 4;
+    MenuLayout layout = MenuLayout::rotationOptions(tft.width(), tft.height(), 4);
     const uint8_t rotVals[] = {0, 2, 1, 3};
 
     while (!feature_exit_requested) {
@@ -2324,13 +2292,10 @@ void rotationControlLoop() {
 
         // Check all 4 rotation buttons
         for (int i = 0; i < 4; i++) {
-            int y = startY + i * (boxH + gap);
-            if (isTouchInArea(20, y, boxW, boxH)) {
+            if (isMenuRectTouched(layout.itemRect(i))) {
                 if (screen_rotation != rotVals[i]) {
                     applyNewRotation(rotVals[i]);
-                    // Recalc dimensions after rotation change
-                    sw = tft.width();
-                    boxW = sw - 40;
+                    layout = MenuLayout::rotationOptions(tft.width(), tft.height(), 4);
                     displayRotationScreen();
                 }
                 delay(300);
@@ -2759,11 +2724,9 @@ void handleSettingsSubmenuTouch() {
         return;
     }
 
+    const MenuLayout layout = currentSubmenuLayout();
     for (int i = 0; i < active_submenu_size; i++) {
-        int yPos = SUBMENU_Y_START + i * SUBMENU_Y_SPACING;
-        if (i == active_submenu_size - 1) yPos += SUBMENU_LAST_GAP;
-
-        if (isTouchInArea(10, yPos, SUBMENU_TOUCH_W, SUBMENU_TOUCH_H)) {
+        if (isMenuRectTouched(layout.itemRect(i))) {
             current_submenu_index = i;
             last_interaction_time = millis();
             displaySubmenu();
@@ -3409,8 +3372,8 @@ void pinSetupLoop() {
 
 // Check if offensive functions are allowed
 bool isOffensiveAllowed() {
-    if (blue_team_mode) return false;
-    return disclaimer_accepted;
+    return PolicyService::legacyAllowsOffensive(disclaimer_accepted,
+                                                blue_team_mode);
 }
 
 // ─── Blue Team Blocked Screen (2-second overlay) ────────────────────────
@@ -3581,6 +3544,9 @@ bool showDisclaimerScreen() {
         // BOOT button = decline
         if (buttonPressed(BTN_BOOT)) {
             delay(200);
+            disclaimer_accepted = false;
+            blue_team_mode = true;
+            saveSettings();
             return false;
         }
 
@@ -3618,6 +3584,9 @@ bool showDisclaimerScreen() {
             // DECLINE button
             if (tx >= dDeclineX && tx <= dDeclineX + dBtnW && ty >= dBtnY && ty <= dBtnY + dBtnH) {
                 delay(200);
+                disclaimer_accepted = false;
+                blue_team_mode = true;
+                saveSettings();
                 return false;
             }
 
@@ -3885,6 +3854,10 @@ void handleButtons() {
     }
 
     if (in_sub_menu) {
+        if (globalBootHealthService().safeMode() && current_menu_index < 7) {
+            returnToMainMenu();
+            return;
+        }
         switch (current_menu_index) {
             case 0: handleWiFiSubmenuTouch(); break;
             case 1: handleBluetoothSubmenuTouch(); break;
@@ -3904,12 +3877,13 @@ void handleButtons() {
 
         // VALHALLA / BLUE TEAM banner tap — bottom bar
         {
-            int barY = SCREEN_HEIGHT - 22;
-            if (isTouchInArea(2, barY, SCREEN_WIDTH - 4, 20)) {
+            const int screenWidth = tft.width();
+            int barY = tft.height() - 22;
+            if (isTouchInArea(2, barY, screenWidth - 4, 20)) {
                 consumeTouch();
                 // Flash border to hotpink on tap
-                tft.drawRect(2, barY, SCREEN_WIDTH - 4, 20, HALEHOUND_HOTPINK);
-                tft.drawRect(4, barY + 2, SCREEN_WIDTH - 8, 16, HALEHOUND_HOTPINK);
+                tft.drawRect(2, barY, screenWidth - 4, 20, HALEHOUND_HOTPINK);
+                tft.drawRect(4, barY + 2, screenWidth - 8, 16, HALEHOUND_HOTPINK);
                 delay(150);
                 activateValhalla();
                 // If cancelled, redraw menu
@@ -3921,7 +3895,7 @@ void handleButtons() {
         }
 
         // Lock icon tap — manual lock (top-right corner)
-        if (pin_enabled && isTouchInArea(SCREEN_WIDTH - 28, 0, 28, 22)) {
+        if (pin_enabled && isTouchInArea(tft.width() - 28, 0, 28, 22)) {
             device_locked = true;
             writeBacklight(0);
             screen_asleep = true;
@@ -3931,13 +3905,12 @@ void handleButtons() {
         }
 
         // Check touch on menu items
+        const MenuLayout layout = currentMainMenuLayout();
         for (int i = 0; i < NUM_MENU_ITEMS; i++) {
-            int column = (i < 5) ? 0 : 1;
-            int row = (i < 5) ? i : (i - 5);
-            int x_position = (column == 0) ? X_OFFSET_LEFT : X_OFFSET_RIGHT;
-            int y_position = Y_START + row * Y_SPACING;
-
-            if (isTouchInArea(x_position, y_position, 100, 60)) {
+            if (isMenuRectTouched(layout.itemRect(i))) {
+                if (globalBootHealthService().safeMode() && i < 7) {
+                    continue;
+                }
                 current_menu_index = i;
                 last_interaction_time = millis();
                 displayMenu();

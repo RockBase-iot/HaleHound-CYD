@@ -1,10 +1,9 @@
 #include "app/App.h"
-#include "app/LegacyApp.h"
 
 void App::setup() {
-    legacySetup();
+    kernel_.setup();
 }
 
 void App::loop() {
-    legacyLoop();
+    kernel_.tick();
 }

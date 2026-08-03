@@ -8,6 +8,8 @@
 #include "shared.h"
 #include "gps_module.h"
 #include <EEPROM.h>
+
+#include "services/SettingsService.h"
 #include <SPI.h>
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -436,7 +438,7 @@ void loadSettings() {
         settings.pinEnabled = 0;       // PIN lock disabled by default
         settings.devicePin = 0;        // No PIN set
         settings.disclaimerAccepted = 0; // Disclaimer not accepted — forces first-time screen
-        settings.blueTeamMode = 0;     // Normal mode (not blue team)
+        settings.blueTeamMode = 1;     // Safe default: Blue Team
         settings.cc1101PaModule = 0;   // Standard CC1101 (no PA control)
 
         // Apply defaults to globals so they're not left uninitialized
@@ -445,7 +447,7 @@ void loadSettings() {
         pin_enabled = false;
         device_pin = 0;
         disclaimer_accepted = false;
-        blue_team_mode = false;
+        blue_team_mode = true;
         cc1101_pa_module = false;
 
         // Write defaults to EEPROM immediately — prevents re-triggering on every boot
@@ -466,8 +468,11 @@ void loadSettings() {
         color_mode = (settings.colorMode <= 2) ? settings.colorMode : 0;
         pin_enabled = (settings.pinEnabled == 1);
         device_pin = (settings.devicePin <= 9999) ? settings.devicePin : 0;
-        disclaimer_accepted = (settings.disclaimerAccepted == 1);
-        blue_team_mode = (settings.blueTeamMode == 1);
+        const SettingsData migrated = settings_record::migrateLegacy(
+            settings.disclaimerAccepted == 1,
+            settings.blueTeamMode == 1);
+        disclaimer_accepted = migrated.disclaimerAccepted;
+        blue_team_mode = migrated.blueTeamMode;
         cc1101_pa_module = (settings.cc1101PaModule == 1);
 
         // Apply rotation to global
@@ -504,6 +509,13 @@ void loadSettings() {
 // Apply BGR/RGB color order to display via MADCTL register
 // Must be called AFTER tft.setRotation() since setRotation resets MADCTL
 void applyColorOrder() {
+#if defined(CYD_C5)
+    // TFT_eSPI owns ST7789 MADCTL rotation on NM-CYD-C5. The values below
+    // are ILI9341-specific and would mirror the C5 panel after setRotation().
+    Serial.println("[UTILS] ST7789 color order follows the display driver");
+    return;
+#endif
+
     // ILI9341 MADCTL base values per rotation (set by TFT_eSPI setRotation):
     //   Rotation 0: 0x48 (MX + BGR)
     //   Rotation 1: 0x28 (MV + BGR)       — landscape, Phase 2

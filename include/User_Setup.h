@@ -4,22 +4,11 @@
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// BOARD SELECTION: Set by PlatformIO build flags (-DCYD_E32R28T=1, -DCYD_E32R35T=1)
-// Default: CYD_28 when no flag specified (backwards compatible)
+// BOARD SELECTION is supplied by the PlatformIO environment.
 // ═══════════════════════════════════════════════════════════════════════════
 
-// E32R28T inherits CYD_28
-#ifdef CYD_E32R28T
-  #ifndef CYD_28
-    #define CYD_28
-  #endif
-#endif
-
-// E32R35T inherits CYD_35
-#ifdef CYD_E32R35T
-  #ifndef CYD_35
-    #define CYD_35
-  #endif
+#if defined(CYD_E32R28T) || defined(CYD_E32R35T) || defined(CYD_35) || defined(NMRF_HAT)
+  #error "Unsupported board target. Use esp32-cyd or nm-cyd-c5."
 #endif
 
 // NM-CYD-C5
@@ -29,7 +18,7 @@
   #endif
 #endif
 
-#if !defined(CYD_28) && !defined(CYD_35) && !defined(CYD_C5)
+#if !defined(CYD_28) && !defined(CYD_C5)
   #define CYD_28    // Default: ESP32-2432S028 - 2.8" 320x240 ILI9341
 #endif
 
@@ -60,8 +49,8 @@
 #endif
 
 #ifdef CYD_C5
-  // NM-CYD-C5 2.8" uses ILI9341
-  #define ST7789_DRIVER  // ST7789 driver works with ILI9341 on C5 - matches Bruce's config
+  // NM-CYD-C5 2.8" uses an ST7789 controller.
+  #define ST7789_DRIVER
   #define TFT_WIDTH  240
   #define TFT_HEIGHT 320
   #define CYD_BOARD_NAME "NM-CYD-C5 2.8\" (ESP32-C5)"
@@ -114,6 +103,19 @@
   #define CYD_TOUCH_MISO TFT_MISO
   #define CYD_TOUCH_CLK  TFT_SCLK
   #define CYD_TOUCH_SEPARATE_SPI 0
+
+  // CYD28_TouchR reuses the display SPI bus on C5. Keeping these aliases
+  // explicit prevents the legacy software-SPI defaults from driving GPIO25
+  // (the C5 backlight) as a touch clock.
+  #define CYD28_TouchR_IRQ  -1
+  #define CYD28_TouchR_MISO TFT_MISO
+  #define CYD28_TouchR_MOSI TFT_MOSI
+  #define CYD28_TouchR_CLK  TFT_SCLK
+  #define CYD28_TouchR_CS   TOUCH_CS
+  #define CYD28_TouchR_CAL_XMIN 185
+  #define CYD28_TouchR_CAL_XMAX 3700
+  #define CYD28_TouchR_CAL_YMIN 250
+  #define CYD28_TouchR_CAL_YMAX 3800
 #else
   #define TOUCH_CS 33
 
@@ -221,6 +223,6 @@
   #error "You must define either CYD_28, CYD_35 or CYD_C5 at the top of User_Setup.h"
 #endif
 
-#if (defined(CYD_28) + defined(CYD_35) + defined(CYD_C5)) > 1
+#if (defined(CYD_28) + defined(CYD_C5)) > 1
   #error "You cannot define multiple CYD boards - choose one"
 #endif

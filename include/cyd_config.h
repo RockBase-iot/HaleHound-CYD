@@ -3,27 +3,15 @@
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HaleHound-CYD Master Pin Configuration
-// Supports: ESP32-2432S028 (2.8"), QDtech E32R28T (2.8"), QDtech E32R35T (3.5")
+// Supported boards: ESP32-2432S028 and NM-CYD-C5.
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// BOARD SELECTION: Set by PlatformIO build flags (-DCYD_E32R28T=1, -DCYD_E32R35T=1)
-// Default: CYD_28 when no flag specified (backwards compatible)
+// BOARD SELECTION is supplied by the PlatformIO environment.
 // ═══════════════════════════════════════════════════════════════════════════
 
-// E32R28T inherits CYD_28 display/touch — same ILI9341, XPT2046, 240x320
-#ifdef CYD_E32R28T
-  #ifndef CYD_28
-    #define CYD_28
-  #endif
-#endif
-
-// E32R35T inherits CYD_35 display — same ST7796, 320x480
-// Touch is XPT2046 resistive on shared HSPI (handled by TFT_eSPI TOUCH_CS)
-#ifdef CYD_E32R35T
-  #ifndef CYD_35
-    #define CYD_35
-  #endif
+#if defined(CYD_E32R28T) || defined(CYD_E32R35T) || defined(CYD_35) || defined(NMRF_HAT)
+  #error "Unsupported board target. Use esp32-cyd or nm-cyd-c5."
 #endif
 
 #ifdef NM_CYD_C5
@@ -33,7 +21,7 @@
 #endif
 
 
-#if !defined(CYD_28) && !defined(CYD_35) && !defined(CYD_C5)
+#if !defined(CYD_28) && !defined(CYD_C5)
   #define CYD_28    // Default: ESP32-2432S028 - 2.8" 320x240 ILI9341
 #endif
 
@@ -745,8 +733,8 @@
   #error "CYD_CONFIG: Define either CYD_28 or CYD_35 at the top of cyd_config.h"
 #endif
 
-#if defined(CYD_28) && defined(CYD_35)
-  #error "CYD_CONFIG: Cannot define both CYD_28 and CYD_35 - choose one"
+#if defined(CYD_28) && defined(CYD_C5)
+  #error "CYD_CONFIG: Cannot define both CYD_28 and CYD_C5 - choose one"
 #endif
 
 #endif // CYD_CONFIG_H

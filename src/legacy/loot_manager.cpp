@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "icon.h"
 #include "nosifer_font.h"
+#include "services/StorageService.h"
 #include <TFT_eSPI.h>
 #include <SD.h>
 #include <SPI.h>
@@ -41,7 +42,7 @@ namespace LootManager {
 #define LM_EAPOL_DIR        "/eapol"
 #define LM_WPLOOT_DIR       "/wp_loot"
 #define LM_IOT_FILE         "/iot_recon.txt"
-#define LM_CREDS_FILE       "/creds.txt"
+#define LM_CREDS_FILE       "/loot/credentials/creds.txt"
 
 #define LM_HUB_Y            62          // First category row Y
 #define LM_HUB_ROW_H        38         // Row height on hub
@@ -131,12 +132,11 @@ static const char* tvTitle = nullptr;      // Title for text viewer
 // ═══════════════════════════════════════════════════════════════════════════
 
 static bool mountSD() {
-    pinMode(SD_CS, OUTPUT);
-    digitalWrite(SD_CS, HIGH);
-    if (SD.begin(SD_CS)) return true;
-    SPI.begin(18, 19, 23, SD_CS);
-    if (SD.begin(SD_CS, SPI, 4000000)) return true;
-    return false;
+    if (globalStorageService().begin() != StorageCode::Ok) return false;
+    globalStorageService().ensureDirectory("/loot");
+    globalStorageService().ensureDirectory("/loot/credentials");
+    globalStorageService().migrateLegacyCredentials();
+    return true;
 }
 
 static void formatSize(uint32_t bytes, char* buf, int bufLen) {

@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "icon.h"
 #include "nosifer_font.h"
+#include "services/StorageService.h"
 #include <TFT_eSPI.h>
 #include <SD.h>
 #include <SPI.h>
@@ -145,16 +146,7 @@ static bool isSCBackTapped() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 static bool mountSD() {
-    pinMode(SD_CS, OUTPUT);
-    digitalWrite(SD_CS, HIGH);
-
-    if (SD.begin(SD_CS)) return true;
-
-    // Retry with explicit SPI
-    SPI.begin(18, 19, 23, SD_CS);
-    if (SD.begin(SD_CS, SPI, 4000000)) return true;
-
-    return false;
+    return globalStorageService().begin() == StorageCode::Ok;
 }
 
 static int scanDirectory() {

@@ -16,6 +16,7 @@
 #include "utils.h"
 #include "icon.h"
 #include "nosifer_font.h"
+#include "services/StorageService.h"
 #include <TFT_eSPI.h>
 #include <SD.h>
 #include <SPI.h>
@@ -157,24 +158,8 @@ static bool mountSD() {
     Serial.printf("[WPLOOT] mountSD — heap: %u\n", ESP.getFreeHeap());
     #endif
 
-    // Identical to SavedCaptures::mountSD() which is proven working
-    pinMode(SD_CS, OUTPUT);
-    digitalWrite(SD_CS, HIGH);
-
-    // Use max_files=1 to minimize heap allocation (BLE eats a lot of heap)
-    if (SD.begin(SD_CS, SPI, 4000000, "/sd", 1)) {
-        #if CYD_DEBUG
-        Serial.println("[WPLOOT] SD mount OK (default SPI)");
-        #endif
-        return true;
-    }
-
-    // Retry with explicit SPI init
-    SPI.begin(18, 19, 23, SD_CS);
-    if (SD.begin(SD_CS, SPI, 4000000, "/sd", 1)) {
-        #if CYD_DEBUG
-        Serial.println("[WPLOOT] SD mount OK (explicit SPI)");
-        #endif
+    if (globalStorageService().begin() == StorageCode::Ok) {
+        globalStorageService().ensureDirectory("/wp_loot");
         return true;
     }
 

@@ -9,6 +9,7 @@
 // =============================================================================
 
 #include <Arduino.h>
+#include "services/FirmwareImageValidator.h"
 
 // Main entry point - called from Tools > Update Firmware
 void firmwareUpdateScreen();

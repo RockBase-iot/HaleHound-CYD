@@ -50,8 +50,8 @@ void waitForTouchRelease() {
     _touchFired = false;
 }
 #else
-// CYD28 resistive touch (software SPI) — needs calibration
-// Uses software SPI when begin() is called without SPI parameter
+// CYD28 resistive touch needs calibration. ESP32-CYD uses software SPI;
+// NM-CYD-C5 shares the display SPI bus and uses hardware transactions.
 // Portrait mode (240x320) to match TFT rotation 0
 CYD28_TouchR touch(CYD_SCREEN_WIDTH, CYD_SCREEN_HEIGHT);
 
@@ -84,13 +84,23 @@ static bool initialized = false;
 
 #ifndef CYD_35
 // Touch calibration globals — loaded from EEPROM by loadSettings()
-// Defaults match Jesse's board (rawY→screenX, rawX→screenY)
+// Defaults map rawY to screenX and rawX to screenY in portrait mode.
 uint8_t touch_cal_x_source = 1;      // 0=rawX, 1=rawY → screenX
+#ifdef CYD_C5
+uint16_t touch_cal_x_min = 3800;     // rawY at portrait left edge
+uint16_t touch_cal_x_max = 250;      // rawY at portrait right edge
+#else
 uint16_t touch_cal_x_min = 3780;     // source raw value → screenX=0
 uint16_t touch_cal_x_max = 350;      // source raw value → screenX=239
+#endif
 uint8_t touch_cal_y_source = 0;      // 0=rawX, 1=rawY → screenY
+#ifdef CYD_C5
+uint16_t touch_cal_y_min = 185;      // rawX at portrait top edge
+uint16_t touch_cal_y_max = 3700;     // rawX at portrait bottom edge
+#else
 uint16_t touch_cal_y_min = 150;      // source raw value → screenY=0
 uint16_t touch_cal_y_max = 3700;     // source raw value → screenY=319
+#endif
 bool touch_calibrated = false;        // true if user has run calibration
 
 // Helper: map raw touch point to screenX using calibration
@@ -207,8 +217,18 @@ void touchButtonsSetup() {
     Serial.println("[TOUCH] XPT2046 resistive touch initialized (TFT_eSPI)");
     #endif
 #else
-    // XPT2046 resistive touch — SOFTWARE BIT-BANGED SPI
-    // Calling begin() without SPI parameter = software SPI mode
+  #ifdef CYD_C5
+    // C5 display, touch, SD and expansion devices share FSPI. The touch
+    // driver brackets each 2 MHz read in its own SPI transaction.
+    touch.begin(&SPI);
+    touch.setRotation(0);
+
+    #if CYD_DEBUG
+    Serial.println("[TOUCH] NM-CYD-C5 XPT2046 initialized on shared FSPI");
+    Serial.println("[TOUCH] Pins - CLK:6 MOSI:7 MISO:2 CS:1 IRQ:none");
+    #endif
+  #else
+    // ESP32-CYD has dedicated touch pins and keeps software SPI mode.
     touch.begin();
     touch.setRotation(1);  // Rotation 1 - direct mapping
 
@@ -216,6 +236,7 @@ void touchButtonsSetup() {
     Serial.println("[TOUCH] CYD28_TouchR initialized with SOFTWARE SPI");
     Serial.println("[TOUCH] Pins - CLK:25 MOSI:32 MISO:39 CS:33 IRQ:36");
     #endif
+  #endif
 #endif
 
     // Clear current event
@@ -339,8 +360,8 @@ void runTouchTest() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 void touchReinitSPI() {
-    // No-op - software SPI doesn't need reinitialization
-    // Kept for API compatibility
+    // No-op: software SPI has no bus state, and C5 hardware touch starts a
+    // fresh SPI transaction for every read.
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -980,12 +1001,9 @@ void runTouchCalibration() {
         if (touch.touched()) {
             CYD28_TS_Point p = touch.getPointRaw();
             if (p.z > 100) {
-                // Use default mapping to check if SKIP button area was tapped
-                // Raw touch axes are swapped: rawY→screenX, rawX→screenY
-                int sx = map(p.y, 3780, 350, 0, 239);
-                int sy = map(p.x, 150, 3700, 0, 319);
-                sx = constrain(sx, 0, 239);
-                sy = constrain(sy, 0, 319);
+                // Use the active board defaults to check the SKIP button.
+                int sx = touchMapX(p);
+                int sy = touchMapY(p);
                 if (sx >= skipX && sx <= (skipX + skipW) && sy >= skipY && sy <= (skipY + skipH)) {
                     skipped = true;
                     break;

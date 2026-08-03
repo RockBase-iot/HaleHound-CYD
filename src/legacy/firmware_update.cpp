@@ -1,6 +1,6 @@
 // =============================================================================
 // HaleHound-CYD SD Card Firmware Update
-// I flash new firmware.bin from my SD card — no laptop needed
+// I flash new firmware.bin from my SD card - no laptop needed
 // My pattern: same as my serial_monitor.cpp / gps_module.cpp
 // Created: 2026-02-15
 // =============================================================================
@@ -12,6 +12,8 @@
 #include "icon.h"
 #include "cyd_config.h"
 #include "spi_manager.h"
+#include "services/FirmwareImageValidator.h"
+#include "services/StorageService.h"
 #include <SD.h>
 #include <SPI.h>
 #include <Update.h>
@@ -50,16 +52,9 @@ static bool fwSDReady = false;
 static bool initSDCard() {
     Serial.println("[FW_UPDATE] Initializing SD card...");
 
-    pinMode(SD_CS, OUTPUT);
-    digitalWrite(SD_CS, HIGH);
-
-    if (!SD.begin(SD_CS)) {
-        Serial.println("[FW_UPDATE] SD.begin(CS) failed, trying explicit SPI...");
-        SPI.begin(18, 19, 23, SD_CS);
-        if (!SD.begin(SD_CS, SPI, 4000000)) {
-            Serial.println("[FW_UPDATE] SD card init failed!");
-            return false;
-        }
+    if (globalStorageService().begin() != StorageCode::Ok) {
+        Serial.println("[FW_UPDATE] SD card init failed!");
+        return false;
     }
 
     Serial.println("[FW_UPDATE] SD card initialized OK");
@@ -120,6 +115,22 @@ static void scanBinFiles() {
 // VALIDATION
 // =============================================================================
 
+static const char* getFileName(const char* path);
+
+class FirmwareFileReader final : public IImageReader {
+public:
+    explicit FirmwareFileReader(File& file) : file_(file) {}
+    size_t size() const override { return file_.size(); }
+    bool read(size_t offset, void* destination, size_t length) const override {
+        File& file = const_cast<File&>(file_);
+        if (!file.seek(offset)) return false;
+        return file.read(static_cast<uint8_t*>(destination), length) == length;
+    }
+
+private:
+    File& file_;
+};
+
 static bool validateBinFile(const char* path, char* errMsg, size_t errLen) {
     File f = SD.open(path, FILE_READ);
     if (!f) {
@@ -127,27 +138,26 @@ static bool validateBinFile(const char* path, char* errMsg, size_t errLen) {
         return false;
     }
 
-    uint32_t fsize = f.size();
-    if (fsize < FW_MIN_SIZE) {
-        snprintf(errMsg, errLen, "Too small (%u KB)", (unsigned)(fsize / 1024));
-        f.close();
-        return false;
-    }
-    if (fsize > FW_MAX_SIZE) {
-        snprintf(errMsg, errLen, "Too large (max 3MB)");
-        f.close();
-        return false;
-    }
-
-    uint8_t magic;
-    f.read(&magic, 1);
+#ifdef NM_CYD_C5
+    const FirmwareChip expectedChip = FirmwareChip::Esp32C5;
+#else
+    const FirmwareChip expectedChip = FirmwareChip::Esp32;
+#endif
+    FirmwareFileReader reader(f);
+    const ImageValidationResult result = FirmwareImageValidator::validate(
+        reader, expectedChip, FW_MAX_SIZE, getFileName(path));
     f.close();
 
-    if (magic != ESP32_IMAGE_MAGIC) {
-        snprintf(errMsg, errLen, "Bad magic: 0x%02X (need 0xE9)", magic);
+    if (!result.valid) {
+        snprintf(errMsg, errLen, "Image rejected (%u)",
+                 static_cast<unsigned>(result.error));
         return false;
     }
-
+    if (result.imageLength < FW_MIN_SIZE) {
+        snprintf(errMsg, errLen, "Image too small (%u KB)",
+                 static_cast<unsigned>(result.imageLength / 1024U));
+        return false;
+    }
     return true;
 }
 
@@ -730,7 +740,6 @@ void firmwareUpdateScreen() {
     if (!fwSDReady) {
         drawNoSDScreen();
         waitForBackTap();
-        SD.end();
         return;
     }
 
@@ -739,7 +748,6 @@ void firmwareUpdateScreen() {
     if (binFileCount == 0) {
         drawNoFilesScreen();
         waitForBackTap();
-        SD.end();
         return;
     }
 
@@ -765,7 +773,6 @@ void firmwareUpdateScreen() {
     }
 
     if (exitRequested) {
-        SD.end();
         return;
     }
 
@@ -774,7 +781,6 @@ void firmwareUpdateScreen() {
     if (!validateBinFile(binFiles[selectedFileIndex], errMsg, sizeof(errMsg))) {
         drawErrorScreen(errMsg);
         waitForErrorBack();
-        SD.end();
         return;
     }
 
@@ -813,7 +819,6 @@ void firmwareUpdateScreen() {
                 if (!validateBinFile(binFiles[selectedFileIndex], errMsg, sizeof(errMsg))) {
                     drawErrorScreen(errMsg);
                     waitForErrorBack();
-                    SD.end();
                     return;
                 }
                 drawConfirmScreen();
@@ -845,7 +850,6 @@ void firmwareUpdateScreen() {
         }
 
         if (!confirmed) {
-            SD.end();
             return;
         }
     }
@@ -856,13 +860,11 @@ void firmwareUpdateScreen() {
 
     bool success = performFlashUpdate(binFiles[selectedFileIndex], errMsg, sizeof(errMsg));
 
-    SD.end();
-
     if (success) {
-        // Step 8: Success → reboot (never returns)
+        // Step 8: Success - reboot (never returns)
         drawSuccessScreen();
     } else {
-        // Step 9: Error → back button
+        // Step 9: Error - back button
         drawErrorScreen(errMsg);
         waitForErrorBack();
     }
