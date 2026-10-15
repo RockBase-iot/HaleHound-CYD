@@ -42,6 +42,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 UNITY_DIR = Path(__file__).resolve().parent / "unity"
+# Shared test doubles (scripted transports and links). A header rather than a
+# compiled source, so a suite includes what it needs and nothing is linked that
+# it does not.
+SUPPORT_DIR = ROOT / "test" / "native" / "support"
 OBJ_DIR = ROOT / "build-reports" / "hostcheck" / "obj"
 
 # Mirrors the source filter of the `native` environment in platformio.ini.
@@ -205,6 +209,8 @@ def compile_command(cxx: list[str], src: Path, out: Path, extra: list[str]) -> l
         str(ROOT / "include"),
         "-I",
         str(UNITY_DIR),
+        "-I",
+        str(SUPPORT_DIR),
         "-c",
         str(src),
         "-o",
@@ -303,6 +309,8 @@ def main() -> int:
                     str(ROOT / "include"),
                     "-I",
                     str(UNITY_DIR),
+                    "-I",
+                    str(SUPPORT_DIR),
                     str(test_file),
                     str(archive),
                     "-o",

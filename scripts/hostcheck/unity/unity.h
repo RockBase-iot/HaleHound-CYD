@@ -66,6 +66,15 @@ static inline long long unity_to_ll(const T&, long) {
         if (!(expr)) UNITY_FAIL_("expected true: " #expr); \
     } while (0)
 
+// Unconditional failure with a detail string. Used by table-driven tests that
+// build the message at runtime (e.g. "CRC mismatch on: <hex>").
+#define TEST_FAIL(message)                            \
+    do {                                              \
+        UNITY_FAIL_(message);                         \
+    } while (0)
+
+#define TEST_FAIL_MESSAGE(message) TEST_FAIL(message)
+
 // Message-carrying variants. Used where the failing value is a `const char*`
 // detail string rather than something printable as an integer.
 #define TEST_ASSERT_TRUE_MESSAGE(expr, message)       \
