@@ -1,5 +1,6 @@
 #include <unity.h>
 
+#include "core/FeatureRegistry.h"
 #include "features/FeatureCatalog.h"
 
 void test_registry_exposes_stable_feature_descriptors() {

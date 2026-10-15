@@ -33,13 +33,17 @@ public:
 };
 }
 
-void test_missing_settings_default_to_blue_team() {
+void test_missing_settings_default_to_undecided() {
     MemoryBackend backend;
     SettingsService settings(backend);
     PolicyService policy(settings);
 
     TEST_ASSERT_TRUE(settings.load());
-    TEST_ASSERT_EQUAL(PolicyMode::BlueTeam, policy.mode());
+    // Undecided, not Blue Team: Blue Team is sticky and refuses the
+    // disclaimer, so defaulting a virgin device into it would make the
+    // offensive tools permanently unreachable.
+    TEST_ASSERT_EQUAL(PolicyMode::Undecided, policy.mode());
+    TEST_ASSERT_FALSE(settings.hasStoredRecord());
 }
 
 void test_valid_valhalla_record_survives_reload() {
@@ -49,6 +53,7 @@ void test_valid_valhalla_record_survives_reload() {
 
     TEST_ASSERT_TRUE(settings.load());
     TEST_ASSERT_TRUE(policy.acceptValhalla());
+    TEST_ASSERT_TRUE(settings.hasStoredRecord());
 
     SettingsService reloaded(backend);
     PolicyService reloadedPolicy(reloaded);
@@ -56,7 +61,7 @@ void test_valid_valhalla_record_survives_reload() {
     TEST_ASSERT_EQUAL(PolicyMode::ValhallaAccepted, reloadedPolicy.mode());
 }
 
-void test_bad_crc_and_decline_keep_blue_team() {
+void test_bad_crc_and_decline_keep_tools_locked() {
     MemoryBackend backend;
     SettingsService settings(backend);
     PolicyService policy(settings);
@@ -68,7 +73,10 @@ void test_bad_crc_and_decline_keep_blue_team() {
     SettingsService corrupted(backend);
     PolicyService corruptedPolicy(corrupted);
     TEST_ASSERT_TRUE(corrupted.load());
-    TEST_ASSERT_EQUAL(PolicyMode::BlueTeam, corruptedPolicy.mode());
+    // Corrupt store fails closed into Undecided, which still blocks offensive
+    // tools (it offers the disclaimer rather than unlocking them).
+    TEST_ASSERT_EQUAL(PolicyMode::Undecided, corruptedPolicy.mode());
+    TEST_ASSERT_FALSE(corruptedPolicy.offensiveAllowed());
     TEST_ASSERT_TRUE(corruptedPolicy.enterBlueTeam());
     TEST_ASSERT_EQUAL(PolicyMode::BlueTeam, corruptedPolicy.mode());
 }
@@ -91,9 +99,9 @@ void test_blue_team_blocks_offensive_and_allows_defensive() {
 
 int main(int, char**) {
     UNITY_BEGIN();
-    RUN_TEST(test_missing_settings_default_to_blue_team);
+    RUN_TEST(test_missing_settings_default_to_undecided);
     RUN_TEST(test_valid_valhalla_record_survives_reload);
-    RUN_TEST(test_bad_crc_and_decline_keep_blue_team);
+    RUN_TEST(test_bad_crc_and_decline_keep_tools_locked);
     RUN_TEST(test_blue_team_blocks_offensive_and_allows_defensive);
     return UNITY_END();
 }

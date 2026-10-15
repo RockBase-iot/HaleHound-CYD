@@ -112,6 +112,8 @@ void test_legacy_session_holds_resource_until_deselect() {
     TEST_ASSERT_EQUAL_STRING("unlock", events[4]);
 }
 
+}  // namespace
+
 int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_spi_transaction_has_complete_cleanup_order);
@@ -119,5 +121,4 @@ int main(int, char**) {
     RUN_TEST(test_all_shared_devices_use_shared_spi_resource);
     RUN_TEST(test_legacy_session_holds_resource_until_deselect);
     return UNITY_END();
-}
 }

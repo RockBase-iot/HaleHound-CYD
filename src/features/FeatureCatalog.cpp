@@ -5,6 +5,11 @@
 #include "core/FeatureRunner.h"
 #include "features/subghz/SubFileParser.h"
 #include "features/rfid/NtagModel.h"
+#include "features/rfid/RfidBackendModel.h"
+#include "features/ble/SkeletonKeyModel.h"
+#include "features/ble/HidReaderModel.h"
+#include "features/ble/KarrModel.h"
+#include "features/tuning/RadioTuningModel.h"
 #include "features/LegacyFeatureFactories.h"
 #include "features/ble/BlePredatorModel.h"
 #include "features/sigint/FlockFingerprint.h"
@@ -75,6 +80,9 @@ const FeatureDescriptor kDescriptors[] = {
     DL(BluetoothDucky, Bluetooth, "BLE Ducky", Offensive, none, 0, none, 0, "ble", "/loot", createLegacyBluetoothDucky),
     D_FACTORY(BluetoothPredator, Bluetooth, "BLE Predator", SensitiveData, none, 0, none, 0, "ble", "/wp_loot", createBlePredatorFeature),
     D_FACTORY(BluetoothAirohaRace, Bluetooth, "Airoha Race", Offensive, none, 0, none, 0, "ble", "/loot", createAirohaRaceFeature),
+    D_FACTORY(BluetoothKarr, Bluetooth, "KARR", Passive, none, 0, none, 0, "ble", "/loot/karr", createKarrFeature),
+    D_FACTORY(BluetoothSkeletonKey, Bluetooth, "SkeletonKey", SensitiveData, none, 0, none, 0, "ble", "/loot", createSkeletonKeyFeature),
+    D_FACTORY(BluetoothHidReader, Bluetooth, "HID Reader", Passive, none, 0, none, 0, "ble", "/loot", createHidReaderFeature),
 
     DL(Nrf24Scanner, Nrf24, "nRF24 Scanner", Passive, {PeripheralId::Nrf24}, 1, none, 0, "spi", "/captures", createLegacyNrf24Scanner),
     DL(Nrf24Spectrum, Nrf24, "nRF24 Spectrum Analyzer", Passive, {PeripheralId::Nrf24}, 1, none, 0, "spi", "/captures", createLegacyNrf24Spectrum),
@@ -82,6 +90,7 @@ const FeatureDescriptor kDescriptors[] = {
     DL(Nrf24MouseJack, Nrf24, "MouseJack", Offensive, {PeripheralId::Nrf24}, 1, none, 0, "spi", "/loot", createLegacyNrf24MouseJack),
     DL(Nrf24WlanJammer, Nrf24, "WLAN Jammer", Offensive, {PeripheralId::Nrf24}, 1, none, 0, "spi", "/captures", createLegacyNrf24WlanJammer),
     DL(Nrf24ProtoKill, Nrf24, "Proto Kill", Offensive, {PeripheralId::Nrf24}, 1, none, 0, "spi", "/captures", createLegacyNrf24ProtoKill),
+    D_FACTORY(Nrf24Tuning, Nrf24, "NRF Tuning", Passive, {PeripheralId::Nrf24}, 1, none, 0, "spi", "/settings", createNrf24TuningFeature),
 
     DL(SubGhzReplay, SubGhz, "SubGHz Replay", Offensive, {PeripheralId::Cc1101}, 1, none, 0, "spi", "/subghz", createLegacySubGhzReplay),
     DL(SubGhzBruteForce, SubGhz, "SubGHz Brute Force", Offensive, {PeripheralId::Cc1101}, 1, none, 0, "spi", "/subghz", createLegacySubGhzBruteForce),
@@ -90,6 +99,7 @@ const FeatureDescriptor kDescriptors[] = {
     D(SubGhzSavedProfiles, SubGhz, "Saved Profiles", Passive, none, 0, {PeripheralId::Cc1101}, 1, "storage", "/subghz"),
     D_FACTORY(SubGhzRead, SubGhz, "SubGHz File Reader", Passive, none, 0, {PeripheralId::Cc1101}, 1, "storage", "/subghz", createSubReadFeature),
     D_FACTORY(TeslaCharge, SubGhz, "Tesla Charge", Offensive, {PeripheralId::Cc1101}, 1, none, 0, "spi", "/subghz", createTeslaChargeFeature),
+    D_FACTORY(SubGhzTuning, SubGhz, "SubGHz Tuning", Passive, {PeripheralId::Cc1101}, 1, none, 0, "spi", "/settings", createSubGhzTuningFeature),
 
     DL(RfidScanner, Rfid, "Card Scanner", SensitiveData, {PeripheralId::Pn532}, 1, none, 0, "i2c", "/loot", createLegacyRfidScanner),
     DL(RfidReader, Rfid, "Card Reader", SensitiveData, {PeripheralId::Pn532}, 1, none, 0, "i2c", "/loot", createLegacyRfidReader),
@@ -97,6 +107,7 @@ const FeatureDescriptor kDescriptors[] = {
     DL(RfidKeyBruteForce, Rfid, "Key Brute Force", Offensive, {PeripheralId::Pn532}, 1, none, 0, "i2c", "/loot", createLegacyRfidKeyBruteForce),
     DL(RfidEmulate, Rfid, "Card Emulate", Offensive, {PeripheralId::Pn532}, 1, none, 0, "i2c", "/loot", createLegacyRfidEmulate),
     D_FACTORY(NtagTools, Rfid, "NTAG Tools", SensitiveData, {PeripheralId::Pn532}, 1, none, 0, "i2c", "/loot", createNtagToolsFeature),
+    D_FACTORY(RfidBackend, Rfid, "RFID Reader", Passive, none, 0, {PeripheralId::Pn532}, 1, "select", "/settings", createRfidBackendFeature),
 
     DL(JamDetect, Defensive, "Jam Detect", Defensive, none, 0, none, 0, "diagnostics", "/logs", createLegacyFullSpectrum),
     DL(WifiGuardian, Defensive, "WiFi Guardian", Defensive, none, 0, none, 0, "diagnostics", "/logs", createLegacyWifiGuardian),

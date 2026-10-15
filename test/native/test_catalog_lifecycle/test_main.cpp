@@ -19,7 +19,7 @@ size_t countCategory(CategoryId category) {
 void test_catalog_has_complete_menu_categories() {
     TEST_ASSERT_EQUAL(8, countCategory(CategoryId::Wifi));
     TEST_ASSERT_TRUE(countCategory(CategoryId::Bluetooth) >= 9);
-    TEST_ASSERT_EQUAL(6, countCategory(CategoryId::Nrf24));
+    TEST_ASSERT_EQUAL(7, countCategory(CategoryId::Nrf24));
     TEST_ASSERT_TRUE(countCategory(CategoryId::SubGhz) >= 5);
     TEST_ASSERT_TRUE(countCategory(CategoryId::Rfid) >= 5);
     TEST_ASSERT_EQUAL(4, countCategory(CategoryId::Defensive));
