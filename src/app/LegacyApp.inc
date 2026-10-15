@@ -55,6 +55,9 @@
 #include "core/PolicyService.h"
 #include "core/BootHealthService.h"
 #include "services/MenuLayout.h"
+#include "services/SettingsService.h"
+#include <EEPROM.h>
+#include <cstring>
 
 void drawInoIconBar();
 bool isInoBackTapped();
@@ -98,11 +101,14 @@ void handleAboutPage();
 void showPinLockScreen();
 int pinEntryScreen(const char* title);
 void pinSetupLoop();
+bool requestOffensiveAccess();
 bool isOffensiveAllowed();
 void showBlueTeamBlockedScreen();
 bool showDisclaimerScreen();
+void showPolicyPanel();
+bool confirmLeaveBlueTeam();
 void recursiveDeleteSD(File dir);
-void activateValhalla();
+void scorchedEarthWipe();
 void handleButtons();
 void showSplash();
 void runBootDiagnostics();
@@ -337,14 +343,15 @@ const unsigned char *sigint_submenu_icons[sigint_NUM_SUBMENU_ITEMS] = {
     bitmap_icon_go_back
 };
 
-// Tools Submenu - 6 items
-const int tools_NUM_SUBMENU_ITEMS = 6;
+// Tools Submenu - 7 items
+const int tools_NUM_SUBMENU_ITEMS = 7;
 const char *tools_submenu_items[tools_NUM_SUBMENU_ITEMS] = {
     "Serial Monitor",
     "Update Firmware",
     "Touch Calibrate",
     "GPS",
     "Radio Test",
+    "Wipe SD Card",
     "Back to Main Menu"
 };
 
@@ -354,11 +361,12 @@ const unsigned char *tools_submenu_icons[tools_NUM_SUBMENU_ITEMS] = {
     bitmap_icon_stat,
     bitmap_icon_antenna,
     bitmap_icon_signal,
+    bitmap_icon_nuke,
     bitmap_icon_go_back
 };
 
-// Settings Submenu - 10 items
-const int settings_NUM_SUBMENU_ITEMS = 10;
+// Settings Submenu - 11 items
+const int settings_NUM_SUBMENU_ITEMS = 11;
 const char *settings_submenu_items[settings_NUM_SUBMENU_ITEMS] = {
     "Brightness",
     "Screen Timeout",
@@ -369,6 +377,7 @@ const char *settings_submenu_items[settings_NUM_SUBMENU_ITEMS] = {
     "Device Info",
     "Set PIN",
     "CC1101 Module",
+    "Device Policy",
     "Back to Main Menu"
 };
 
@@ -382,6 +391,7 @@ const unsigned char *settings_submenu_icons[settings_NUM_SUBMENU_ITEMS] = {
     bitmap_icon_stat,
     bitmap_icon_eye2,
     bitmap_icon_antenna,
+    bitmap_icon_eye2,
     bitmap_icon_go_back
 };
 
@@ -431,12 +441,144 @@ uint16_t device_pin = 0;       // 4-digit PIN (0-9999), stored as number
 bool pin_enabled = false;       // PIN lock feature on/off
 bool device_locked = false;     // Current lock state (not persisted)
 
-// VALHALLA Protocol — Liability disclaimer + blue team mode
-bool disclaimer_accepted = false;   // Legal disclaimer accepted (persisted in EEPROM)
-bool blue_team_mode = false;        // VALHALLA blue team mode active (persisted in EEPROM)
+// VALHALLA Protocol — liability disclaimer + blue team mode.
+// MIRRORS of PolicyService state, never an authority. mirrorPolicyToGlobals()
+// is their only writer after boot; they exist so the rest of the legacy surface
+// (home-screen banner, legacy EEPROM struct) keeps reading something coherent.
+bool disclaimer_accepted = false;
+bool blue_team_mode = false;
 
 // CC1101 PA Module — E07-433M20S support (TX_EN/RX_EN control)
 bool cc1101_pa_module = false;      // E07 PA module active (persisted in EEPROM)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEVICE POLICY STORE — PolicyService is the single authorization authority
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Before this change every offensive menu entry carried its own copy of the
+// gate and mutated the two globals directly, and showDisclaimerScreen() cleared
+// blue_team_mode on ACCEPT — so any blocked tool could be unlocked by simply
+// re-accepting the disclaimer. Policy state now lives in a dedicated
+// double-slot + CRC EEPROM region, PolicyService owns every transition, and
+// every gate funnels through requestOffensiveAccess().
+
+void saveSettings();
+void loadSettings();
+
+namespace {
+
+constexpr int kPolicyEepromOffset = 128;  // reserved: 2 x sizeof(SettingsRecord)
+constexpr int kPolicyEepromSize = 512;
+
+int policySlotOffset(uint8_t slot) {
+    return kPolicyEepromOffset +
+           static_cast<int>(slot) * static_cast<int>(sizeof(SettingsRecord));
+}
+
+// EEPROM-backed ISettingsBackend for the policy region only. Deliberately
+// separate from the legacy Settings struct so PolicyService can own its own
+// record (magic + schema + CRC + sequence) without colliding with the old
+// single-blob layout.
+class EepromPolicyBackend final : public ISettingsBackend {
+public:
+    bool read(uint8_t slot, void* data, size_t size) override {
+        if (slot > 1U || data == nullptr || size != sizeof(SettingsRecord)) {
+            return false;
+        }
+        SettingsRecord record{};
+        EEPROM.begin(kPolicyEepromSize);
+        EEPROM.get(policySlotOffset(slot), record);
+        EEPROM.end();
+        std::memcpy(data, &record, sizeof(record));
+        return true;
+    }
+
+    bool write(uint8_t slot, const void* data, size_t size) override {
+        if (slot > 1U || data == nullptr || size != sizeof(SettingsRecord)) {
+            return false;
+        }
+        SettingsRecord record{};
+        std::memcpy(&record, data, sizeof(record));
+        EEPROM.begin(kPolicyEepromSize);
+        EEPROM.put(policySlotOffset(slot), record);
+        const bool ok = EEPROM.commit();
+        EEPROM.end();
+        return ok;
+    }
+
+    bool commit() override {
+        EEPROM.begin(kPolicyEepromSize);
+        const bool ok = EEPROM.commit();
+        EEPROM.end();
+        return ok;
+    }
+};
+
+}  // namespace
+
+SettingsService& policyStore() {
+    static EepromPolicyBackend backend;
+    static SettingsService store(backend);
+    return store;
+}
+
+PolicyService& policy() {
+    static PolicyService service(policyStore());
+    return service;
+}
+
+// The only writer of the legacy mirrors, and the only path that keeps the
+// legacy EEPROM bytes in step with the policy store.
+void mirrorPolicyToGlobals() {
+    disclaimer_accepted = policy().disclaimerAccepted();
+    blue_team_mode = policy().inBlueTeam();
+    saveSettings();
+}
+
+// Adopt the legacy EEPROM bytes exactly once, then never look at them again.
+void policyBootstrap() {
+    SettingsService& store = policyStore();
+    store.load();
+    if (!store.hasStoredRecord()) {
+        store.migrateLegacy(disclaimer_accepted, blue_team_mode);
+    }
+    policy().syncFromStore();
+    disclaimer_accepted = policy().disclaimerAccepted();
+    blue_team_mode = policy().inBlueTeam();
+}
+
+bool policyAcceptValhalla() {
+    if (!policy().acceptValhalla()) {
+        return false;
+    }
+    mirrorPolicyToGlobals();
+    return true;
+}
+
+bool policyDeclineValhalla() {
+    if (!policy().declineValhalla()) {
+        return false;
+    }
+    mirrorPolicyToGlobals();
+    return true;
+}
+
+bool policyEnterBlueTeam() {
+    if (!policy().enterBlueTeam()) {
+        return false;
+    }
+    mirrorPolicyToGlobals();
+    return true;
+}
+
+bool policyLeaveBlueTeam(bool acknowledgedRisk) {
+    if (!policy().leaveBlueTeam(acknowledgedRisk)) {
+        return false;
+    }
+    mirrorPolicyToGlobals();
+    return true;
+}
+
 
 // Timeout option tables
 const int timeoutOptions[] = {30, 60, 120, 300, 600, 0};
@@ -779,11 +921,8 @@ void handleWiFiSubmenuTouch() {
                     PacketMonitor::cleanup();
                     break;
                 case 1: // Beacon Spammer
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     BeaconSpammer::setup();
                     while (!feature_exit_requested) {
                         BeaconSpammer::loop();
@@ -793,11 +932,8 @@ void handleWiFiSubmenuTouch() {
                     BeaconSpammer::cleanup();
                     break;
                 case 2: // Deauther
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     Deauther::setup();
                     while (!feature_exit_requested) {
                         Deauther::loop();
@@ -887,11 +1023,8 @@ void handleWiFiSubmenuTouch() {
                     }
                     break;
                 case 5: // Captive Portal (GARMR Evil Twin)
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     CaptivePortal::setup();
                     while (!feature_exit_requested) {
                         CaptivePortal::loop();
@@ -930,11 +1063,8 @@ void handleWiFiSubmenuTouch() {
                     }
                     break;
                 case 7: // Auth Flood
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     AuthFlood::setup();
                     while (!feature_exit_requested) {
                         AuthFlood::loop();
@@ -984,11 +1114,8 @@ void handleBluetoothSubmenuTouch() {
 
             switch (current_submenu_index) {
                 case 0: // BLE Jammer
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     BleJammer::setup();
                     while (!feature_exit_requested) {
                         BleJammer::loop();
@@ -1000,11 +1127,8 @@ void handleBluetoothSubmenuTouch() {
                     BleJammer::cleanup();
                     break;
                 case 1: // BLE Spoofer
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     BleSpoofer::setup();
                     while (!feature_exit_requested) {
                         BleSpoofer::loop();
@@ -1049,11 +1173,8 @@ void handleBluetoothSubmenuTouch() {
                     BleScan::cleanup();
                     break;
                 case 5: // WhisperPair (CVE-2025-36911)
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     WhisperPair::setup();
                     while (!feature_exit_requested) {
                         WhisperPair::loop();
@@ -1077,11 +1198,8 @@ void handleBluetoothSubmenuTouch() {
                     LunaticFringe::cleanup();
                     break;
                 case 8: // BLE Ducky
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     BleDucky::setup();
                     while (!feature_exit_requested) {
                         BleDucky::loop();
@@ -1153,11 +1271,8 @@ void handleAirTagHubTouch() {
                         AirTagDetect::cleanup();
                         break;
                     case 1: // Phantom Flood (FindMy BLE Flood)
-                        if (!isOffensiveAllowed()) {
-                            if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                            else if (!showDisclaimerScreen()) break;
-                            if (!isOffensiveAllowed()) break;
-                        }
+                        if (!requestOffensiveAccess()) break;
+
                         PhantomFlood::setup();
                         while (!feature_exit_requested) {
                             PhantomFlood::loop();
@@ -1169,11 +1284,8 @@ void handleAirTagHubTouch() {
                         PhantomFlood::cleanup();
                         break;
                     case 2: // AirTag Replay (Sniff + Replay)
-                        if (!isOffensiveAllowed()) {
-                            if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                            else if (!showDisclaimerScreen()) break;
-                            if (!isOffensiveAllowed()) break;
-                        }
+                        if (!requestOffensiveAccess()) break;
+
                         AirTagReplay::setup();
                         while (!feature_exit_requested) {
                             AirTagReplay::loop();
@@ -1270,11 +1382,8 @@ void handleNRFSubmenuTouch() {
                     NrfSniffer::cleanup();
                     break;
                 case 3: // MouseJack
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     MouseJack::setup();
                     while (!feature_exit_requested) {
                         MouseJack::loop();
@@ -1285,11 +1394,8 @@ void handleNRFSubmenuTouch() {
                     MouseJack::cleanup();
                     break;
                 case 4: // WLAN Jammer
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     WLANJammer::wlanjammerSetup();
                     while (!feature_exit_requested) {
                         WLANJammer::wlanjammerLoop();
@@ -1300,11 +1406,8 @@ void handleNRFSubmenuTouch() {
                     WLANJammer::cleanup();
                     break;
                 case 5: // Proto Kill
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     ProtoKill::prokillSetup();
                     while (!feature_exit_requested) {
                         ProtoKill::prokillLoop();
@@ -1353,11 +1456,8 @@ void handleSubGHzSubmenuTouch() {
 
             switch (current_submenu_index) {
                 case 0: // Replay Attack
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     ReplayAttack::setup();
                     while (!feature_exit_requested) {
                         ReplayAttack::loop();
@@ -1368,11 +1468,8 @@ void handleSubGHzSubmenuTouch() {
                     ReplayAttack::cleanup();
                     break;
                 case 1: // Brute Force
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     SubBrute::setup();
                     while (!feature_exit_requested) {
                         SubBrute::loop();
@@ -1384,11 +1481,8 @@ void handleSubGHzSubmenuTouch() {
                     SubBrute::cleanup();
                     break;
                 case 2: // SubGHz Jammer
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     SubJammer::setup();
                     while (!feature_exit_requested) {
                         SubJammer::loop();
@@ -1500,11 +1594,8 @@ void handleRFIDSubmenuTouch() {
                     RFIDReader::cleanup();
                     break;
                 case 2: // Card Clone
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     RFIDClone::setup();
                     while (!feature_exit_requested) {
                         RFIDClone::loop();
@@ -1517,11 +1608,8 @@ void handleRFIDSubmenuTouch() {
                     RFIDClone::cleanup();
                     break;
                 case 3: // Key Brute Force
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     RFIDBrute::setup();
                     while (!feature_exit_requested) {
                         RFIDBrute::loop();
@@ -1534,11 +1622,8 @@ void handleRFIDSubmenuTouch() {
                     RFIDBrute::cleanup();
                     break;
                 case 4: // Card Emulate
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     RFIDEmulate::setup();
                     while (!feature_exit_requested) {
                         RFIDEmulate::loop();
@@ -1671,11 +1756,8 @@ void handleSIGINTSubmenuTouch() {
 
             switch (current_submenu_index) {
                 case 0: // EAPOL Capture
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     EapolCapture::setup();
                     while (!feature_exit_requested) {
                         EapolCapture::loop();
@@ -1687,11 +1769,8 @@ void handleSIGINTSubmenuTouch() {
                     EapolCapture::cleanup();
                     break;
                 case 1: // Karma Attack
-                    if (!isOffensiveAllowed()) {
-                        if (blue_team_mode) { showBlueTeamBlockedScreen(); if (!showDisclaimerScreen()) break; }
-                        else if (!showDisclaimerScreen()) break;
-                        if (!isOffensiveAllowed()) break;
-                    }
+                    if (!requestOffensiveAccess()) break;
+
                     KarmaAttack::setup();
                     while (!feature_exit_requested) {
                         KarmaAttack::loop();
@@ -1763,7 +1842,7 @@ void handleToolsSubmenuTouch() {
             delay(200);
             waitForTouchRelease();
 
-            if (current_submenu_index == 5) { // Back
+            if (current_submenu_index == 6) { // Back
                 returnToMainMenu();
                 return;
             }
@@ -1799,6 +1878,14 @@ void handleToolsSubmenuTouch() {
             // Firmware Update - flash .bin from SD card
             if (current_submenu_index == 1) {
                 firmwareUpdateScreen();
+                returnToSubmenu();
+                break;
+            }
+
+            // Wipe SD Card - destructive, deliberately separate from the
+            // Device Policy panel so the policy banner never erases data.
+            if (current_submenu_index == 5) {
+                scorchedEarthWipe();
                 returnToSubmenu();
                 break;
             }
@@ -2732,7 +2819,7 @@ void handleSettingsSubmenuTouch() {
             displaySubmenu();
             delay(200);
 
-            if (current_submenu_index == 9) { // Back
+            if (current_submenu_index == 10) { // Back
                 returnToMainMenu();
                 return;
             }
@@ -2768,6 +2855,9 @@ void handleSettingsSubmenuTouch() {
                     break;
                 case 8: // CC1101 Module Type
                     cc1101ModuleLoop();
+                    break;
+                case 9: // Device Policy — the only place policy state changes
+                    showPolicyPanel();
                     break;
             }
 
@@ -3370,10 +3460,30 @@ void pinSetupLoop() {
 // VALHALLA PROTOCOL — Legal Disclaimer + Blue Team Mode + Panic Button
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Check if offensive functions are allowed
+// ─── Single point of authorization for every offensive entry point ──────
+// Returns true only when the caller may proceed, and owns the screen shown
+// when it may not. Every menu, deep link and feature-to-feature handoff must
+// call this instead of re-implementing the gate.
+bool requestOffensiveAccess() {
+    const Authorization auth = policy().authorizeOffensive();
+    switch (auth.action) {
+        case PolicyAction::Proceed:
+            return true;
+        case PolicyAction::PromptValhalla:
+            // Undecided: the disclaimer is the unlock path.
+            return showDisclaimerScreen();
+        case PolicyAction::BlockedBlueTeam:
+        default:
+            showBlueTeamBlockedScreen();
+            // Deliberately no disclaimer offer here. Blue Team has exactly one
+            // exit and it is a separate, acknowledged flow in Device Policy.
+            return false;
+    }
+}
+
+// Kept for read-only probes such as the home-screen mode banner.
 bool isOffensiveAllowed() {
-    return PolicyService::legacyAllowsOffensive(disclaimer_accepted,
-                                                blue_team_mode);
+    return policy().offensiveAllowed();
 }
 
 // ─── Blue Team Blocked Screen (2-second overlay) ────────────────────────
@@ -3396,8 +3506,8 @@ void showBlueTeamBlockedScreen() {
     drawCenteredText(SCALE_Y(180), "VALHALLA protocol engaged", HALEHOUND_GUNMETAL, 1);
 
     // Hint to unlock
-    drawCenteredText(SCALE_Y(220), "Tap offensive tool to unlock", HALEHOUND_GUNMETAL, 1);
-    drawCenteredText(SCALE_Y(235), "via disclaimer acceptance", HALEHOUND_GUNMETAL, 1);
+    drawCenteredText(SCALE_Y(220), "Unlock: Settings > Device Policy", HALEHOUND_GUNMETAL, 1);
+    drawCenteredText(SCALE_Y(235), "Blue Team stays until you leave it", HALEHOUND_GUNMETAL, 1);
 
     delay(2000);
 }
@@ -3541,12 +3651,10 @@ bool showDisclaimerScreen() {
     while (true) {
         touchButtonsUpdate();
 
-        // BOOT button = decline
+        // BOOT button = decline -> persistent Blue Team
         if (buttonPressed(BTN_BOOT)) {
             delay(200);
-            disclaimer_accepted = false;
-            blue_team_mode = true;
-            saveSettings();
+            policyDeclineValhalla();
             return false;
         }
 
@@ -3573,20 +3681,20 @@ bool showDisclaimerScreen() {
                 tft.print("ACCEPT");
                 delay(300);
 
-                disclaimer_accepted = true;
-                if (blue_team_mode) {
-                    blue_team_mode = false;
+                // PolicyService refuses this while Blue Team is active — that
+                // refusal is what makes Blue Team sticky. It can only succeed
+                // from the Undecided state.
+                if (policyAcceptValhalla()) {
+                    return true;
                 }
-                saveSettings();
-                return true;
+                showBlueTeamBlockedScreen();
+                return false;
             }
 
-            // DECLINE button
+            // DECLINE button -> persistent Blue Team
             if (tx >= dDeclineX && tx <= dDeclineX + dBtnW && ty >= dBtnY && ty <= dBtnY + dBtnH) {
                 delay(200);
-                disclaimer_accepted = false;
-                blue_team_mode = true;
-                saveSettings();
+                policyDeclineValhalla();
                 return false;
             }
 
@@ -3609,6 +3717,155 @@ bool showDisclaimerScreen() {
     }
 }
 
+// ─── Device Policy Panel ────────────────────────────────────────────────
+// The single place the user changes policy state. Nothing here destroys data;
+// the destructive SD wipe is a separate named Tools action.
+bool confirmLeaveBlueTeam() {
+    tft.fillScreen(TFT_BLACK);
+    tft.drawBitmap(0, 0, skull_bg_bitmap, SKULL_BG_WIDTH, SKULL_BG_HEIGHT, 0x1841);
+    tft.drawRect(2, 2, SCREEN_WIDTH - 4, SCREEN_HEIGHT - 4, HALEHOUND_VIOLET);
+    tft.drawRect(4, 4, SCREEN_WIDTH - 8, SCREEN_HEIGHT - 8, HALEHOUND_MAGENTA);
+
+    drawGlitchTitle(SCALE_Y(70), "LEAVE");
+    drawGlitchStatus(SCALE_Y(95), "BLUE TEAM?", HALEHOUND_HOTPINK);
+
+    drawCenteredText(SCALE_Y(130), "Offensive tools will be unlocked.", HALEHOUND_MAGENTA, 1);
+    drawCenteredText(SCALE_Y(148), "You accept full personal liability", HALEHOUND_MAGENTA, 1);
+    drawCenteredText(SCALE_Y(164), "for their use.", HALEHOUND_MAGENTA, 1);
+
+    const int btnW = SCALE_W(95);
+    const int btnH = SCALE_H(34);
+    const int btnY = SCALE_Y(215);
+    const int okX = SCALE_X(15);
+    const int noX = SCREEN_WIDTH - btnW - SCALE_X(15);
+
+    tft.fillRoundRect(okX, btnY, btnW, btnH, 5, HALEHOUND_DARK);
+    tft.drawRoundRect(okX, btnY, btnW, btnH, 5, HALEHOUND_HOTPINK);
+    tft.setTextSize(1);
+    tft.setTextColor(HALEHOUND_HOTPINK);
+    tft.setCursor(okX + 14, btnY + (btnH - 8) / 2);
+    tft.print("I ACCEPT");
+
+    tft.fillRoundRect(noX, btnY, btnW, btnH, 5, HALEHOUND_DARK);
+    tft.drawRoundRect(noX, btnY, btnW, btnH, 5, HALEHOUND_GUNMETAL);
+    tft.setTextColor(HALEHOUND_GUNMETAL);
+    tft.setCursor(noX + 20, btnY + (btnH - 8) / 2);
+    tft.print("CANCEL");
+
+    while (true) {
+        touchButtonsUpdate();
+        if (isInoBackTapped() || buttonPressed(BTN_BACK) || buttonPressed(BTN_BOOT)) {
+            waitForTouchRelease();
+            return false;
+        }
+        if (isTouchInArea(okX, btnY, btnW, btnH)) {
+            waitForTouchRelease();
+            return true;
+        }
+        if (isTouchInArea(noX, btnY, btnW, btnH)) {
+            waitForTouchRelease();
+            return false;
+        }
+        delay(30);
+    }
+}
+
+void showPolicyPanel() {
+    const int rowH = SCALE_H(38);
+    const int rowGap = SCALE_H(6);
+    const int firstRowY = SCALE_Y(100);
+    const int x = SCALE_X(14);
+    const int w = SCREEN_WIDTH - 2 * SCALE_X(14);
+
+    while (true) {
+        const PolicyMode mode = policy().mode();
+
+        const char* labels[3] = {nullptr, nullptr, nullptr};
+        int actionCount = 1;
+        if (mode == PolicyMode::Undecided) {
+            labels[0] = "ACCEPT DISCLAIMER";
+            labels[1] = "STAY IN BLUE TEAM";
+            actionCount = 2;
+        } else if (mode == PolicyMode::BlueTeam) {
+            labels[0] = "LEAVE BLUE TEAM";
+        } else {
+            labels[0] = "ENTER BLUE TEAM";
+        }
+        const int rows = actionCount + 1;  // + BACK
+
+        const char* modeText = "MODE: DISCLAIMER PENDING";
+        uint16_t modeColor = HALEHOUND_GUNMETAL;
+        if (mode == PolicyMode::ValhallaAccepted) {
+            modeText = "MODE: VALHALLA";
+            modeColor = HALEHOUND_MAGENTA;
+        } else if (mode == PolicyMode::BlueTeam) {
+            modeText = "MODE: BLUE TEAM";
+            modeColor = VALHALLA_BLUE;
+        }
+
+        // ── draw ──
+        tft.fillScreen(TFT_BLACK);
+        tft.drawRect(2, 2, SCREEN_WIDTH - 4, SCREEN_HEIGHT - 4, HALEHOUND_VIOLET);
+        tft.drawRect(4, 4, SCREEN_WIDTH - 8, SCREEN_HEIGHT - 8, HALEHOUND_MAGENTA);
+        drawGlitchTitle(SCALE_Y(24), "DEVICE POLICY");
+        drawGlitchStatus(SCALE_Y(58), modeText, modeColor);
+
+        for (int i = 0; i < rows; i++) {
+            const int y = firstRowY + i * (rowH + rowGap);
+            const bool isBack = (i == actionCount);
+            tft.fillRoundRect(x, y, w, rowH, 5, HALEHOUND_DARK);
+            tft.drawRoundRect(x, y, w, rowH, 5,
+                              isBack ? HALEHOUND_GUNMETAL : modeColor);
+            tft.setTextSize(1);
+            tft.setTextColor(isBack ? HALEHOUND_GUNMETAL : TFT_WHITE);
+            tft.setCursor(x + 10, y + (rowH - 8) / 2);
+            tft.print(isBack ? "BACK" : labels[i]);
+        }
+
+        tft.setTextSize(1);
+        tft.setTextColor(HALEHOUND_GUNMETAL, TFT_BLACK);
+        tft.setCursor(x, firstRowY + rows * (rowH + rowGap) + SCALE_H(4));
+        tft.print("Offensive use may violate local law.");
+
+        // ── touch ──
+        bool redraw = false;
+        while (!redraw) {
+            touchButtonsUpdate();
+            if (isInoBackTapped() || buttonPressed(BTN_BACK) || buttonPressed(BTN_BOOT)) {
+                waitForTouchRelease();
+                return;
+            }
+            for (int i = 0; i < rows; i++) {
+                const int y = firstRowY + i * (rowH + rowGap);
+                if (!isTouchInArea(x, y, w, rowH)) {
+                    continue;
+                }
+                waitForTouchRelease();
+                if (i == actionCount) {
+                    return;  // BACK
+                }
+                if (mode == PolicyMode::Undecided && i == 0) {
+                    if (!policyAcceptValhalla()) {
+                        showBlueTeamBlockedScreen();
+                    }
+                } else if (mode == PolicyMode::Undecided && i == 1) {
+                    policyDeclineValhalla();
+                } else if (mode == PolicyMode::BlueTeam) {
+                    if (confirmLeaveBlueTeam()) {
+                        policyLeaveBlueTeam(true);
+                    }
+                } else {
+                    policyEnterBlueTeam();
+                }
+                redraw = true;
+                break;
+            }
+            delay(30);
+        }
+    }
+}
+
+
 // ─── SD Card Recursive Wipe ─────────────────────────────────────────────
 void recursiveDeleteSD(File dir) {
     while (true) {
@@ -3625,8 +3882,11 @@ void recursiveDeleteSD(File dir) {
     }
 }
 
-// ─── VALHALLA Protocol Activation ───────────────────────────────────────
-void activateValhalla() {
+// ─── Scorched Earth: destructive SD wipe ────────────────────────────────
+// Renamed out of the VALHALLA policy flow. It destroys data, so it is a named
+// Tools action with its own hold-to-confirm — never a side effect of tapping
+// the policy banner.
+void scorchedEarthWipe() {
     // Phase 1: Confirmation screen
     tft.fillScreen(TFT_BLACK);
 
@@ -3642,14 +3902,14 @@ void activateValhalla() {
     tft.drawBitmap(skullX, SCALE_Y(10), bitmap_disclaimer_skull, 120, 160, TFT_RED);
 
     // Title
-    drawGlitchTitle(SCALE_Y(175), "VALHALLA");
-    drawGlitchStatus(SCALE_Y(195), "PROTOCOL", HALEHOUND_VIOLET);
+    drawGlitchTitle(SCALE_Y(175), "WIPE SD");
+    drawGlitchStatus(SCALE_Y(195), "SCORCHED EARTH", HALEHOUND_VIOLET);
 
     // Separator
     tft.drawLine(20, SCALE_Y(207), SCREEN_WIDTH - 20, SCALE_Y(207), TFT_RED);
 
     // Warning text
-    drawCenteredText(SCALE_Y(215), "ACTIVATE SCORCHED EARTH?", HALEHOUND_HOTPINK, 1);
+    drawCenteredText(SCALE_Y(215), "ERASE SD AND LOCK TOOLS?", HALEHOUND_HOTPINK, 1);
     tft.setTextSize(1);
     tft.setTextColor(HALEHOUND_MAGENTA);
     tft.setCursor(SCALE_X(30), SCALE_Y(232));
@@ -3792,19 +4052,19 @@ void activateValhalla() {
     updateProgress(40, "SD CARD WIPED");
     delay(500);
 
-    // Step 2: Clear disclaimer
+    // Step 2: Lock down — clears the disclaimer bit and engages Blue Team
+    // through PolicyService, which is the only writer of policy state.
     updateProgress(60, "LOCKING TOOLS...");
-    disclaimer_accepted = false;
+    policy().lockDown();
     delay(300);
 
-    // Step 3: Set blue team mode
+    // Step 3: Persist the mirrors so a downgrade still reads something sane
     updateProgress(80, "ENTERING BLUE TEAM...");
-    blue_team_mode = true;
+    mirrorPolicyToGlobals();
     delay(300);
 
-    // Step 4: Save to EEPROM
+    // Step 4: Progress only — the state is already committed
     updateProgress(90, "SAVING STATE...");
-    saveSettings();
     delay(300);
 
     updateProgress(100, "VALHALLA COMPLETE");
@@ -3885,8 +4145,8 @@ void handleButtons() {
                 tft.drawRect(2, barY, screenWidth - 4, 20, HALEHOUND_HOTPINK);
                 tft.drawRect(4, barY + 2, screenWidth - 8, 16, HALEHOUND_HOTPINK);
                 delay(150);
-                activateValhalla();
-                // If cancelled, redraw menu
+                showPolicyPanel();
+                // Redraw menu when the panel closes
                 menu_initialized = false;
                 displayMenu();
                 delay(200);
@@ -4327,6 +4587,10 @@ void legacySetup() {
 
     // Load settings from EEPROM (brightness, timeout, color order, rotation, touch cal, color mode, PIN)
     loadSettings();
+
+    // Seed / refresh the policy store. After this the policy region is the
+    // authority and the legacy disclaimer/blue-team bytes are mirrors.
+    policyBootstrap();
 
     writeBacklight(brightness_level);
     applyColorMode(color_mode);

@@ -11,6 +11,7 @@ bool SettingsService::load() {
         current_ = settings_record::make(0U, data_);
         currentSlot_ = 0U;
         loaded_ = true;
+        hasRecord_ = false;
         return true;
     }
     currentSlot_ = validRecords[1] && (!validRecords[0] ||
@@ -20,6 +21,7 @@ bool SettingsService::load() {
     current_ = records[currentSlot_];
     data_ = settings_record::decode(current_);
     loaded_ = true;
+    hasRecord_ = true;
     return true;
 }
 
@@ -40,6 +42,7 @@ bool SettingsService::save(const SettingsData& data) {
     currentSlot_ = nextSlot;
     data_ = settings_record::decode(verify);
     loaded_ = true;
+    hasRecord_ = true;
     return true;
 }
 

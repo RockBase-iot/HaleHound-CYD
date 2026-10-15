@@ -39,13 +39,13 @@ SettingsData decode(const SettingsRecord& record) {
     if (!valid(record)) {
         return SettingsData{};
     }
+    // No normalisation here anymore. The three policy states are carried
+    // verbatim by the two bits; collapsing (false,false) into Blue Team used to
+    // make the "never decided" state unrepresentable, which forced the
+    // disclaimer to be unreachable on a fresh device.
     SettingsData data;
     data.disclaimerAccepted = record.disclaimerAccepted == 1U;
     data.blueTeamMode = record.blueTeamMode == 1U;
-    if (!data.disclaimerAccepted || data.blueTeamMode) {
-        data.disclaimerAccepted = false;
-        data.blueTeamMode = true;
-    }
     return data;
 }
 
@@ -54,9 +54,9 @@ bool newer(const SettingsRecord& left, const SettingsRecord& right) {
 }
 
 SettingsData migrateLegacy(bool disclaimerAccepted, bool blueTeamMode) {
-    if (disclaimerAccepted && !blueTeamMode) {
-        return SettingsData{true, false};
-    }
-    return SettingsData{false, true};
+    // Legacy firmware stored two raw booleans and never wrote (false,false).
+    // Map them faithfully so a device that had never accepted stays Undecided
+    // instead of being silently promoted into a sticky Blue Team.
+    return SettingsData{disclaimerAccepted, blueTeamMode};
 }
 }

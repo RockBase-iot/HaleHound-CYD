@@ -3,8 +3,17 @@
 #include <cstddef>
 #include <cstdint>
 
+// Two persisted bits, three policy states:
+//   (false, false) = Undecided        - offensive locked, disclaimer will be offered
+//   (true,  false) = ValhallaAccepted - offensive allowed
+//   (*,     true)  = BlueTeam         - offensive locked, sticky
+//
+// The default is Undecided, NOT Blue Team: a device that has never been
+// configured must still be able to accept the disclaimer. Blue Team is only
+// ever entered by an explicit decline/engage, and only left by an explicit
+// acknowledged request (see PolicyService).
 struct SettingsData {
-    constexpr SettingsData(bool disclaimer = false, bool blueTeam = true)
+    constexpr SettingsData(bool disclaimer = false, bool blueTeam = false)
         : disclaimerAccepted(disclaimer), blueTeamMode(blueTeam) {}
 
     bool disclaimerAccepted;
@@ -53,6 +62,9 @@ public:
     bool migrateLegacy(bool disclaimerAccepted, bool blueTeamMode);
     const SettingsData& data() const { return data_; }
     bool loaded() const { return loaded_; }
+    // True when at least one slot held a valid, CRC-checked record. Used by the
+    // one-time migration path: an empty store means "adopt the legacy bytes".
+    bool hasStoredRecord() const { return hasRecord_; }
 
 private:
     ISettingsBackend& backend_;
@@ -60,4 +72,5 @@ private:
     SettingsRecord current_{};
     uint8_t currentSlot_ = 0;
     bool loaded_ = false;
+    bool hasRecord_ = false;
 };

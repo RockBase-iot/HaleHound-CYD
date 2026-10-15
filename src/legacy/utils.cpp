@@ -438,7 +438,7 @@ void loadSettings() {
         settings.pinEnabled = 0;       // PIN lock disabled by default
         settings.devicePin = 0;        // No PIN set
         settings.disclaimerAccepted = 0; // Disclaimer not accepted — forces first-time screen
-        settings.blueTeamMode = 1;     // Safe default: Blue Team
+        settings.blueTeamMode = 0;     // Undecided: Blue Team is now opt-in, not the default
         settings.cc1101PaModule = 0;   // Standard CC1101 (no PA control)
 
         // Apply defaults to globals so they're not left uninitialized
@@ -446,8 +446,11 @@ void loadSettings() {
         screen_timeout_seconds = settings.screenTimeout;
         pin_enabled = false;
         device_pin = 0;
+        // Undecided, NOT Blue Team: PolicyService refuses to accept the
+        // disclaimer while Blue Team is active, so a default of Blue Team would
+        // make a fresh device unable to ever unlock offensive tools.
         disclaimer_accepted = false;
-        blue_team_mode = true;
+        blue_team_mode = false;
         cc1101_pa_module = false;
 
         // Write defaults to EEPROM immediately — prevents re-triggering on every boot
