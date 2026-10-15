@@ -1,0 +1,17 @@
+# Derived verification output -- regenerate with scripts/hostcheck/run_host_tests.py.
+hostcheck/
+hostenv/
+
+# Generated compiler response files and logs.
+hostcheck-report.txt
+*.rsp
+sc.log
+_digest.txt
+.pio-esp32-build.log
+
+# Object files emitted by syntax_env_check.py (real-toolchain -fsyntax-only).
+xtensa-check/
+
+# Bluetooth SIG assigned-numbers YAML, fetched by verify_gatt_names.py.
+# Re-download rather than commit: the SIG revises the list.
+sig/

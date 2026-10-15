@@ -6,9 +6,6 @@ param(
 $ErrorActionPreference = "Stop"
 $environments = @(
     "esp32-cyd",
-    "esp32-cyd-hat",
-    "esp32-e32r28t",
-    "esp32-e32r35t",
     "nm-cyd-c5"
 )
 
@@ -17,7 +14,12 @@ $results = foreach ($environment in $environments) {
     Write-Host "Building $environment..."
     $coreGroup = if ($environment -eq "nm-cyd-c5") { "c5" } else { "classic" }
     $previousCoreDirectory = $env:PLATFORMIO_CORE_DIR
-    $env:PLATFORMIO_CORE_DIR = Join-Path $PWD ".pio/matrix/$coreGroup"
+    if ($coreGroup -eq "c5") {
+        $driveRoot = [System.IO.Path]::GetPathRoot($PWD.Path)
+        $env:PLATFORMIO_CORE_DIR = Join-Path $driveRoot ".pio-halehound-c5"
+    } else {
+        $env:PLATFORMIO_CORE_DIR = Join-Path $PWD ".pio/matrix/classic"
+    }
     $stdoutPath = Join-Path $OutputDirectory "$environment.stdout.log"
     $stderrPath = Join-Path $OutputDirectory "$environment.stderr.log"
     try {

@@ -2,6 +2,11 @@
 .pio/
 .vscode/
 
+# Packaged firmware images and per-target build output. Reproduce with
+# scripts/package_firmware.ps1; do not commit binaries.
+dist/
+.pio-esp32-build.log
+
 # Backup files
 *.bak
 *.bak2
