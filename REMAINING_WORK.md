@@ -2,9 +2,9 @@
 
 | 项 | 值 |
 |---|---|
-| 快照时间 | 2026-10-16 11:05 GMT+8 |
+| 快照时间 | 2026-10-16 11:20 GMT+8 |
 | 分支 | `nm-cyd-c5` |
-| 快照依据 | 工作树全量宿主回归 `48/48` 套件通过（`ziglang` clang 21）；7 个新 TU 经真实 C5 工具链 `-fsyntax-only` 通过 |
+| 快照依据 | 工作树全量宿主回归 `48/48` 套件通过（`ziglang` clang 21）+ **运行时可达性只读走查**（见 §0.5，10 条硬证据） |
 | 上游基线 | v4.0（见 `docs/upstream-analysis/RELEASE_BRIEF_zh.md`） |
 | 主计划 | `DEVELOPMENT_PLAN.md` 阶段 5–9 |
 
@@ -27,8 +27,39 @@
   `ChameleonFrame`（逐字节增量接收器）+ `ChameleonUltraClient`、`HidReaderClient`，
   各配一套宿主测试；协议数字逐条对过固件源码，记入 `docs/protocol-evidence/chameleon-ultra.md`。
   B5 的**宿主侧收口**也已就位（`BleVisitAudit`），只剩真机采样（`X2`）。
-- **下一步最高 ROI**：① 新模型/驱动进 catalog（低成本、立刻可用）→ ② `CardDumpFormat` 落 SD
-  （打通 B1 回归）→ ③ RFID 七屏 UI（R2 —— 驱动前置已经就位，可以直接开工）。
+- **下一步最高 ROI**：① ~~新模型/驱动进 catalog~~ —— **见 §0.5：只进 catalog 不够，
+  因为 runner 从来没有被启动过** → 真·① `U1` 写 `Esp32BleCentral` → 真·② `U2` 接线
+  （授权钩子 + 渲染钩子 + 菜单读 catalog）→ ③ `CardDumpFormat` 落 SD（打通 B1 回归）。
+
+---
+
+## 0.5 运行时可达性审查（2026-10-16，只读走查）
+
+> **一句话：逻辑层扎实，但「整条新架构在运行时不可达」是当前唯一的 P0 级结构缺口。**
+> 把「编译通过 + 宿主测试 48/48 绿」当成「能用」，是本项目此刻最大的认知陷阱。
+
+| # | 事实 | 证据 |
+|---|---|---|
+| **A1** | **`Esp32BleCentral` 不存在** | `IBleCentral`（279 行、17 个纯虚函数）只有测试用的 `FakeBleCentral`；`src/drivers/` 无任何 Arduino/Bluedroid 实现。**B1/B2/B3 三个 client 没有物理底座** |
+| **A2** | **`FeatureRunner::start()` 全仓无调用点** | `grep -rn 'runner_.start\|\.start(FeatureId' src/` 为空（`PolicyService.cpp:76` 只构造了一个字面 descriptor）⟹ **catalog 全部 76 条运行时不可达** |
+| **A3** | **`AppKernel` 给 runner 传的是空钩子 `{}`** | `src/core/AppKernel.cpp:14`。即便有人调 `start()`：`FeatureRunner.cpp:8` 的 `allowed()` 把**空回调视为放行**，于是 `PolicyService` 授权门、外设探测、资源预检全部被短路 —— **授权单点形同不存在** |
+| **A4** | **`LegacyApp.inc`（4661 行）是唯一的运行时** | 它 grep 不到 `runner` / `featureCatalog` / `FeatureId`；全部功能直接调旧单体（`WifiScan::setup()` …） |
+| **A5** | **新功能在 UI 里 0 个入口** | 对 `KARR / SkeletonKey / HID Reader / Predator / Airoha / Flock / Skimmer / Drone / Chameleon` 逐个 grep `LegacyApp.inc` **全部为 0**；蓝牙子菜单仍只有 10 条旧项 |
+| **A6** | **`IFeature` 没有渲染钩子** | `include/core/IFeature.h`：`tick()` 返回 `void`，接口里没有任何 draw/display 概念 ⟹ 新屏（GATT 树、槽位表）**无处可画** |
+| **A7** | **Chameleon Ultra 连 catalog 条目都没有** | `FeatureId` 枚举无 `BluetoothChameleonUltra`；`createChameleonUltraFeature()`（`ChameleonUltraModel.cpp:199`）**零引用** |
+| **A8** | **PN532 四层驱动是封闭孤岛** | `Pn532Transport`/`Pn532Protocol`/`Iso14443aFraming`/`MifareClassicDriver` 只有互相引用 + 宿主测试；`CardDumpFormat` / `IclassPacs` / `NdefCodec` / `RfidBackendModel` / `RadioTuningModel` / `KarrModel` **生产侧零引用** |
+| **A9** | **`Pn532I2cDriver` 已完全孤儿** | `src/drivers/Pn532I2cDriver.{h,cpp}` **全仓零引用**（连头文件都没人 include）⟹ `W6` 不是「收并」而是「删除或改为接管」 |
+| **A10** | **16 条 catalog 条目是纯空壳** | `CatalogFeatureStub`（只有 begin/tick/end 的橡皮图章）：`SubGhzSavedProfiles` / `SigintWardriving` / 9 个 `Setting*` / 5 个 `Tool*` |
+
+### 由此重排的紧急度
+
+| 新 ID | 事项 | 为什么紧急 | 级别 |
+|---|---|---|---|
+| **U1** | 写 `Esp32BleCentral`（Arduino/Bluedroid：`BLEClient` + `BLEScan` + `BLERemoteCharacteristic`；仓库已有 `scripts/patch_ble_keyboard_arduino3.py` 这类 3.x API 补丁先例） | B1/B2/B3 三个 client 全部悬空，不写就永远停在 `Model Verified` | **P0** |
+| **U2** | **把架构接通**：`AppKernel` 用 `PolicyService` 填 `FeatureRunnerHooks`；给 `IFeature` 加渲染钩子；legacy 菜单改为读 catalog | A2+A3+A6 必须一起解：不接则「授权单点」是装饰、「菜单」是硬编码、「新屏」无处画 | **P0** |
+| **U3** | `ChameleonUltra` 补 `FeatureId` + descriptor | B2 连「注册」这步都没做 | **P0** |
+| **U4** | `Pn532I2cDriver` 去留决策（倾向删除） | 同一条 I2C 总线上两套驱动的可能性是真实故障面 | P1 |
+| **U5** | 16 条空壳条目：要么补实现、要么从 catalog 摘掉 | 「菜单里有、点了没反应」比「菜单里没有」更坏 | P1 |
 
 ---
 
