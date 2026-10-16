@@ -32,7 +32,7 @@ enum class HeapVerdict : uint8_t {
 struct HeapAssessment {
     HeapVerdict verdict = HeapVerdict::Invalid;
     int32_t freeDelta = 0;         // current - baseline; negative = regression
-    int32_t percentDeltaX100 = 0;  // -1245 == -12.45 %
+    int32_t percentDeltaX100 = 0;  // +1245 == a 12.45 % regression
     int32_t percentShrinkX100 = 0; // largest-block shrink vs baseline
     const char* detail = "no assessment";
 };
