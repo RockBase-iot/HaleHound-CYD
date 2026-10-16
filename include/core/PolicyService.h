@@ -101,3 +101,20 @@ private:
     PolicyMode mode_ = PolicyMode::BlueTeam;
     bool disclaimerAccepted_ = false;
 };
+
+// The process-wide settings store and policy instance, in the shape
+// `globalBootHealthService()` established: a function-local static behind an
+// accessor, so nothing can end up holding a second policy with its own store.
+//
+// They live in the core rather than in the legacy app because both the legacy
+// menu -- which renders the disclaimer and the Blue Team screen -- and the
+// FeatureRunner's authorization hook -- which decides whether a feature may
+// start at all -- must be asking the *same* authority. Two instances reading
+// two stores is precisely the shape of the bug this service exists to prevent,
+// and it is the shape the wiring had while the store lived inside the menu.
+//
+// On a host build the store is a backend that refuses every read and write, so
+// the service comes up Undecided and transient -- which is the honest state of
+// a machine with no EEPROM, not a simulation of one.
+SettingsService& globalSettingsStore();
+PolicyService& globalPolicyService();

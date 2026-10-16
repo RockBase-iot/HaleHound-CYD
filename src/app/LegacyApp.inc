@@ -52,8 +52,11 @@
 #include "rfid_attacks.h"
 #include "jam_detect.h"
 #include "board/BoardProfile.h"
+#include "core/AppKernel.h"
 #include "core/PolicyService.h"
 #include "core/BootHealthService.h"
+#include "features/FeatureCatalog.h"
+#include "features/FeatureMenuModel.h"
 #include "services/MenuLayout.h"
 #include "services/SettingsService.h"
 #include <EEPROM.h>
@@ -69,6 +72,7 @@ void returnToMainMenu();
 void handleWiFiSubmenuTouch();
 void handleBluetoothSubmenuTouch();
 void handleAirTagHubTouch();
+void runCatalogFeature(FeatureId id);
 void handleNRFSubmenuTouch();
 void handleSubGHzSubmenuTouch();
 void showSigintPlaceholder(const char* title);
@@ -197,33 +201,43 @@ const unsigned char *wifi_submenu_icons[NUM_SUBMENU_ITEMS] = {
     bitmap_icon_go_back
 };
 
-// Bluetooth Submenu - 10 items
-const int bluetooth_NUM_SUBMENU_ITEMS = 10;
-const char *bluetooth_submenu_items[bluetooth_NUM_SUBMENU_ITEMS] = {
-    "BLE Jammer",
-    "BLE Spoofer",
-    "BLE Beacon",
-    "Sniffer",
-    "BLE Scanner",
-    "WhisperPair",
-    "AirTag",
-    "Lunatic Fringe",
-    "BLE Ducky",
-    "Back to Main Menu"
-};
+// Bluetooth Submenu — derived from the feature catalog at run time.
+//
+// This used to be a hand-kept array of ten names beside a hand-written ten-case
+// switch. Both had drifted from the catalog: SkeletonKey, HID Reader, KARR,
+// Airoha Race and BLE Predator are catalog entries under CategoryId::Bluetooth
+// with no menu row at all, so five working screens were unreachable from the
+// device, and the array's "Sniffer" matches no displayName in the catalog. A
+// menu built from the catalog cannot drift from it.
+//
+// The label pointers point at the catalog's own strings (flash), so this costs
+// three arrays of pointers and no string copies. The entries array is what the
+// dispatch switches on, so a row's identity no longer depends on its index.
+constexpr int kBluetoothMenuMax = 24;  // catalog entries + Back, with headroom
+FeatureMenuItem bluetooth_menu_entries[kBluetoothMenuMax] = {};
+const char *bluetooth_submenu_items[kBluetoothMenuMax] = {};
+const unsigned char *bluetooth_submenu_icons[kBluetoothMenuMax] = {};
+int bluetooth_NUM_SUBMENU_ITEMS = 0;
 
-const unsigned char *bluetooth_submenu_icons[bluetooth_NUM_SUBMENU_ITEMS] = {
-    bitmap_icon_ble_jammer,
-    bitmap_icon_spoofer,
-    bitmap_icon_signal,
-    bitmap_icon_analyzer,
-    bitmap_icon_graph,
-    bitmap_icon_eye,
-    bitmap_icon_apple,
-    bitmap_icon_scanner,
-    bitmap_icon_key,            // BLE Ducky - key icon
-    bitmap_icon_go_back
-};
+// Icons stay hand-mapped: the catalog carries no bitmap, and inventing one would
+// drag a font down into features/. Anything unmapped gets the generic BLE glyph
+// instead of, say, the previous row's icon by an off-by-one -- which is what a
+// parallel index array would have produced the first time the two lists differed
+// in length.
+const unsigned char *bluetoothMenuIcon(FeatureId id) {
+    switch (id) {
+        case FeatureId::BluetoothJammer:       return bitmap_icon_ble_jammer;
+        case FeatureId::BluetoothSpoofer:      return bitmap_icon_spoofer;
+        case FeatureId::BluetoothBeacon:       return bitmap_icon_signal;
+        case FeatureId::BluetoothSniffer:      return bitmap_icon_analyzer;
+        case FeatureId::BluetoothScanner:      return bitmap_icon_graph;
+        case FeatureId::BluetoothWhisperPair:  return bitmap_icon_eye;
+        case FeatureId::BluetoothAirTag:       return bitmap_icon_apple;
+        case FeatureId::BluetoothLunaticFringe: return bitmap_icon_scanner;
+        case FeatureId::BluetoothDucky:        return bitmap_icon_key;
+        default:                               return bitmap_icon_skull_bluetooth;
+    }
+}
 
 // AirTag Hub Submenu - 4 items (const * const → .rodata/flash, saves DRAM)
 const int airtag_NUM_SUBMENU_ITEMS = 4;
@@ -410,6 +424,33 @@ const char **active_submenu_items = nullptr;
 int active_submenu_size = 0;
 const unsigned char **active_submenu_icons = nullptr;
 
+// Fills the Bluetooth rows from the catalog and points the active-submenu
+// globals at them. Rebuilt on every entry to the submenu rather than once at
+// boot, because the AirTag hub repoints those globals at its own tables and the
+// pointers have to survive that.
+void setupBluetoothSubmenu() {
+    const uint8_t count = FeatureMenuModel::build(
+        CategoryId::Bluetooth, bluetooth_menu_entries,
+        static_cast<uint8_t>(kBluetoothMenuMax - 1));
+
+    uint8_t row = 0;
+    for (; row < count; ++row) {
+        bluetooth_submenu_items[row] = bluetooth_menu_entries[row].label;
+        bluetooth_submenu_icons[row] = bluetoothMenuIcon(bluetooth_menu_entries[row].id);
+    }
+    // Back is appended here rather than emitted by the model: it is a menu
+    // affordance, not a feature, and a model that emitted it would have to invent
+    // a FeatureId for it. Its row index is therefore count, which is also what
+    // derives the constants downstream code needs.
+    bluetooth_submenu_items[row] = "Back to Main Menu";
+    bluetooth_submenu_icons[row] = bitmap_icon_go_back;
+    bluetooth_NUM_SUBMENU_ITEMS = static_cast<int>(row) + 1;
+
+    active_submenu_items = bluetooth_submenu_items;
+    active_submenu_size = bluetooth_NUM_SUBMENU_ITEMS;
+    active_submenu_icons = bluetooth_submenu_icons;
+}
+
 // Settings
 int brightness_level = 255;
 int screen_timeout_seconds = 60;
@@ -465,67 +506,18 @@ bool cc1101_pa_module = false;      // E07 PA module active (persisted in EEPROM
 void saveSettings();
 void loadSettings();
 
-namespace {
+// The policy instance and its store now live in the core
+// (src/core/PolicyService.cpp). They used to be defined here, which meant the
+// menu that renders the disclaimer and the FeatureRunner gate that decides
+// whether a feature may start could hold two stores and disagree -- the exact
+// failure PolicyService exists to prevent.
+//
+// The EEPROM layout did not change in the move: the Arduino backend in
+// PolicyService.cpp uses the same offset, size and CRC'd double-slot record
+// this region always had, so an already-provisioned device keeps its state.
+PolicyService& policy() { return globalPolicyService(); }
+SettingsService& policyStore() { return globalSettingsStore(); }
 
-constexpr int kPolicyEepromOffset = 128;  // reserved: 2 x sizeof(SettingsRecord)
-constexpr int kPolicyEepromSize = 512;
-
-int policySlotOffset(uint8_t slot) {
-    return kPolicyEepromOffset +
-           static_cast<int>(slot) * static_cast<int>(sizeof(SettingsRecord));
-}
-
-// EEPROM-backed ISettingsBackend for the policy region only. Deliberately
-// separate from the legacy Settings struct so PolicyService can own its own
-// record (magic + schema + CRC + sequence) without colliding with the old
-// single-blob layout.
-class EepromPolicyBackend final : public ISettingsBackend {
-public:
-    bool read(uint8_t slot, void* data, size_t size) override {
-        if (slot > 1U || data == nullptr || size != sizeof(SettingsRecord)) {
-            return false;
-        }
-        SettingsRecord record{};
-        EEPROM.begin(kPolicyEepromSize);
-        EEPROM.get(policySlotOffset(slot), record);
-        EEPROM.end();
-        std::memcpy(data, &record, sizeof(record));
-        return true;
-    }
-
-    bool write(uint8_t slot, const void* data, size_t size) override {
-        if (slot > 1U || data == nullptr || size != sizeof(SettingsRecord)) {
-            return false;
-        }
-        SettingsRecord record{};
-        std::memcpy(&record, data, sizeof(record));
-        EEPROM.begin(kPolicyEepromSize);
-        EEPROM.put(policySlotOffset(slot), record);
-        const bool ok = EEPROM.commit();
-        EEPROM.end();
-        return ok;
-    }
-
-    bool commit() override {
-        EEPROM.begin(kPolicyEepromSize);
-        const bool ok = EEPROM.commit();
-        EEPROM.end();
-        return ok;
-    }
-};
-
-}  // namespace
-
-SettingsService& policyStore() {
-    static EepromPolicyBackend backend;
-    static SettingsService store(backend);
-    return store;
-}
-
-PolicyService& policy() {
-    static PolicyService service(policyStore());
-    return service;
-}
 
 // The only writer of the legacy mirrors, and the only path that keeps the
 // legacy EEPROM bytes in step with the policy store.
@@ -623,10 +615,8 @@ void updateActiveSubmenu() {
             active_submenu_size = NUM_SUBMENU_ITEMS;
             active_submenu_icons = wifi_submenu_icons;
             break;
-        case 1: // Bluetooth
-            active_submenu_items = bluetooth_submenu_items;
-            active_submenu_size = bluetooth_NUM_SUBMENU_ITEMS;
-            active_submenu_icons = bluetooth_submenu_icons;
+        case 1: // Bluetooth — rows come from the catalog (setupBluetoothSubmenu)
+            setupBluetoothSubmenu();
             break;
         case 2: // 2.4GHz (NRF)
             active_submenu_items = nrf_submenu_items;
@@ -1103,115 +1093,16 @@ void handleBluetoothSubmenuTouch() {
             displaySubmenu();
             delay(200);
 
-            if (current_submenu_index == 9) { // Back
+            // Back is the last row by construction -- setupBluetoothSubmenu appends
+            // it -- so the index is derived instead of the literal 9 it used to be,
+            // which was only right while the array happened to hold ten rows.
+            if (current_submenu_index == bluetooth_NUM_SUBMENU_ITEMS - 1) {
                 returnToMainMenu();
                 return;
             }
 
-            feature_active = true;
-            feature_exit_requested = false;
             waitForTouchRelease();
-
-            switch (current_submenu_index) {
-                case 0: // BLE Jammer
-                    if (!requestOffensiveAccess()) break;
-
-                    BleJammer::setup();
-                    while (!feature_exit_requested) {
-                        BleJammer::loop();
-                        if (BleJammer::isExitRequested()) feature_exit_requested = true;
-                        touchButtonsUpdate();
-                        if (isBackButtonTapped()) feature_exit_requested = true;
-                        if (IS_BOOT_PRESSED()) feature_exit_requested = true;
-                    }
-                    BleJammer::cleanup();
-                    break;
-                case 1: // BLE Spoofer
-                    if (!requestOffensiveAccess()) break;
-
-                    BleSpoofer::setup();
-                    while (!feature_exit_requested) {
-                        BleSpoofer::loop();
-                        if (BleSpoofer::isExitRequested()) feature_exit_requested = true;
-                        touchButtonsUpdate();
-                        if (isBackButtonTapped()) feature_exit_requested = true;
-                        if (IS_BOOT_PRESSED()) feature_exit_requested = true;
-                    }
-                    BleSpoofer::cleanup();
-                    break;
-                case 2: // BLE Beacon
-                    BleBeacon::setup();
-                    while (!feature_exit_requested) {
-                        BleBeacon::loop();
-                        if (BleBeacon::isExitRequested()) feature_exit_requested = true;
-                        touchButtonsUpdate();
-                        if (isBackButtonTapped()) feature_exit_requested = true;
-                        if (IS_BOOT_PRESSED()) feature_exit_requested = true;
-                    }
-                    BleBeacon::cleanup();
-                    break;
-                case 3: // Sniffer
-                    BleSniffer::setup();
-                    while (!feature_exit_requested) {
-                        BleSniffer::loop();
-                        if (BleSniffer::isExitRequested()) feature_exit_requested = true;
-                        touchButtonsUpdate();
-                        if (isBackButtonTapped()) feature_exit_requested = true;
-                        if (IS_BOOT_PRESSED()) feature_exit_requested = true;
-                    }
-                    BleSniffer::cleanup();
-                    break;
-                case 4: // BLE Scanner
-                    BleScan::setup();
-                    while (!feature_exit_requested) {
-                        BleScan::loop();
-                        if (BleScan::isExitRequested()) feature_exit_requested = true;
-                        touchButtonsUpdate();
-                        if (isBackButtonTapped()) feature_exit_requested = true;
-                        if (IS_BOOT_PRESSED()) feature_exit_requested = true;
-                    }
-                    BleScan::cleanup();
-                    break;
-                case 5: // WhisperPair (CVE-2025-36911)
-                    if (!requestOffensiveAccess()) break;
-
-                    WhisperPair::setup();
-                    while (!feature_exit_requested) {
-                        WhisperPair::loop();
-                        if (WhisperPair::isExitRequested()) feature_exit_requested = true;
-                        touchButtonsUpdate();
-                        if (isBackButtonTapped()) feature_exit_requested = true;
-                        if (IS_BOOT_PRESSED()) feature_exit_requested = true;
-                    }
-                    WhisperPair::cleanup();
-                    break;
-                case 6: // AirTag Hub — sub-submenu
-                    handleAirTagHubTouch();
-                    break;
-                case 7: // Lunatic Fringe (Multi-platform tracker detect)
-                    LunaticFringe::setup();
-                    while (!feature_exit_requested) {
-                        LunaticFringe::loop();
-                        if (LunaticFringe::isExitRequested()) feature_exit_requested = true;
-                        if (IS_BOOT_PRESSED()) feature_exit_requested = true;
-                    }
-                    LunaticFringe::cleanup();
-                    break;
-                case 8: // BLE Ducky
-                    if (!requestOffensiveAccess()) break;
-
-                    BleDucky::setup();
-                    while (!feature_exit_requested) {
-                        BleDucky::loop();
-                        if (BleDucky::isExitRequested()) feature_exit_requested = true;
-                        touchButtonsUpdate();
-                        if (isBackButtonTapped()) feature_exit_requested = true;
-                        if (IS_BOOT_PRESSED()) feature_exit_requested = true;
-                    }
-                    BleDucky::cleanup();
-                    break;
-            }
-
+            runCatalogFeature(bluetooth_menu_entries[current_submenu_index].id);
             returnToSubmenu();
             break;
         }
@@ -1314,9 +1205,7 @@ void handleAirTagHubTouch() {
     }
 
     // Restore Bluetooth submenu pointers for caller's returnToSubmenu()
-    active_submenu_items = bluetooth_submenu_items;
-    active_submenu_size = bluetooth_NUM_SUBMENU_ITEMS;
-    active_submenu_icons = bluetooth_submenu_icons;
+    setupBluetoothSubmenu();
     current_submenu_index = 0;
     submenu_initialized = false;
 }
@@ -3464,8 +3353,10 @@ void pinSetupLoop() {
 // Returns true only when the caller may proceed, and owns the screen shown
 // when it may not. Every menu, deep link and feature-to-feature handoff must
 // call this instead of re-implementing the gate.
-bool requestOffensiveAccess() {
-    const Authorization auth = policy().authorizeOffensive();
+// The one place the three PolicyActions turn into pixels. Everything that gates
+// on policy funnels through here, so a fourth action would be a compile warning
+// rather than a fifth screen that disagrees with the other four.
+bool resolvePolicyAction(const Authorization& auth) {
     switch (auth.action) {
         case PolicyAction::Proceed:
             return true;
@@ -3479,6 +3370,92 @@ bool requestOffensiveAccess() {
             // exit and it is a separate, acknowledged flow in Device Policy.
             return false;
     }
+}
+
+bool requestOffensiveAccess() {
+    // For call sites with no catalog entry to name: the policy's own offensive
+    // probe. Call sites that do have a descriptor use policyPrecheck(), which
+    // asks about that descriptor rather than about a synthetic one.
+    return resolvePolicyAction(policy().authorizeOffensive());
+}
+
+// The menu's pre-check. Deliberately the same authority the runner will consult
+// -- but asked for the *action*, because "offer the disclaimer" and "Blue Team
+// refuses" are two different screens and the runner reduces both to Blocked.
+//
+// This is not the gate. The runner re-asks policy for the decision, so a call
+// path that forgets this pre-check still cannot start an offensive feature; what
+// forgetting it costs is the right screen, not the guarantee.
+bool policyPrecheck(const FeatureDescriptor& descriptor) {
+    return resolvePolicyAction(policy().authorize(descriptor));
+}
+
+// The honest-report screen. A feature that refused to start says why in words:
+// "required peripheral missing" tells the user something, and a silent return to
+// the menu tells them the button is broken.
+void showFeatureRefusal(const char* title, const char* detail) {
+    tft.fillScreen(TFT_BLACK);
+    tft.drawRect(2, 2, SCREEN_WIDTH - 4, SCREEN_HEIGHT - 4, VALHALLA_BLUE);
+    tft.setTextColor(VALHALLA_BLUE);
+    tft.setTextSize(2);
+    tft.setCursor(12, 60);
+    tft.print(title == nullptr ? "Refused" : title);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(1);
+    tft.setCursor(12, 110);
+    tft.print(detail == nullptr ? "no detail reported" : detail);
+    delay(1600);
+}
+
+// Runs one catalog entry to completion. This is the single dispatch path the
+// whole redesign exists for: it replaced ten hand-written `case` blocks, each
+// calling X::setup()/loop()/cleanup() with its own copy of the exit condition,
+// and none of which ever touched the runner, the catalog or the policy gate.
+void runCatalogFeature(FeatureId id) {
+    const FeatureDescriptor* descriptor = featureCatalog().find(id);
+    if (descriptor == nullptr) {
+        showFeatureRefusal("Not registered", "the catalog has no such feature");
+        return;
+    }
+
+    // The AirTag row opens a hub of three sessions rather than one session. A
+    // menu is not a feature, so it keeps its own screen -- but the row exists
+    // because the catalog has it, which is the property that was missing before.
+    if (id == FeatureId::BluetoothAirTag) {
+        handleAirTagHubTouch();
+        return;
+    }
+
+    if (!policyPrecheck(*descriptor)) {
+        return;
+    }
+
+    FeatureRunner& runner = globalAppKernel().runner();
+    const FeatureResult started = runner.start(id);
+    if (started.code != FeatureResultCode::Completed) {
+        // Blocked already rendered its own screen inside policyPrecheck, and
+        // re-rendering a second one would hide the first.
+        if (started.code != FeatureResultCode::Blocked) {
+            showFeatureRefusal("Cannot start", started.detail);
+        }
+        return;
+    }
+
+    feature_active = true;
+    feature_exit_requested = false;
+    while (!feature_exit_requested) {
+        runner.tick();
+        // The feature's own exit signal. It used to be consulted by hand in
+        // every case block; routing it through IFeature means one loop serves
+        // every entry, including ones added to the catalog later.
+        if (runner.exitRequested()) break;
+        touchButtonsUpdate();
+        if (isBackButtonTapped()) break;
+        if (IS_BOOT_PRESSED()) break;
+    }
+    feature_active = false;
+    feature_exit_requested = false;
+    runner.requestStop(StopReason::UserRequest);
 }
 
 // Kept for read-only probes such as the home-screen mode banner.

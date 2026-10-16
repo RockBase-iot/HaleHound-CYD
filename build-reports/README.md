@@ -17,10 +17,36 @@ python build-reports/syntax_env_check.py --env esp32-cyd --baseline   # tool-noi
 ```
 
 `--baseline` compiles untouched files with the same flags. If they fail identically,
-the failure is the tool configuration, not your change. (`esp32-cyd` always reports
-`'assert' was not declared` / `'errno' was not declared` for this reason: the
-pre-split framework's `tools/sdk/<chip>/include/newlib/platform_include/` shadows the
-toolchain's own `assert.h` / `errno.h`.)
+the failure is the tool configuration, not your change.
+
+No env fails its baseline any more, and that is the point: both causes were fixed
+rather than documented around.
+
+* `esp32-cyd` used to report `'assert' was not declared` / `'errno' was not declared`
+  for *every* TU, touched or not. Cause: the pre-split framework's
+  `tools/sdk/<chip>/include/newlib/platform_include/` shadows the toolchain's own
+  `assert.h` / `errno.h`, and `soc/spinlock.h` calls `assert()` without including
+  `<assert.h>` — the real build only survives because it force-includes them.
+  `prepare()` now prepends the `xtensa-esp32-elf/include` directory and adds
+  `-include <sysinc>/assert.h` / `errno.h` *before* the `@rsp`, which is where they
+  have to go.
+* `esp32-cyd` also passed no `ARDUINO`, `ARDUINO_ARCH_ESP32` or `ESP32`. That was
+  worse than a bad error message. With `ARDUINO` undefined, every `#ifdef ARDUINO`
+  body in that environment preprocessed to nothing, so `src/drivers/Esp32BleCentral.cpp`
+  reported PASS while **not one line of it was compiled** — a green check on a
+  discarded translation unit, which is worse than no check at all. Adding the define
+  surfaced a real defect immediately (a missing `#include <BLEDevice.h>`), so it had
+  been hiding something. Values and sources:
+
+  | Define | Value | Where it comes from |
+  |---|---|---|
+  | `ARDUINO` | `20017` | `2*10000 + 0*100 + 17`; framework `package.json` is `3.20017.241212` and `esp_arduino_version.h` says MAJOR 2. Same encoding the `nm-cyd-c5` entry uses for 3.3.6 (`30306`). |
+  | `ARDUINO_ARCH_ESP32` | — | `{build.arch}` in the framework's `platform.txt` recipes |
+  | `ESP32` | `ESP32` | `-DESP32=ESP32`, one occurrence in the same `platform.txt`. The libdeps RF24 library picks its architecture by testing `defined(ESP32)`, not `defined(ARDUINO_ARCH_ESP32)`; without it, it takes the AVR branch and includes `<avr/pgmspace.h>`. |
+
+  **Before trusting a PASS, check that the TU was compiled at all** — a guard that is
+  false in this environment is the one failure mode `-fsyntax-only` cannot tell you
+  about.
 
 Not covered: linking, `extra_scripts`, `build_src_filter`, Flash/RAM footprint.
 
@@ -67,7 +93,8 @@ Two things it does that are easy to get wrong:
 2. `-w` is passed deliberately: zig's bundled libc++ headers otherwise emit a wall of
    nullability warnings on any `<string>` / `<functional>` use.
 
-Result on 2026-10-15: **29/29 suites, 142 test cases green.**
+Result on 2026-10-16: **49/49 suites, 446 test cases green** (`test/native/` holds 50
+directories; `support/` is a header-only test double and has no suite).
 
 ## `patch_*.py` — applied-and-verified source edits
 
@@ -84,3 +111,5 @@ already applied will abort harmlessly (`expected 1 match, found 0`).
 | `patch_hostcheck_archive.py` | `run_host_tests.py`: archive shared objects before linking |
 | `patch_hostcheck_fixes.py` | the nine latent defects from the first host run (see DEVELOPMENT_PLAN.md §5.5) |
 | `patch_plan_hostcheck.py` | DEVELOPMENT_PLAN.md §5.4 / §5.5 / §7 / §9 |
+| `patch_u2_wiring.py` | U2: `LegacyApp.inc`'s ten-case Bluetooth switch -> catalog dispatch, the policy store moved to `src/core/PolicyService.cpp`, the catalog-derived submenu arrays |
+| `patch_u2_docs.py` | U2 docs: `REMAINING_WORK.md` §0.7, the two stale claims in this file, the evidence doc §6 |

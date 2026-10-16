@@ -102,6 +102,26 @@ static inline long long unity_to_ll(const T&, long) {
         if ((ptr) == NULL) UNITY_FAIL_("expected non-NULL: " #ptr); \
     } while (0)
 
+// Upstream Unity compares the two pointers directly and prints them when they
+// differ. Worth having rather than writing `TEST_ASSERT_TRUE(a == b)` at each
+// call site: identity is a different claim from equality, and a suite that wants
+// to say "this is the catalog's own string, not a copy" should be able to say it.
+#define TEST_ASSERT_EQUAL_PTR(expected, actual)                       \
+    do {                                                              \
+        const void* unity_pe_ = (const void*)(expected);               \
+        const void* unity_pa_ = (const void*)(actual);                 \
+        if (unity_pe_ != unity_pa_) {                                  \
+            std::printf("  expected %p\n  actual   %p\n", unity_pe_, unity_pa_); \
+            UNITY_FAIL_("pointers differ: " #expected " vs " #actual); \
+        }                                                             \
+    } while (0)
+
+#define TEST_ASSERT_NOT_EQUAL_PTR(unexpected, actual)                 \
+    do {                                                              \
+        if ((const void*)(unexpected) == (const void*)(actual))        \
+            UNITY_FAIL_("pointers are equal: " #unexpected " vs " #actual); \
+    } while (0)
+
 #define UNITY_ASSERT_CMP_(expected, actual, op, text) \
     do {                                              \
         if (!((expected) op (actual))) {              \

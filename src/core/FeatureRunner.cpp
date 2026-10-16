@@ -1,5 +1,7 @@
 #include "core/FeatureRunner.h"
 
+#include "core/IFeatureCanvas.h"
+
 namespace {
 FeatureResult result(FeatureResultCode code, const char* detail) {
     return {code, detail};
@@ -8,6 +10,17 @@ FeatureResult result(FeatureResultCode code, const char* detail) {
 bool allowed(bool (*callback)(const FeatureDescriptor&), const FeatureDescriptor& descriptor) {
     return callback == nullptr || callback(descriptor);
 }
+
+// Fail closed. A runner with no authorization hook is a runner whose policy gate
+// was never installed, and "no gate" must not read as "gate passed" for the
+// features the gate exists for. Passive and defensive features still run, so a
+// headless or bench runner stays usable -- that is the same asymmetry
+// `PolicyService::legacyAllowsOffensive` uses.
+bool policyAllowsWithoutHook(const FeatureDescriptor& descriptor) {
+    return !PolicyService::isOffensive(descriptor.risk);
+}
+
+const char* kNoAuthorizationHook = "no authorization hook installed";
 }
 
 FeatureRunner::FeatureRunner(const FeatureRegistry& registry,
@@ -30,8 +43,16 @@ FeatureResult FeatureRunner::start(FeatureId id) {
     }
 
     state_ = FeatureState::Preflight;
-    if (!allowed(hooks_.authorize, *descriptor)) {
-        return finish(result(FeatureResultCode::Blocked, "policy blocked"));
+    if (hooks_.authorize != nullptr) {
+        const Authorization auth = hooks_.authorize(*descriptor);
+        if (!auth.allowed()) {
+            // The policy's own words, not a generic label: the caller shows this
+            // line, and "Blue Team mode active - leave via Device Policy" says
+            // something the word "blocked" does not.
+            return finish(result(FeatureResultCode::Blocked, auth.detail));
+        }
+    } else if (!policyAllowsWithoutHook(*descriptor)) {
+        return finish(result(FeatureResultCode::Blocked, kNoAuthorizationHook));
     }
     if (!allowed(hooks_.routeSupported, *descriptor)) {
         return finish(result(FeatureResultCode::Unsupported, "route unavailable"));
@@ -66,9 +87,25 @@ FeatureResult FeatureRunner::start(FeatureId id) {
 }
 
 void FeatureRunner::tick() {
-    if (state_ == FeatureState::Running && feature_ != nullptr) {
-        feature_->tick();
+    if (state_ != FeatureState::Running || feature_ == nullptr) {
+        return;
     }
+    feature_->tick();
+    // Painted after tick(), so the frame that reaches the panel is the frame
+    // that was just computed and not the previous one. present() is called only
+    // when the feature actually painted: a sprite-backed canvas would otherwise
+    // push whatever stale pixels it still held.
+    if (context_.canvas != nullptr && feature_->draw(*context_.canvas)) {
+        context_.canvas->present();
+        ownsScreen_ = true;
+    } else {
+        ownsScreen_ = false;
+    }
+}
+
+bool FeatureRunner::exitRequested() const {
+    return state_ == FeatureState::Running && feature_ != nullptr &&
+           feature_->exitRequested();
 }
 
 void FeatureRunner::requestStop(StopReason reason) {
@@ -87,6 +124,7 @@ FeatureResult FeatureRunner::finish(FeatureResult resultValue) {
         }
         releaseFeature();
     }
+    ownsScreen_ = false;
     state_ = resultValue.code == FeatureResultCode::Completed ? FeatureState::Idle
                                                                : FeatureState::Failed;
     return resultValue;
@@ -96,4 +134,5 @@ void FeatureRunner::releaseFeature() {
     delete feature_;
     feature_ = nullptr;
     endCalled_ = false;
+    ownsScreen_ = false;
 }

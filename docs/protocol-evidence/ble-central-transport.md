@@ -212,3 +212,45 @@ build-reports/hostenv/Scripts/python.exe build-reports/syntax_env_check.py \
    `DISC_COMPLETE` 时补发。证据：`.../BLE/src/BLEScan.cpp`（NimBLE 分支）
    第 672-684 行逐条 `onResult`、第 700-706 行在扫描结束时补发未发过的。
    这一条决定了 `scanResults()` 的 drain 语义成立与否，属于**必须在真机上确认**的项。
+
+---
+
+## 6. 校验器自身的缺口（2026-10-16 补上）—— 它掩盖了一个真实缺陷
+
+做 `U2` 接线时发现 `esp32-cyd` 的 flag 列表里**没有 `ARDUINO`**。
+
+后果不是「报错难看」，而是**静默**：本文件主角 `src/drivers/Esp32BleCentral.cpp`
+全文由 `#if defined(ARDUINO) && (CONFIG_NIMBLE_ENABLED || CONFIG_BLUEDROID_ENABLED)`
+守卫，`ARDUINO` 未定义 ⟹ 整段被预处理掉 ⟹ `-fsyntax-only` 报 **PASS**。
+也就是说 §4 表格里那一行「`esp32-cyd` → `Esp32BleCentral.cpp` PASS」，
+当时**一行代码都没编译**。
+
+补上 define 之后立刻暴露的真实缺陷：
+
+```
+src/drivers/Esp32BleCentral.cpp:241:10: error: 'BLEDevice' has not been declared
+```
+
+**根因**：`include/drivers/Esp32BleCentral.h` 的 Arduino include 段里没有
+`<BLEDevice.h>`。NimBLE(3.3.6) 那条路径靠其它 BLE 头**传递引入**到 `BLEDevice`，
+所以 C5 编得过；Bluedroid 2.0.17 的 `libraries/BLE/src/BLEDevice.h` 把
+`class BLEDevice` 放在自己的 `#if defined(CONFIG_BLUEDROID_ENABLED)` 里，
+没有任何别的头会把它带进来。已修，并把这段因果写进头文件注释。
+
+补上的宏（值都取自装好的框架文件，不是推断）：
+
+| 宏 | 值 | 出处 |
+|---|---|---|
+| `ARDUINO` | `20017` | `package.json` = `3.20017.241212`，`esp_arduino_version.h` MAJOR 2 |
+| `ARDUINO_ARCH_ESP32` | — | 框架 `platform.txt` 的 `{build.arch}` |
+| `ESP32` | `ESP32` | `platform.txt` 的 `-DESP32=ESP32`；libdeps 的 RF24 用 `defined(ESP32)` 判断架构 |
+
+**这条教训比缺陷本身重要**：`-fsyntax-only` 无法区分「编过」和「被预处理掉了」。
+绿灯之前要先确认那个 TU 真的被编译。
+
+## 7. 结论修订（相对 §4）
+
+| 项 | §4 当时 | 现在 |
+|---|---|---|
+| `esp32-cyd` → `Esp32BleCentral.cpp` | PASS（**空**） | PASS（**真的编译了**，且修掉一个缺陷后） |
+| `esp32-cyd` 基线 | 2/2 因 assert/errno 假象而失败 | 2/2 PASS |

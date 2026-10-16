@@ -66,7 +66,33 @@ ENV = {
         mem="dio_qspi",
         variant="esp32",
         legacy=True,
-        extra_defines=["ARDUINO_ESP32_DEV", "BOARD_HAS_PSRAM=0"],
+        # ARDUINO and ARDUINO_ARCH_ESP32 are what PlatformIO's
+        # recipe.cpp.o.pattern fills in from `{runtime.ide.version}` and
+        # `{build.arch}`. This legacy framework's hand-built flag list does not
+        # carry them, so any TU that reaches a third-party library testing
+        # `#if ARDUINO >= 100` fails to find its own Arduino.h. That was the
+        # rc-switch/libdeps artifact: subconfig.h includes <RCSwitch.h>
+        # unconditionally, so LegacyApp.cpp -- the largest TU in the repository --
+        # was unverifiable in this env for a reason that had nothing to do with
+        # the code.
+        #
+        # 20017 = 2*10000 + 0*100 + 17, matching this framework's Arduino 2.0.17
+        # (`package.json` 3.20017.241212, `esp_arduino_version.h` MAJOR 2), and
+        # the same encoding the nm-cyd-c5 entry already uses for 3.3.6 (30306).
+        #
+        # ESP32=ESP32 is copied from this framework's own `platform.txt`, which
+        # passes exactly that (`-DESP32=ESP32`, one occurrence). It is not
+        # cosmetic: the libdeps RF24 library picks its architecture by testing
+        # `defined(ESP32)`, not `defined(ARDUINO_ARCH_ESP32)`, and without it takes
+        # the AVR branch and includes <avr/pgmspace.h>. RF24 is reached through
+        # nrf24_config.h from LegacyApp.inc.
+        extra_defines=[
+            "ARDUINO_ESP32_DEV",
+            "ARDUINO_ARCH_ESP32",
+            "ARDUINO=20017",
+            "ESP32=ESP32",
+            "BOARD_HAS_PSRAM=0",
+        ],
         fw=PKG / "framework-arduinoespressif32",
         libs=None,
         triplet="xtensa-esp32-elf",
@@ -124,6 +150,16 @@ DEFAULT_TARGETS = [
     # touched integration points
     "src/features/FeatureCatalog.cpp",
     "src/core/FeatureRegistry.cpp",
+    # U2: the wiring. The four core files are also host-compiled; they are here
+    # because the Arduino branch of PolicyService.cpp (the EEPROM backend) is
+    # *only* compiled here.
+    "src/core/FeatureRunner.cpp",
+    "src/core/PolicyService.cpp",
+    "src/core/AppKernel.cpp",
+    "src/features/FeatureMenuModel.cpp",
+    # U2: the Arduino-only runtime entry and the one TU that includes the menu.
+    "src/app/App.cpp",
+    "src/app/LegacyApp.cpp",
 ]
 
 TEST_TARGETS = [

@@ -68,13 +68,21 @@
 #include "drivers/IBleCentral.h"
 
 #ifdef ARDUINO
-// Pulled in explicitly rather than relied on transitively: the whole adapter is
-// conditioned on CONFIG_NIMBLE_ENABLED / CONFIG_BLUEDROID_ENABLED from here.
+// Every header is named here rather than relied on transitively. The whole
+// adapter is conditioned on CONFIG_NIMBLE_ENABLED / CONFIG_BLUEDROID_ENABLED,
+// which is why <sdkconfig.h> is explicit -- and <BLEDevice.h> is explicit for
+// the same class of reason: on the NimBLE side it arrives transitively through
+// the other BLE headers, and on the Bluedroid side it does not, because
+// 2.0.17's BLEDevice.h declares `class BLEDevice` inside its own
+// `#if defined(CONFIG_BLUEDROID_ENABLED)` and nothing else pulls it in. The
+// omission compiled on the C5 and failed on esp32-cyd the moment that
+// environment was actually able to compile this file at all.
 #include <sdkconfig.h>
 #include <Arduino.h>
 #include <BLEAddress.h>
 #include <BLEAdvertisedDevice.h>
 #include <BLEClient.h>
+#include <BLEDevice.h>
 #include <BLERemoteCharacteristic.h>
 #include <BLERemoteService.h>
 #include <BLEScan.h>

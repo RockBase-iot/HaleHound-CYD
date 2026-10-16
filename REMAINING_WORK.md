@@ -29,9 +29,10 @@
   B5 的**宿主侧收口**也已就位（`BleVisitAudit`），只剩真机采样（`X2`）。
 - **下一步最高 ROI**：① ~~新模型/驱动进 catalog~~ —— **见 §0.5：只进 catalog 不够，
   因为 runner 从来没有被启动过** → ① ~~`U1` 写 `Esp32BleCentral`~~ ✅（§0.6）→
-  **真·① `U2` 接线**（授权钩子 + 渲染钩子 + 菜单读 catalog；传输层已就位但**无人 new**）→
-  ② `X2` 上机跑一次真实 BLE 连接（地址反转 / live 扫描两条结论待真机复验）→
-  ③ `CardDumpFormat` 落 SD（打通 B1 回归）。
+  ~~`U2` 接线~~ ✅（§0.7：runner 已有真实调用点，policy 门已装，渲染钩子已通）→
+  **真·① `U3`**：`ChameleonUltra` 补 `FeatureId` + descriptor，让它能出现在菜单上 →
+  ② `U4`：`Pn532I2cDriver` 去留决策 → ③ `U5`：16 条空壳条目补实现或摘掉 →
+  ④ `X2` 上机跑一次真实 BLE 连接（地址反转 / live 扫描两条结论待真机复验）。
 
 ---
 
@@ -58,7 +59,7 @@
 | 新 ID | 事项 | 为什么紧急 | 级别 |
 |---|---|---|---|
 | **U1** | ~~写 `Esp32BleCentral`~~ ✅ **本轮完成**：`src/drivers/Esp32BleCentral.cpp`（`BLEClient` + `BLEScan` + `BLERemoteCharacteristic`）+ `docs/protocol-evidence/ble-central-transport.md`。`nm-cyd-c5` / `esp32-cyd` / 宿主 三处全绿 | —— | ✅ 完成 |
-| **U2** | **把架构接通**：`AppKernel` 用 `PolicyService` 填 `FeatureRunnerHooks`；给 `IFeature` 加渲染钩子；legacy 菜单改为读 catalog | A2+A3+A6 必须一起解：不接则「授权单点」是装饰、「菜单」是硬编码、「新屏」无处画 | **P0** |
+| **U2** | ~~**把架构接通**~~ ✅ **本轮完成**（§0.7）：`AppKernel` 用 `PolicyService` 填 `FeatureRunnerHooks`（`authorize` 改为返回 `Authorization`，缺钩子时对 offensive 失败关闭）；`IFeature::draw(IFeatureCanvas&)` + `exitRequested()` + `AppKernel::setCanvas()`；蓝牙子菜单由 `FeatureMenuModel` 从 catalog 生成并经 `runner.start(id)` 派发 | —— | ✅ 完成 |
 | **U3** | `ChameleonUltra` 补 `FeatureId` + descriptor | B2 连「注册」这步都没做 | **P0** |
 | **U4** | `Pn532I2cDriver` 去留决策（倾向删除） | 同一条 I2C 总线上两套驱动的可能性是真实故障面 | P1 |
 | **U5** | 16 条空壳条目：要么补实现、要么从 catalog 摘掉 | 「菜单里有、点了没反应」比「菜单里没有」更坏 | P1 |
@@ -106,6 +107,84 @@
   需要真机复验 ⟹ 记入 `X2`。
 - **`esp32-cyd` 分支只是「能编过」**：`writeValue()` 在 2.0.17 返回 `void`，
   实现里把它如实标为「链路活着即 Ok」，不是 NotPermitted —— 语义上弱于 C5 路径。
+
+---
+
+## 0.7 `U2` 落地：把架构接通（2026-10-16）
+
+**一句话**：A2/A3/A6 三条一起解了 —— runner 有了真实调用点，授权门装上了，
+新屏有了可画的地方；顺带发现 U1 那次「`esp32-cyd` PASS」对 `Esp32BleCentral.cpp`
+是**空的**（见下）。
+
+### 交付物
+
+| 文件 | 内容 |
+|---|---|
+| `include/core/IFeatureCanvas.h`（新） | 绘图缝。与 Arduino 无关，RGB565，`present()` 显式收帧 |
+| `src/app/TftFeatureCanvas.h`（新） | `TFT_eSPI` 侧直通适配器；`drawTextClipped()` 做「最长可容纳前缀 + `~`」 |
+| `include/core/IFeature.h` | `draw(IFeatureCanvas&)` 默认不画返回 false（单一覆写点，避免两个虚函数漂移）；`exitRequested()` |
+| `include/core/FeatureRunner.h` / `.cpp` | `FeatureContext::canvas`；`tick()` 在 tick 之后画并 `present()`；`ownsScreen()` / `exitRequested()`；`FeatureRunnerHooks::authorize` 由 `bool` 改为 `Authorization` |
+| `include/core/PolicyService.h` / `.cpp` | `globalSettingsStore()` / `globalPolicyService()`：EEPROM 后端从 `LegacyApp.inc` 搬进 core（布局不变，已配网设备状态不丢） |
+| `include/core/AppKernel.h` / `.cpp` | 装真实钩子；`globalAppKernel()` 单例 |
+| `include/features/FeatureMenuModel.h` / `src/features/FeatureMenuModel.cpp`（新） | 从 catalog 生成某 category 的菜单行 |
+| `src/app/LegacyApp.inc` | 蓝牙子菜单改为 catalog 驱动；10 个 `case` 收敛成 `runCatalogFeature(id)`；策略动作与「诚实上报屏」各自一处 |
+| `src/app/App.cpp` / `App.h` | 不再自持 kernel；装上 canvas 后交给 `globalAppKernel()` |
+| `test/native/support/FakeFeatureCanvas.h`（新） | 渲染缝的宿主替身：记录而非绘制，可断言输出 |
+| `test/native/test_feature_menu_model/`（新，8 用例） | 钉住「菜单 == catalog」：计数、顺序、每条可运行、标签是 catalog 自己的指针 |
+| `build-reports/syntax_env_check.py` | 补 `ARDUINO`/`ARDUINO_ARCH_ESP32`/`ESP32`；目标集加 6 个文件 |
+
+### 三个关键判断
+
+1. **`authorize` 必须返回 `Authorization` 而不是 `bool`。**
+   原钩子签名把「提示免责声明」和「Blue Team 拒绝」折叠成同一个 `Blocked`，
+   而这两者需要**两个不同的屏**——调用方只能自己再问一次 policy，于是变成第二个授权点。
+   现在 runner 把 `auth.detail` 当诚实上报行传出，`PolicyService` 仍是唯一权威。
+   菜单侧仍然先问一次 policy，但**只为了决定画哪个屏**；runner 会再问一次决定，
+   所以「忘了预检」的代价是画错屏，而不是放行。
+2. **缺钩子必须失败关闭。** 原来 `AppKernel` 传 `{}`，而 `allowed()` 把空回调当放行 ⟹
+   catalog 里每一条 offensive 都绕过了 `PolicyService`。现在缺 `authorize` 时
+   Offensive/SensitiveData 直接 `Blocked`，Passive/Defensive 仍可跑（与
+   `legacyAllowsOffensive` 同一套不对称）。
+3. **渲染钩子是一个覆写点，不是一个 `drawsOwnScreen()` + `draw()` 对。**
+   两个虚函数就是一个要保持同步的不变量，而漂移的后果是「声称拥有屏幕但从不绘制」。
+
+### ⚠️ 顺带发现：U1 的 `esp32-cyd` 证据对该文件是**空的**
+
+`esp32-cyd` 的 flag 列表里**没有 `ARDUINO`**。`Esp32BleCentral.cpp` 全文由
+`#ifdef ARDUINO` 守卫，所以它在那里**整段被预处理掉**却报 PASS —— 一次「绿」的
+翻译单元其实一行都没编译。补上 define 后立刻暴露一个真实缺陷：
+**头文件缺 `#include <BLEDevice.h>`**（NimBLE 侧靠其它 BLE 头传递引入，Bluedroid
+2.0.17 的 `BLEDevice.h` 只在自己的 `#if defined(CONFIG_BLUEDROID_ENABLED)` 里声明
+`BLEDevice`，传不过来）。已修，并写进头文件注释。
+
+**教训**：检查器报 PASS 之前，先确认那个 TU 真的被编译了。已写进 skill。
+
+### 验证（真 toolchain，非推断）
+
+| 目标 | 命令 | 结果 |
+|---|---|---|
+| `nm-cyd-c5`（C5 / 3.3.6 / NimBLE） | `syntax_env_check.py --env nm-cyd-c5` | **19/19 PASS** |
+| `esp32-cyd`（ESP32 / 2.0.17 / Bluedroid） | `syntax_env_check.py --env esp32-cyd` | **19/19 PASS**（`ARDUINO` 修好后为该文件首次真正编译） |
+| 基线（未改动文件）× 2 env | `--baseline` | **2/2** × 2 |
+| 宿主全量 | `run_host_tests.py` | **49/49 套件 / 446 用例通过** |
+
+### 仍未做 / 已知后果（不要读成「已完成」）
+
+- **其余 8 个子菜单仍用手维护的数组**（WiFi / 2.4GHz / SubGHz / RFID / Jam Detect /
+  SIGINT / Tools / Setting）。它们与 catalog 的漂移**依然存在**，只是蓝牙这一支不再漂移。
+  机械结构已经铺好，`FeatureMenuModel` 是通用的。
+- **蓝牙子菜单行数 10 → 15，竖屏行高 25 → 16 px**。用 `MenuLayout` 实测：
+  `240x320` 下 15 行仍 `valid=1`、不重叠（末行 bottom 310/320）；横屏 `320x240`
+  走两列、8 行、行高 23 px。**可读性是真实退化**，需要分页/滚动（照 `GattTreeView`
+  的分页做法），这是一件独立的事。
+- **`routeSupported` / `probePeripheral` / `preflightResources` 三个钩子仍为 null**：
+  仓库里还没有路由模型、外设探测与资源经纪人接到运行时。空钩子按注释是「没有意见」，
+  不是「放行」。
+- **canvas 只被接线，还没有任何 feature 覆写 `draw()`**：`TftFeatureCanvas` 是真的，
+  但第一个真正自己画屏的 feature（GATT 树 / 槽位表）还没写。`FakeFeatureCanvas`
+  已经把宿主侧的断言路铺好了。
+- **`U3` 仍然挡路**：`ChameleonUltraModel` 没有 `FeatureId`，所以它**不会**出现在蓝牙菜单上
+  —— 菜单现在读 catalog，catalog 里没有它就等于没有它。
 
 ---
 
