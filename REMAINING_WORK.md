@@ -2,9 +2,9 @@
 
 | 项 | 值 |
 |---|---|
-| 快照时间 | 2026-10-15 16:45 GMT+8 |
+| 快照时间 | 2026-10-16 11:05 GMT+8 |
 | 分支 | `nm-cyd-c5` |
-| 快照依据 | 工作树全量宿主回归 `40/40` 套件通过（`ziglang` clang 21，76 个共享对象）；7 个新 TU 经真实 C5 工具链 `-fsyntax-only` 通过 |
+| 快照依据 | 工作树全量宿主回归 `48/48` 套件通过（`ziglang` clang 21）；7 个新 TU 经真实 C5 工具链 `-fsyntax-only` 通过 |
 | 上游基线 | v4.0（见 `docs/upstream-analysis/RELEASE_BRIEF_zh.md`） |
 | 主计划 | `DEVELOPMENT_PLAN.md` 阶段 5–9 |
 
@@ -23,6 +23,10 @@
 - **但 UI 与接线仍是孤岛**：13 个模型 **加上** 本次 5 组驱动文件全部没有注册进
   `FeatureCatalog` —— 无 `FeatureId`、无生命周期工厂、无菜单入口。当前状态是
   `Model Verified` + 部分 `Build Verified`，离 `Hardware Verified` 还差一层。
+- **BLE 传输层（B1–B3）本轮已补齐**：`SkeletonKeyClient` + `GattTreeView`、
+  `ChameleonFrame`（逐字节增量接收器）+ `ChameleonUltraClient`、`HidReaderClient`，
+  各配一套宿主测试；协议数字逐条对过固件源码，记入 `docs/protocol-evidence/chameleon-ultra.md`。
+  B5 的**宿主侧收口**也已就位（`BleVisitAudit`），只剩真机采样（`X2`）。
 - **下一步最高 ROI**：① 新模型/驱动进 catalog（低成本、立刻可用）→ ② `CardDumpFormat` 落 SD
   （打通 B1 回归）→ ③ RFID 七屏 UI（R2 —— 驱动前置已经就位，可以直接开工）。
 
@@ -33,7 +37,7 @@
 | ID | 事项 | 为什么阻塞 | 需要 BOSS 做什么 |
 |---|---|---|---|
 | **X1** | 沙箱外跑一次 `pio run` | 本沙箱守卫「每轮 50 文件删除预算」被 PlatformIO 包管理器结构性撞穿，`pio run` 在产出 `.bin` 前必失败（见 `DEVELOPMENT_PLAN.md` §5.4） | 在沙箱外执行 `pio run -e nm-cyd-c5 -e esp32-cyd`，或批准一次性提升删除预算。**本轮 7 个新 TU 已用真实 C5 工具链 `-fsyntax-only` 验证 7/7 通过（不链接、不跑 `extra_scripts`）** |
-| **X2** | 两台实机上机跑 B1–B4 | `HeapBaseline` / `FeatureSwitchLedger` 只有模型自测数据，没有真实采样 | 提供 nm-cyd-c5 + esp32-cyd 实机各一台 + SD 卡 + 拨码可切换 |
+| **X2** | 两台实机上机跑 B1–B4 | `HeapBaseline` / `FeatureSwitchLedger` 只有模型自测数据，没有真实采样。**宿主侧桥接已就位**（`BleVisitAudit`：把 `IBleCentral` 的实时资源读数与 heap 采样送进两个模型），缺的只是板子上的读数 | 提供 nm-cyd-c5 + esp32-cyd 实机各一台 + SD 卡 + 拨码可切换 |
 | **X3** | HID reader 服务 UUID 证据 | `0xFD40`(Signo) / `0xFFF0`(iCLASS SE) 映射无权威来源；`0xFFF0` 在 SIG 清单里是 Triones/ELK-BLEDOM 厂商服务，跨语境撞号 | 提供设备实测广告包、或厂商文档、或明确接受「凭经验映射」并注明来源等级 |
 | **X4** | 魔术卡后门证据 | 写 UID 后门命令未公开验证，已按证据门标 `UNSUPPORTED`（`docs/protocol-evidence/mifare-classic.md` §4） | 提供可复现的魔术卡型号 + 后门流程，否则保持 `UNSUPPORTED` |
 | **X5** | 其它密钥表来源 | KeeLoq 厂商密钥、iCLASS Corporate 1000 主密钥表 | 提供来源或明确不做 |
@@ -99,11 +103,11 @@ Pn532Protocol         主机帧编解码 + Table 13 状态码     ← test_pn532
 
 | ID | 事项 | 现状 | 还缺什么 | 依赖 | 级别 |
 |---|---|---|---|---|---|
-| **B1** | SkeletonKey BLE 传输层 | `SkeletonKeyModel` + `GattNameTable`（165 项，已对齐 Bluetooth SIG 机读清单）就位（12 例测试） | BLE client：连接/服务发现/特征读写/notify 订阅 + GATT 树→屏渲染 | BLE client 实现 | P1 |
-| **B2** | Chameleon Ultra BLE 传输 | `ChameleonUltraModel` 就位（10 例测试，含 `N of 16` 诚实报告） | BLE 连接 + 8 槽读写 + 自动连接策略 + 设备地址解析 | BLE client | P1 |
-| **B3** | HID reader tooling | `HidReaderModel` 就位（7 例测试） | 被动扫描 + 连接诊断；**UUID 映射先补证据**（`X3`） | X3 + BLE client | P1 |
+| **B1** | SkeletonKey BLE 传输层 | ✅ **client 已就位**：`SkeletonKeyClient`（连接/发现/读写/notify）+ `GattTreeView`（扁平行列表、展开折叠、分页且光标跟随页）；`SkeletonKeyModel` + `GattNameTable`（165 项，对齐 SIG 机读清单）在其下 | 屏接线（`FeatureCatalog` 注册，见 `W1`）+ 真机上机（`X2`） | W1 + X2 | P1 |
+| **B2** | Chameleon Ultra BLE 传输 | ✅ **client 已就位**：`ChameleonFrame`（帧编解码 + 逐字节增量接收器）+ `ChameleonUltraClient`（8 槽读写、自动连接、设备地址解析、昵称、启用槽）；`ChameleonUltraModel` 在其下。协议帧/命令号/槽类型/NUS UUID 全部逐条对过固件源码，记入 `docs/protocol-evidence/chameleon-ultra.md` | STATUS 码表（只知 `0x0000`）+ 真机上机（`X2`） | X2 | P1 |
+| **B3** | HID reader tooling | ✅ **client 已就位**：`HidReaderClient`（被动扫描 + 连接诊断 + 分连接批次的扫描 + 诚实事务报告）；写目标按 GATT 属性位选，不假设回复特征。UUID 映射仍 `mappingVerified=false`，`0xFFF0` 另标 `uuidCollidesWithAnotherRole`（SIG 清单里它是 Triones/ELK-BLEDOM LED 服务） | `X3` 证据 + 屏接线；opcode 由调用方提供（本仓库不发明协议） | X3 + W1 | P1 |
 | **B4** | BLE 名称库单一化 | `GattNameTable`（SIG 原文，可宿主测试）与 `include/ble_database.h`（Nordic 来源，名称截断到 14 字符，依赖 `Arduino.h`，只被 `src/legacy/bluetooth_attacks.cpp` 用）**并存** | 决定是否让 legacy 表委托新表（独立迁移，未盲改） | **BOSS 决策** | P1 |
-| **B5** | BLE 内存/白屏收口 | `FeatureSwitchLedger` + `test_ble_switch_ledger` 全绿；`replay()` 对 120 种排列返回 `Clean` | **真机** B2 用例 + heap 采样 | `X2` | **P0** |
+| **B5** | BLE 内存/白屏收口 | ✅ **宿主侧已收口**：`BleVisitAudit` 把 `IBleCentral` 的实时资源读数（running/connected/scanning/subscriptions + begin/end 配对）桥进 `FeatureProfile.resourcesHeldAfterEnd`，`profileFromMeasurement()` 让「声明的 0」被实测取代，`assessBleVisit()` 复用 `HeapBaselineCheck` 的口径；三个 client 的 `end()` 是否真的交还控制器/订阅由测试实测。`FeatureSwitchLedger` + `test_ble_switch_ledger` 全绿，`replay()` 对 120 种排列 `Clean` | **真机** B2 用例 + heap 采样（`IBleHeapProbe` 的设备实现只差一个 `ESP.getFreeHeap()`） | `X2` | **P0** |
 
 ---
 
