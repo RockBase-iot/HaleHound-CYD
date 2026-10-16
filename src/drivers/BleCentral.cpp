@@ -60,6 +60,16 @@ BleUuid BleUuid::fromShort(uint16_t value) {
     return uuid;
 }
 
+BleUuid BleUuid::fromLong(uint32_t value) {
+    BleUuid uuid;
+    uuid.bytes[0] = static_cast<uint8_t>((value >> 24) & 0xFF);
+    uuid.bytes[1] = static_cast<uint8_t>((value >> 16) & 0xFF);
+    uuid.bytes[2] = static_cast<uint8_t>((value >> 8) & 0xFF);
+    uuid.bytes[3] = static_cast<uint8_t>(value & 0xFF);
+    std::memcpy(uuid.bytes.data() + 4, kBaseTrailing, sizeof(kBaseTrailing));
+    return uuid;
+}
+
 BleUuid BleUuid::fromBytes(const uint8_t* sixteen) {
     BleUuid uuid;
     if (sixteen != nullptr) {

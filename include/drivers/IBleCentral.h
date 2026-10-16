@@ -68,6 +68,16 @@ struct BleUuid {
 
     // Expands a SIG short UUID to its base form.
     static BleUuid fromShort(uint16_t value);
+    // Expands a 32-bit UUID the way the Bluetooth spec does: the value goes in
+    // the *first* field, giving `xxxxxxxx-0000-1000-8000-00805f9b34fb`.
+    //
+    // Deliberately not folded into the short form. A 32-bit UUID and a 16-bit
+    // UUID both start with zero-ish bytes, so treating the 32-bit one as "the
+    // same shape, wider" would make `isShort()` true for it and hand a caller a
+    // 16-bit name that belongs to a different UUID. The expansion below stays
+    // `isShort() == false`, so a caller prints the whole value -- unknown stays
+    // unknown, which is the rule the rest of this layer follows.
+    static BleUuid fromLong(uint32_t value);
     // From 16 bytes already in printed (big-endian) order.
     static BleUuid fromBytes(const uint8_t* sixteen);
 

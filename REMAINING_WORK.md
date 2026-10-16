@@ -2,7 +2,7 @@
 
 | 项 | 值 |
 |---|---|
-| 快照时间 | 2026-10-16 11:20 GMT+8 |
+| 快照时间 | 2026-10-16 14:21 GMT+8 |
 | 分支 | `nm-cyd-c5` |
 | 快照依据 | 工作树全量宿主回归 `48/48` 套件通过（`ziglang` clang 21）+ **运行时可达性只读走查**（见 §0.5，10 条硬证据） |
 | 上游基线 | v4.0（见 `docs/upstream-analysis/RELEASE_BRIEF_zh.md`） |
@@ -28,8 +28,10 @@
   各配一套宿主测试；协议数字逐条对过固件源码，记入 `docs/protocol-evidence/chameleon-ultra.md`。
   B5 的**宿主侧收口**也已就位（`BleVisitAudit`），只剩真机采样（`X2`）。
 - **下一步最高 ROI**：① ~~新模型/驱动进 catalog~~ —— **见 §0.5：只进 catalog 不够，
-  因为 runner 从来没有被启动过** → 真·① `U1` 写 `Esp32BleCentral` → 真·② `U2` 接线
-  （授权钩子 + 渲染钩子 + 菜单读 catalog）→ ③ `CardDumpFormat` 落 SD（打通 B1 回归）。
+  因为 runner 从来没有被启动过** → ① ~~`U1` 写 `Esp32BleCentral`~~ ✅（§0.6）→
+  **真·① `U2` 接线**（授权钩子 + 渲染钩子 + 菜单读 catalog；传输层已就位但**无人 new**）→
+  ② `X2` 上机跑一次真实 BLE 连接（地址反转 / live 扫描两条结论待真机复验）→
+  ③ `CardDumpFormat` 落 SD（打通 B1 回归）。
 
 ---
 
@@ -40,7 +42,7 @@
 
 | # | 事实 | 证据 |
 |---|---|---|
-| **A1** | **`Esp32BleCentral` 不存在** | `IBleCentral`（279 行、17 个纯虚函数）只有测试用的 `FakeBleCentral`；`src/drivers/` 无任何 Arduino/Bluedroid 实现。**B1/B2/B3 三个 client 没有物理底座** |
+| **A1** | ~~**`Esp32BleCentral` 不存在**~~ → **本轮已落地**（见 §0.6） | `include/drivers/Esp32BleCentral.h` + `src/drivers/Esp32BleCentral.cpp`：`BLEClient` + `BLEScan` + `BLERemoteCharacteristic`，覆盖 **NimBLE(C5) / Bluedroid 3.x / Bluedroid 2.0.17** 三种组合。**注意：它还没有被任何人实例化** —— B1/B2/B3 的底座写好了，但接线属于 `U2` |
 | **A2** | **`FeatureRunner::start()` 全仓无调用点** | `grep -rn 'runner_.start\|\.start(FeatureId' src/` 为空（`PolicyService.cpp:76` 只构造了一个字面 descriptor）⟹ **catalog 全部 76 条运行时不可达** |
 | **A3** | **`AppKernel` 给 runner 传的是空钩子 `{}`** | `src/core/AppKernel.cpp:14`。即便有人调 `start()`：`FeatureRunner.cpp:8` 的 `allowed()` 把**空回调视为放行**，于是 `PolicyService` 授权门、外设探测、资源预检全部被短路 —— **授权单点形同不存在** |
 | **A4** | **`LegacyApp.inc`（4661 行）是唯一的运行时** | 它 grep 不到 `runner` / `featureCatalog` / `FeatureId`；全部功能直接调旧单体（`WifiScan::setup()` …） |
@@ -55,11 +57,55 @@
 
 | 新 ID | 事项 | 为什么紧急 | 级别 |
 |---|---|---|---|
-| **U1** | 写 `Esp32BleCentral`（Arduino/Bluedroid：`BLEClient` + `BLEScan` + `BLERemoteCharacteristic`；仓库已有 `scripts/patch_ble_keyboard_arduino3.py` 这类 3.x API 补丁先例） | B1/B2/B3 三个 client 全部悬空，不写就永远停在 `Model Verified` | **P0** |
+| **U1** | ~~写 `Esp32BleCentral`~~ ✅ **本轮完成**：`src/drivers/Esp32BleCentral.cpp`（`BLEClient` + `BLEScan` + `BLERemoteCharacteristic`）+ `docs/protocol-evidence/ble-central-transport.md`。`nm-cyd-c5` / `esp32-cyd` / 宿主 三处全绿 | —— | ✅ 完成 |
 | **U2** | **把架构接通**：`AppKernel` 用 `PolicyService` 填 `FeatureRunnerHooks`；给 `IFeature` 加渲染钩子；legacy 菜单改为读 catalog | A2+A3+A6 必须一起解：不接则「授权单点」是装饰、「菜单」是硬编码、「新屏」无处画 | **P0** |
 | **U3** | `ChameleonUltra` 补 `FeatureId` + descriptor | B2 连「注册」这步都没做 | **P0** |
 | **U4** | `Pn532I2cDriver` 去留决策（倾向删除） | 同一条 I2C 总线上两套驱动的可能性是真实故障面 | P1 |
 | **U5** | 16 条空壳条目：要么补实现、要么从 catalog 摘掉 | 「菜单里有、点了没反应」比「菜单里没有」更坏 | P1 |
+
+---
+
+## 0.6 `U1` 落地：`Esp32BleCentral`（2026-10-16）
+
+**交付物**
+
+| 文件 | 内容 |
+|---|---|
+| `include/drivers/Esp32BleCentral.h` | `IBleCentral` 的实现声明；单文件 `#ifdef ARDUINO` 守卫，与 `WirePn532Link` 同构 |
+| `src/drivers/Esp32BleCentral.cpp` | `BLEDevice` / `BLEScan` / `BLEClient` / `BLERemoteCharacteristic` 全量实现 + 三方组合的 normalise 层 |
+| `build-reports/syntax_env_check.py` | 加了 `Esp32BleCentral.cpp` / `BleCentral.cpp` 到默认集；**修好了 `esp32-cyd` 那个「基线也 FAIL」的假象** |
+| `docs/protocol-evidence/ble-central-transport.md` | 两条 host 差异的逐条一手证据 + 两个静默陷阱 |
+
+**关键发现（推翻了原设计前提）**
+
+1. **主板 `nm-cyd-c5` 是 NimBLE，不是 Bluedroid。**
+   原 header 理由「legacy 用 Bluedroid 所以 transport 必须 Bluedroid」**是错的**：
+   legacy 用的是 `Arduino BLE` 这个**库**，库在 3.x 里两套 host 都支持；而 C5 的 lib
+   包本身就是 NimBLE 构建的，**没有 Bluedroid 可选项**。判定 BT host 只能读 `sdkconfig.h`。
+2. **地址字节序是唯一「编得过但必错」的地方。**
+   NimBLE 的 `BLEAddress::getNative()` 是 **LSB first**，seam 要打印序 ⟹
+   `scanResults()` 必须反转。直拷 `memcpy` 会把每个地址六个字节全交换。
+   （`connect()` 方向两个 host 都吃打印序，不用动。）
+3. **宏参数名撞结构体成员名**：`#define HH_UUID_LEN(u) ((u).u.type)` 会把成员名
+   `.u` 一起替换掉。参数改名即可。
+
+**验证（真 toolchain，非推断）**
+
+| 目标 | 命令 | 结果 |
+|---|---|---|
+| `nm-cyd-c5`（C5 / 3.3.6 / **NimBLE**） | `syntax_env_check.py --env nm-cyd-c5` | **13/13 PASS** |
+| `esp32-cyd`（ESP32 / 2.0.17 / **Bluedroid**） | `syntax_env_check.py --env esp32-cyd` | **13/13 PASS** |
+| 宿主 `!ARDUINO` 分支 | `ziglang c++ -std=gnu++17 -Iinclude -c` | PASS |
+| `--baseline`（未改动文件） | 两个 env | PASS（`esp32-cyd` 本轮从「必 FAIL」修成 PASS） |
+
+**仍未验证 / 未做（不要读成「已可用」）**
+
+- **没有任何人 `new Esp32BleCentral`。** 传输层就位但运行时依旧不可达 —— 这是 `U2` 的工作。
+- **未链接、未上机**：`-fsyntax-only` 只证编译。地址反转、NimBLE live 扫描
+  （`wantDuplicates=true` 才会逐条实时回调，否则只在 `DISC_COMPLETE` 补发）两条结论
+  需要真机复验 ⟹ 记入 `X2`。
+- **`esp32-cyd` 分支只是「能编过」**：`writeValue()` 在 2.0.17 返回 `void`，
+  实现里把它如实标为「链路活着即 Ok」，不是 NotPermitted —— 语义上弱于 C5 路径。
 
 ---
 

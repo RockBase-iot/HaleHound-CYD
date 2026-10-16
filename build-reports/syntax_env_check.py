@@ -69,6 +69,7 @@ ENV = {
         extra_defines=["ARDUINO_ESP32_DEV", "BOARD_HAS_PSRAM=0"],
         fw=PKG / "framework-arduinoespressif32",
         libs=None,
+        triplet="xtensa-esp32-elf",
         gxx=Path.home() / ".platformio/packages/toolchain-xtensa-esp32/bin/xtensa-esp32-elf-g++.exe",
     ),
 }
@@ -117,6 +118,9 @@ DEFAULT_TARGETS = [
     "src/features/ble/SkeletonKeyModel.cpp",
     "src/features/ble/HidReaderModel.cpp",
     "src/features/tuning/RadioTuningModel.cpp",
+    # the Arduino-dependent transport -- the one file the host suites cannot run
+    "src/drivers/Esp32BleCentral.cpp",
+    "src/drivers/BleCentral.cpp",
     # touched integration points
     "src/features/FeatureCatalog.cpp",
     "src/core/FeatureRegistry.cpp",
@@ -132,9 +136,10 @@ TEST_TARGETS = [
 
 # Files this branch never touched. If these fail the same way as the changed
 # files, the failure is a hand-built-include-list artifact, not a regression.
-# (Measured on the esp32-cyd legacy layout: the pre-split framework's
-# newlib/platform_include/{assert,errno}.h shadow the toolchain's own, so
-# `'assert' was not declared` shows up for every TU, touched or not.)
+# (That was the esp32-cyd legacy layout: the pre-split framework's
+# newlib/platform_include/{assert,errno}.h shadowed the toolchain's own, so
+# `'assert' was not declared` showed up for every TU, touched or not. `prepare()`
+# now forces the toolchain's copies in first, so this list is a regression check.)
 BASELINE_TARGETS = [
     "src/features/rfid/NtagModel.cpp",
     "src/core/FeatureRegistry.cpp",
@@ -231,6 +236,18 @@ def prepare(env: str, std: str | None, targets: list[str]):
         includes = [sdk_inc, fw / "cores" / "esp32", fw / "variants" / cfg["variant"]]
         includes.append(sdk_inc.parent / cfg["mem"] / "include")  # sdkconfig.h
         includes += _walk_dirs(sdk_inc)
+        # The pre-split framework ships `newlib/platform_include/{assert,errno}.h`
+        # which shadow the toolchain's own, and `soc/spinlock.h` (reached through
+        # FreeRTOS) calls `assert()` without including <assert.h> at all -- the real
+        # build survives that only because of its own forced includes. Re-asserting
+        # the toolchain copies first, and putting its include dir ahead of every
+        # walked SDK dir, turns this env from "fails for every TU, touched or not"
+        # into a check that can actually separate a regression from the artifact.
+        # Verified: an untouched baseline file goes from FAIL to PASS with this on.
+        sysinc = gxx.parent.parent / cfg["triplet"] / "include"
+        if sysinc.is_dir():
+            cpp = [f"-I{sysinc}", f"-include{sysinc}/assert.h",
+                   f"-include{sysinc}/errno.h"] + cpp
         defines = [f"-D{d}" for d in PROJECT_DEFINES if not d.startswith(DROP_PREFIX)]
         defines += [f"-D{d}" for d in cfg["extra_defines"]]
     else:
