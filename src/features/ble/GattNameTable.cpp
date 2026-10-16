@@ -52,8 +52,39 @@ constexpr NamedUuid kServices[] = {
     {0x1828, "Mesh Proxy"},
     {0x1829, "Reconnection Configuration"},
     {0x183A, "Insulin Delivery"},
+    {0x183B, "Binary Sensor"},
+    {0x183C, "Emergency Configuration"},
+    {0x183E, "Physical Activity Monitor"},
+    {0x1843, "Audio Input Control"},
+    {0x1844, "Volume Control"},
+    {0x1845, "Volume Offset Control"},
+    {0x1846, "Coordinated Set Identification"},
+    {0x1847, "Device Time"},
+    {0x1848, "Media Control"},
+    {0x1849, "Generic Media Control"},
+    {0x184A, "Constant Tone Extension"},
+    {0x184B, "Telephone Bearer"},
+    {0x184C, "Generic Telephone Bearer"},
+    {0x184D, "Microphone Control"},
+    {0x184E, "Audio Stream Control"},
+    {0x184F, "Broadcast Audio Scan"},
+    {0x1850, "Published Audio Capabilities"},
+    {0x1851, "Basic Audio Announcement"},
+    {0x1852, "Broadcast Audio Announcement"},
+    {0x1853, "Common Audio"},
+    {0x1854, "Hearing Access"},
+    {0x1855, "Telephony and Media Audio"},
+    {0x1856, "Public Broadcast Announcement"},
+    {0x1857, "Electronic Shelf Label"},
+    {0x1858, "Gaming Audio"},
+    {0x1859, "Mesh Proxy Solicitation"},
+    {0xFD0D, "Blecon service (member)"},
     {0xFD6F, "Exposure Notification Service (member)"},
+    {0xFE0F, "Philips Hue service (member)"},
+    {0xFE2C, "Fast Pair service (member)"},
     {0xFE59, "Nordic Secure DFU Service (vendor)"},
+    {0xFEAA, "Eddystone beacon (member)"},
+    {0xFEBB, "Adafruit service (member)"},
     {0xFFE0, "HM-10 / UART bridge (vendor)"},
     {0xFFF0, "Triones / ELK-BLEDOM LED service (vendor)"},
 };
@@ -356,6 +387,20 @@ uint16_t GattNameTable::characteristicCount() {
 
 uint16_t GattNameTable::descriptorCount() {
     return static_cast<uint16_t>(sizeof(kDescriptors) / sizeof(kDescriptors[0]));
+}
+
+uint16_t GattNameTable::serviceUuidAt(uint16_t index) {
+    if (index >= serviceCount()) {
+        return 0;
+    }
+    return kServices[index].uuid;
+}
+
+const char* GattNameTable::serviceNameAt(uint16_t index) {
+    if (index >= serviceCount()) {
+        return "";
+    }
+    return kServices[index].name;
 }
 
 bool GattNameTable::tablesAreSorted() {

@@ -14,6 +14,10 @@
 #include <Arduino.h>
 #include <pgmspace.h>
 
+// Service names resolve through GattNameTable via BleLegacyDisplay. Keeping the
+// clamp in a pure TU is what makes it testable; this header cannot be.
+#include "features/ble/BleLegacyDisplay.h"
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECTION 1: BLUETOOTH COMPANY IDs (BT SIG Assigned Numbers)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -240,190 +244,25 @@ static const char* lookupCompanyName(uint16_t companyId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION 2: GATT SERVICE UUIDs (16-bit standard services only)
+// SECTION 2: GATT SERVICE UUIDs
 // ═══════════════════════════════════════════════════════════════════════════════
-// These are the 16-bit UUIDs from the Bluetooth SIG GATT specification.
-// Used to identify what a BLE device is advertising / offering.
-// 128-bit vendor UUIDs (Apple, Nordic, etc.) are NOT included here —
-// they require separate handling per-vendor.
-// Sorted by UUID for binary search.
-// ═══════════════════════════════════════════════════════════════════════════════
-
-struct BleServiceEntry {
-    uint16_t    uuid;
-    const char* name;
-};
-
-static const char PROGMEM _sn_generic_access[]   = "Generic Access";
-static const char PROGMEM _sn_generic_attr[]     = "Generic Attrib";
-static const char PROGMEM _sn_immediate_alert[]  = "Immediate Alert";
-static const char PROGMEM _sn_link_loss[]        = "Link Loss";
-static const char PROGMEM _sn_tx_power[]         = "Tx Power";
-static const char PROGMEM _sn_current_time[]     = "Current Time";
-static const char PROGMEM _sn_ref_time[]         = "Ref Time Update";
-static const char PROGMEM _sn_next_dst[]         = "Next DST Change";
-static const char PROGMEM _sn_glucose[]          = "Glucose";
-static const char PROGMEM _sn_health_thermo[]    = "Health Thermo";
-static const char PROGMEM _sn_device_info[]      = "Device Info";
-static const char PROGMEM _sn_heart_rate[]       = "Heart Rate";
-static const char PROGMEM _sn_phone_alert[]      = "Phone Alert";
-static const char PROGMEM _sn_battery[]          = "Battery";
-static const char PROGMEM _sn_blood_pressure[]   = "Blood Pressure";
-static const char PROGMEM _sn_alert_notif[]      = "Alert Notif";
-static const char PROGMEM _sn_hid[]              = "HID";
-static const char PROGMEM _sn_scan_params[]      = "Scan Params";
-static const char PROGMEM _sn_running[]          = "Running Speed";
-static const char PROGMEM _sn_automation[]        = "Automation IO";
-static const char PROGMEM _sn_cycling_speed[]    = "Cycling Speed";
-static const char PROGMEM _sn_cycling_power[]    = "Cycling Power";
-static const char PROGMEM _sn_location_nav[]     = "Location & Nav";
-static const char PROGMEM _sn_env_sensing[]      = "Env Sensing";
-static const char PROGMEM _sn_body_comp[]        = "Body Composit";
-static const char PROGMEM _sn_user_data[]        = "User Data";
-static const char PROGMEM _sn_weight_scale[]     = "Weight Scale";
-static const char PROGMEM _sn_bond_mgmt[]        = "Bond Mgmt";
-static const char PROGMEM _sn_cgm[]              = "Cont Glucose";
-static const char PROGMEM _sn_ip_support[]       = "IP Support";
-static const char PROGMEM _sn_indoor_pos[]       = "Indoor Position";
-static const char PROGMEM _sn_http_proxy[]       = "HTTP Proxy";
-static const char PROGMEM _sn_transport[]        = "Transport Disc";
-static const char PROGMEM _sn_obj_transfer[]     = "Object Transfer";
-static const char PROGMEM _sn_fitness[]          = "Fitness Machine";
-static const char PROGMEM _sn_mesh_prov[]        = "Mesh Provision";
-static const char PROGMEM _sn_mesh_proxy[]       = "Mesh Proxy";
-static const char PROGMEM _sn_reconnect[]        = "Reconnection";
-static const char PROGMEM _sn_insulin[]          = "Insulin Deliver";
-static const char PROGMEM _sn_binary_sensor[]    = "Binary Sensor";
-static const char PROGMEM _sn_emergency[]        = "Emergency Conf";
-static const char PROGMEM _sn_phys_activity[]    = "Physical Activ";
-static const char PROGMEM _sn_audio_input[]      = "Audio Input";
-static const char PROGMEM _sn_volume_ctrl[]      = "Volume Control";
-static const char PROGMEM _sn_vol_offset[]       = "Vol Offset";
-static const char PROGMEM _sn_coord_set[]        = "Coordinated Set";
-static const char PROGMEM _sn_device_time[]      = "Device Time";
-static const char PROGMEM _sn_media_ctrl[]       = "Media Control";
-static const char PROGMEM _sn_gen_media[]        = "Gen Media Ctrl";
-static const char PROGMEM _sn_cte[]              = "Const Tone Ext";
-static const char PROGMEM _sn_telephone[]        = "Telephone Bear";
-static const char PROGMEM _sn_gen_telephone[]    = "Gen Telephone";
-static const char PROGMEM _sn_mic_ctrl[]         = "Microphone Ctrl";
-static const char PROGMEM _sn_audio_stream[]     = "Audio Stream";
-static const char PROGMEM _sn_broadcast_scan[]   = "Broadcast Scan";
-static const char PROGMEM _sn_pub_audio_cap[]    = "Pub Audio Cap";
-static const char PROGMEM _sn_basic_audio[]      = "Basic Audio";
-static const char PROGMEM _sn_broadcast_audio[]  = "Broadcast Audio";
-static const char PROGMEM _sn_common_audio[]     = "Common Audio";
-static const char PROGMEM _sn_hearing_access[]   = "Hearing Access";
-static const char PROGMEM _sn_tmap[]             = "Telephony Media";
-static const char PROGMEM _sn_pub_broadcast[]    = "Pub Broadcast";
-static const char PROGMEM _sn_esl[]              = "Elec Shelf Lbl";
-static const char PROGMEM _sn_gaming_audio[]     = "Gaming Audio";
-static const char PROGMEM _sn_mesh_solicit[]     = "Mesh Proxy Sol";
-
-// Well-known vendor 16-bit service UUIDs (not GATT standard but very common)
-static const char PROGMEM _sn_eddystone[]        = "Eddystone";
-static const char PROGMEM _sn_fast_pair[]        = "Fast Pair";
-static const char PROGMEM _sn_exposure_notif[]   = "Exposure Notif";
-static const char PROGMEM _sn_dfu_secure[]       = "Secure DFU";
-static const char PROGMEM _sn_philips_hue[]      = "Philips Hue";
-static const char PROGMEM _sn_adafruit_ft[]      = "Adafruit FT";
-static const char PROGMEM _sn_blecon[]           = "Blecon";
-
-// MUST be sorted by UUID for binary search
-static const BleServiceEntry PROGMEM bleServiceDB[] = {
-    { 0x1800, _sn_generic_access   },
-    { 0x1801, _sn_generic_attr     },
-    { 0x1802, _sn_immediate_alert  },
-    { 0x1803, _sn_link_loss        },
-    { 0x1804, _sn_tx_power         },
-    { 0x1805, _sn_current_time     },
-    { 0x1806, _sn_ref_time         },
-    { 0x1807, _sn_next_dst         },
-    { 0x1808, _sn_glucose          },
-    { 0x1809, _sn_health_thermo    },
-    { 0x180A, _sn_device_info      },
-    { 0x180D, _sn_heart_rate       },
-    { 0x180E, _sn_phone_alert      },
-    { 0x180F, _sn_battery          },
-    { 0x1810, _sn_blood_pressure   },
-    { 0x1811, _sn_alert_notif      },
-    { 0x1812, _sn_hid              },
-    { 0x1813, _sn_scan_params      },
-    { 0x1814, _sn_running          },
-    { 0x1815, _sn_automation       },
-    { 0x1816, _sn_cycling_speed    },
-    { 0x1818, _sn_cycling_power    },
-    { 0x1819, _sn_location_nav     },
-    { 0x181A, _sn_env_sensing      },
-    { 0x181B, _sn_body_comp        },
-    { 0x181C, _sn_user_data        },
-    { 0x181D, _sn_weight_scale     },
-    { 0x181E, _sn_bond_mgmt        },
-    { 0x181F, _sn_cgm              },
-    { 0x1820, _sn_ip_support       },
-    { 0x1821, _sn_indoor_pos       },
-    { 0x1822, _sn_http_proxy       },
-    { 0x1823, _sn_http_proxy       },  // Pulse Oximeter uses same slot
-    { 0x1824, _sn_transport        },
-    { 0x1825, _sn_obj_transfer     },
-    { 0x1826, _sn_fitness          },
-    { 0x1827, _sn_mesh_prov        },
-    { 0x1828, _sn_mesh_proxy       },
-    { 0x1829, _sn_reconnect        },
-    { 0x183A, _sn_insulin          },
-    { 0x183B, _sn_binary_sensor    },
-    { 0x183C, _sn_emergency        },
-    { 0x183E, _sn_phys_activity    },
-    { 0x1843, _sn_audio_input      },
-    { 0x1844, _sn_volume_ctrl      },
-    { 0x1845, _sn_vol_offset       },
-    { 0x1846, _sn_coord_set        },
-    { 0x1847, _sn_device_time      },
-    { 0x1848, _sn_media_ctrl       },
-    { 0x1849, _sn_gen_media        },
-    { 0x184A, _sn_cte              },
-    { 0x184B, _sn_telephone        },
-    { 0x184C, _sn_gen_telephone    },
-    { 0x184D, _sn_mic_ctrl         },
-    { 0x184E, _sn_audio_stream     },
-    { 0x184F, _sn_broadcast_scan   },
-    { 0x1850, _sn_pub_audio_cap    },
-    { 0x1851, _sn_basic_audio      },
-    { 0x1852, _sn_broadcast_audio  },
-    { 0x1853, _sn_common_audio     },
-    { 0x1854, _sn_hearing_access   },
-    { 0x1855, _sn_tmap             },
-    { 0x1856, _sn_pub_broadcast    },
-    { 0x1857, _sn_esl              },
-    { 0x1858, _sn_gaming_audio     },
-    { 0x1859, _sn_mesh_solicit     },
-    // Vendor 16-bit UUIDs (assigned by BT SIG to specific companies)
-    { 0xFD0D, _sn_blecon           },
-    { 0xFD6F, _sn_exposure_notif   },
-    { 0xFE0F, _sn_philips_hue     },
-    { 0xFE2C, _sn_fast_pair        },
-    { 0xFE59, _sn_dfu_secure       },
-    { 0xFEAA, _sn_eddystone        },
-    { 0xFEBB, _sn_adafruit_ft      },
-};
-
-static const int BLE_SERVICE_DB_SIZE = sizeof(bleServiceDB) / sizeof(bleServiceDB[0]);
-
-// Binary search for service UUID name
+// The numbers and their names live in exactly one place: GattNameTable
+// (include/features/ble/GattNameTable.h). This section used to carry its own
+// 73-row copy, which meant two lists of the same assigned numbers and, in
+// practice, two different answers: 0x1822 here said "HTTP Proxy" while the SIG
+// assigns it to Pulse Oximeter (HTTP Proxy is 0x1823). B4 deleted the copy.
+//
+// What is kept is the legacy presentation rule: this panel budgets 14
+// characters per row, so a name is clamped rather than allowed to overrun it.
+//
+// Returns nullptr for an unknown UUID, preserving the old contract -- callers
+// print the raw UUID rather than a name that could not be verified.
 static const char* lookupServiceName(uint16_t uuid) {
-    int lo = 0, hi = BLE_SERVICE_DB_SIZE - 1;
-    while (lo <= hi) {
-        int mid = (lo + hi) / 2;
-        uint16_t midUuid = pgm_read_word(&bleServiceDB[mid].uuid);
-        if (midUuid == uuid) {
-            return (const char*)pgm_read_ptr(&bleServiceDB[mid].name);
-        } else if (midUuid < uuid) {
-            lo = mid + 1;
-        } else {
-            hi = mid - 1;
-        }
+    static char row[BleLegacyDisplay::kMaxNameChars + 1];
+    if (!BleLegacyDisplay::writeServiceName(uuid, row, sizeof(row))) {
+        return nullptr;
     }
-    return nullptr;
+    return row;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -434,6 +273,11 @@ static const char* lookupServiceName(uint16_t uuid) {
 // We store category-level names (52 entries). For subcategory detail,
 // use lookupAppearanceDetail() which returns specific types like
 // "Keyboard", "Smartwatch", "Earbud" etc.
+//
+// NOTE (B4): nothing in this tree calls lookupAppearanceCategory/Detail, and
+// GattNameTable does not cover appearance values, so this block is retained
+// rather than superseded. It is dead weight today (~1 KB of PROGMEM); delete it
+// only alongside a decision about where appearance names should live.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 struct BleAppearanceEntry {

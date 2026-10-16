@@ -29,11 +29,12 @@
 //      or "(member)" provenance tag.
 //
 // Note on the legacy table: include/ble_database.h is an older,
-// Arduino-dependent service list whose names are truncated to ~14 characters
-// for a small display, and it is used only by src/legacy/bluetooth_attacks.cpp.
-// This table holds canonical names and is host-testable. The two are expected
-// to differ in wording; ble_database.h should eventually delegate here rather
-// than keep a second copy of the same assigned numbers.
+// Arduino-dependent list used only by src/legacy/bluetooth_attacks.cpp. It no
+// longer carries service names of its own -- `lookupServiceName()` there
+// delegates to BleLegacyDisplay, which resolves through this table and clamps
+// to the old panel's 14-character budget. The assigned numbers therefore exist
+// in exactly one place, and the clamp is host-testable; see
+// docs/protocol-evidence/gatt-names.md section 5.
 
 #include <cstdint>
 #include <string>
@@ -77,6 +78,12 @@ public:
     static uint16_t serviceCount();
     static uint16_t characteristicCount();
     static uint16_t descriptorCount();
+
+    // Index access, so a caller can audit the whole table instead of keeping a
+    // private copy of the numbers. `index` at or past serviceCount() returns 0
+    // and "" respectively.
+    static uint16_t serviceUuidAt(uint16_t index);
+    static const char* serviceNameAt(uint16_t index);
 
     // True when all three tables are strictly ascending by UUID. `lookup()` is a
     // linear scan, so an out-of-order or duplicated entry would not crash -- it

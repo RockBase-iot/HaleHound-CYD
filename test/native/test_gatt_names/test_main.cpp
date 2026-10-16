@@ -94,8 +94,10 @@ void test_tables_are_sorted_and_the_counts_are_pinned() {
     TEST_ASSERT_TRUE(GattNameTable::tablesAreSorted());
 
     // Pinned so that adding or dropping an entry is a conscious change. Update
-    // the number here and say why, rather than letting it drift.
-    TEST_ASSERT_EQUAL(44, GattNameTable::serviceCount());
+    // the number here and say why, rather than letting it drift. Services went
+    // 44 -> 75 in B4, when this table absorbed the legacy service table's rows
+    // (see test_the_legacy_service_rows_are_now_covered_here below).
+    TEST_ASSERT_EQUAL(75, GattNameTable::serviceCount());
     TEST_ASSERT_EQUAL(106, GattNameTable::characteristicCount());
     TEST_ASSERT_EQUAL(15, GattNameTable::descriptorCount());
 }
@@ -177,6 +179,31 @@ void test_kind_label_covers_every_kind() {
     TEST_ASSERT_EQUAL_STRING("descriptor", GattNameTable::kindLabel(GattUuidKind::Descriptor));
 }
 
+// B4: `include/ble_database.h` carried 73 service rows, 31 of which this table
+// did not have. They are now here, which is what lets the legacy copy go. The
+// 26 adopted ones carry the SIG name verbatim; the 5 member UUIDs carry a
+// provenance tag rather than a name that looks assigned.
+void test_the_legacy_service_rows_are_now_covered_here() {
+    // Spots from the 0x183x-0x185x block only the legacy table used to have.
+    TEST_ASSERT_EQUAL_STRING("Binary Sensor", GattNameTable::serviceName(0x183B));
+    TEST_ASSERT_EQUAL_STRING("Emergency Configuration", GattNameTable::serviceName(0x183C));
+    TEST_ASSERT_EQUAL_STRING("Audio Input Control", GattNameTable::serviceName(0x1843));
+    TEST_ASSERT_EQUAL_STRING("Electronic Shelf Label", GattNameTable::serviceName(0x1857));
+    TEST_ASSERT_EQUAL_STRING("Mesh Proxy Solicitation", GattNameTable::serviceName(0x1859));
+
+    // The row the legacy table got wrong: 0x1822 is Pulse Oximeter; HTTP Proxy
+    // is 0x1823. Pinned so the wrong mapping cannot come back through the
+    // legacy path.
+    TEST_ASSERT_EQUAL_STRING("Pulse Oximeter", GattNameTable::serviceName(0x1822));
+    TEST_ASSERT_EQUAL_STRING("HTTP Proxy", GattNameTable::serviceName(0x1823));
+
+    // Member UUIDs must say so, so a community mapping is never read as an
+    // assigned number.
+    TEST_ASSERT_EQUAL_STRING("Blecon service (member)", GattNameTable::serviceName(0xFD0D));
+    TEST_ASSERT_EQUAL_STRING("Fast Pair service (member)", GattNameTable::serviceName(0xFE2C));
+    TEST_ASSERT_EQUAL_STRING("Eddystone beacon (member)", GattNameTable::serviceName(0xFEAA));
+}
+
 int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_every_spelling_of_a_sig_uuid_collapses_to_the_same_short_form);
@@ -184,6 +211,7 @@ int main(int, char**) {
     RUN_TEST(test_a_uuid_off_the_sig_base_is_not_forced_into_a_short_form);
     RUN_TEST(test_malformed_uuids_are_rejected_rather_than_guessed);
     RUN_TEST(test_tables_are_sorted_and_the_counts_are_pinned);
+    RUN_TEST(test_the_legacy_service_rows_are_now_covered_here);
     RUN_TEST(test_well_known_names_resolve_and_unknown_stays_empty);
     RUN_TEST(test_the_vendor_range_is_labelled_as_vendor);
     RUN_TEST(test_resolve_dispatches_on_kind_and_normalises_first);

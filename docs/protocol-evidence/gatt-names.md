@@ -98,35 +98,72 @@ build-reports/hostenv/Scripts/python.exe build-reports/verify_gatt_names.py
 ## 4. 最终核验结果
 
 ```
-verify_gatt_names: 165 table entries, 612 assigned numbers available
-  assigned, name-exact : 158
-  unassigned, tagged   : 7
+verify_gatt_names: 196 table entries, 612 assigned numbers available
+  assigned, name-exact : 184
+  unassigned, tagged   : 12
 OK: every assigned UUID matches the SIG name verbatim; every other entry declares its provenance.
 ```
 
-- 服务表 44 条、特征表 106 条、描述符表 15 条。
+- 服务表 **75** 条、特征表 106 条、描述符表 15 条。
 - 表按 UUID 严格升序（`GattNameTable::tablesAreSorted()`，由 `test_gatt_names` 断言），
   因为查表是线性扫描：重复或乱序条目不会崩，只会让后面那条**永远查不到**。
 
+### 4.1 B4 扩表（44 → 75）
+
+B4 之前服务表只有 44 条，而 `include/ble_database.h` 另有一份 73 条的表。两份表重叠 42 条，
+**legacy 表独有 31 条**。若直接让 legacy 委托而不先补表，会静默丢掉这 31 条覆盖 ——
+所以先按 SIG 机读清单扩表，再动委托：
+
+| 来源 | 条数 | 定名依据 | 等级 |
+|---|---|---|---|
+| SIG 已采纳服务（`service_uuids.yaml`） | 26 | 名称逐字照抄 SIG | `VERIFIED` |
+| SIG 成员 UUID（`member_uuids.yaml`） | 5 | 号段→公司可核验；功能名是社区通行叫法，带 `(member)` 标记 | `PARTIALLY VERIFIED` |
+
+成员 UUID 五条：`0xFD0D`(Blecon Ltd) / `0xFE0F`(Signify Netherlands B.V.) /
+`0xFE2C`(Google LLC) / `0xFEAA`(Google LLC) / `0xFEBB`(adafruit industries)。
+
+> `member_uuids.yaml` 只给**公司**，不给服务功能名。所以这 5 条的功能名不是官方分配：
+> 号段归属记为 `VERIFIED`，功能名记为 `PARTIALLY VERIFIED`，并在名称里带 `(member)` 标记，
+> 避免被读成 SIG 采纳服务。
+
 ---
 
-## 5. 与既有 `include/ble_database.h` 的关系（重要）
+## 5. 与 `include/ble_database.h` 的关系（B4 已改造）
 
-仓库里**已有一张**服务名表：`include/ble_database.h`（来源 Nordic
-`bluetooth-numbers-database` v1.0.4，56 个 16-bit 服务 + 94 个 Company ID + 52 个 Appearance）。
+### 5.1 改造前实测到的三件事
 
-两者**刻意不合并**，因为用途不同：
+1. **只有一处调用方，而且只用 Company ID。**
+   `ble_database.h` 仅被 `src/legacy/bluetooth_attacks.cpp` 包含；该文件用到的符号只有
+   `lookupCompanyName`。全仓检索 `lookupServiceName` / `lookupAppearanceCategory` /
+   `lookupAppearanceDetail` / `lookupCompanyFromMfgData` **零调用方**
+   （该文件还自定义了 static `extractCompanyId`，遮蔽了头文件里的同名函数）。
+   即：service 段 73 条与 appearance 段 52 条**都是死代码**。
+2. **死代码里藏着一个真错误。**
+   `0x1822` 在 legacy 表里写作 `HTTP Proxy`；SIG 把 `0x1822` 分配给 **Pulse Oximeter**，
+   `HTTP Proxy` 是 `0x1823`。legacy 表把这两条写成了同一个名字。
+3. **一处「看起来像错」的其实是对的。** `0x184x`–`0x185x` 那一段曾怀疑整体错位 2 位；
+   逐条对照 SIG 后确认**号是对的**，只是名字被截断。记在这里是为了说明：
+   凭感觉判错会改坏一张正确的表，必须走机读核验。
+
+### 5.2 改造后的分工
 
 | | `include/ble_database.h` | `include/features/ble/GattNameTable.h` |
 |---|---|---|
-| 名称 | **截断到 ~14 字符**（`Generic Attrib`、`Health Thermo`、`IP Support`） | SIG 原文（`GATT`、`Health Thermometer`） |
-| 存储 | `PROGMEM`，依赖 `Arduino.h` | 普通 `constexpr` 数组 |
-| 可测 | 否（拉不进 host 测试） | 是（`test_gatt_names`，31 个 hostcheck 套件之一） |
+| 内容 | Company ID（**唯一在用**）+ Appearance（无调用方，已就地标注） | 服务 / 特征 / 描述符 + **全部 assigned numbers** |
+| 服务名 | **不再自带**；`lookupServiceName()` 委托 `BleLegacyDisplay` | SIG 原文，唯一来源 |
+| 截断 | 由 `BleLegacyDisplay::kMaxNameChars = 14` 施加 | 不截断（截断是渲染层的事） |
+| 存储 | `PROGMEM` + `Arduino.h` | `constexpr`，可宿主测试 |
+| 可测 | 否（拉不进 host 测试） | 是（`test_gatt_names` / `test_ble_legacy_display`） |
 | 使用方 | 仅 `src/legacy/bluetooth_attacks.cpp` | 新架构 `SkeletonKeyModel` / GATT 树 / dump |
 
-截断是**渲染层**的事，不是数据层的事，所以名称存原文、上屏时再截。
-**遗留项**：`ble_database.h` 应改为委托 `GattNameTable`，而不是再存一份同样的 assigned numbers；
-这属于 legacy 迁移，需要单独做，不要在盲改。
+**单一数字来源是可断言的，不是承诺。** `BleLegacyDisplay` 自身不存任何数据；
+`test_ble_legacy_display::test_coverage_is_exactly_the_canonical_table` 遍历
+`GattNameTable` 全表，断言「每一条都能在 legacy 路径渲染，且表外的 UUID 一律不可命名」。
+私有副本一旦回来，这条会红。
+
+> 遗留：`ble_database.h` 的 Appearance 段（52 条）仍无调用方，而 `GattNameTable` 也不覆盖
+> appearance 值，所以**保留而不是取代**（已在源码就地标注）。删除它需要先决定
+> appearance 名称归谁管，属于独立决策。
 
 ---
 
