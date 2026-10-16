@@ -28,7 +28,7 @@ names a licence without shipping it.
 | ESP-IDF prebuilt libs | 5.5.0 | LGPL-2.1-or-later | weak copyleft | yes |
 | rc-switch | 2.6.4 | LGPL-2.1-or-later | weak copyleft | yes |
 | TinyGPSPlus | 1.1.0 | LGPL-2.1-or-later | weak copyleft | yes |
-| SmartRC-CC1101-Driver-Lib | 2.5.7 | unrecognised text (upstream declares MIT) | unclear | yes |
+| SmartRC-CC1101-Driver-Lib | 2.5.7 | bespoke permissive (`LicenseRef-…`, requires source reference) | permissive, conditional | yes |
 | TFT_eSPI | 2.5.43 | MIT AND BSD-3-Clause | permissive | yes |
 | Adafruit PN532 | 1.3.4 | BSD-3-Clause | permissive | yes |
 | Adafruit BusIO | 1.17.4 | MIT | permissive | yes |
@@ -43,8 +43,12 @@ hand-copied attribution drifts; the collected files do not.
 
 ## Blockers
 
-Three findings stop this firmware from being distributable. Details, evidence and
-the plan to close them: `docs/legal/COMPLIANCE_PLAN_zh.md`.
+Three findings stop this firmware from being distributable — and the first two are
+*independent* reasons, so fixing one kind leaves the firmware just as undistributable as it
+is now. That is why the gate keys on this script's exit code rather than on the copyleft
+count alone. Details, evidence and the plan to close them:
+`docs/legal/COMPLIANCE_PLAN_zh.md`, execution plan in
+`docs/legal/LICENSE_REPLACEMENT_PLAN_zh.md`.
 
 **1. RF24 (GPL-2.0-only) and arduinoFFT (GPL-3.0) cannot both be linked in.**
 `RF24`'s `library.json` declares `GPL-2.0-only` — exactly v2, no "or later" — and
@@ -99,3 +103,21 @@ explaining, because a simpler rule gets them wrong:
 - **TFT_eSPI is composite.** Its own terms are MIT, but its `LICENSE.txt` also
   carries the BSD text of the Adafruit_GFX functions it imported, so the row is an
   SPDX expression rather than a single id.
+- **A bespoke notice can still be a grant.** SmartRC's `LICENSE.txt` says
+  "You can freely use, edit or distribute it with reference to the source" —
+  permissive, but conditional, and written in the author's own words instead of
+  SPDX vocabulary. Reporting that as merely unidentified gets the conclusion
+  wrong in the expensive direction: a reader concludes the grant is unknown when
+  it is known and merely non-standard. It is recorded as a `LicenseRef` and its
+  condition is printed as a NOTE — satisfied by this file and `NOTICE.md`, so it
+  does not fail the gate, but it is a condition and must not be dropped when
+  either file is edited.
+- **`LGPL-2.1-or-later`, not bare `LGPL-2.1`.** `rc-switch` and `TinyGPSPlus`
+  ship no licence file, and both headers say "either version 2.1 of the License,
+  or (at your option) any later version". The bare GPL/LGPL ids in SPDX mean
+  `-only`, so the earlier row had the direction of that clause backwards. The
+  wording is now read for the version tag, and **only** source headers are read
+  this way: every GPL/LGPL licence *text* contains "any later version" in its
+  "How to Apply" appendix, so applying it to a licence file would wrongly
+  upgrade RF24, whose `GPL-2.0-only` declaration has to win over the GPLv2 text
+  it ships.

@@ -42,6 +42,13 @@ from audit_licenses import (  # noqa: E402
 
 OUT = ROOT / "LICENSES"
 
+# A LicenseRef is an SPDX expression, not a filename, and slugging one produces
+# something no reader can parse.  A library whose licence is a LicenseRef gets
+# a name here that says what the file actually is.
+BESPOKE = {
+    "SmartRC-CC1101-Driver-Lib": "SmartRC-CC1101-Driver-Lib-bespoke-permissive.txt",
+}
+
 # Files this script does NOT own.  They were captured once, are checked in, and
 # must survive every rebuild.
 #
@@ -108,7 +115,8 @@ def main() -> int:
     for entry in audit_libraries():
         if entry["kind"] in ("no-grant", "unidentified"):
             continue
-        target = f"{slug(entry['name'])}-{slug(entry['spdx'])}.txt"
+        target = (BESPOKE.get(entry["name"])
+                  or f"{slug(entry['name'])}-{slug(entry['spdx'])}.txt")
         destination = OUT / target
         if destination.exists():
             continue
@@ -183,11 +191,11 @@ def main() -> int:
         ),
         "unidentified": (
             "This library does ship a licence file, but the text names no licence\n"
-            "any tool can identify: it is a bespoke permission notice whose scope\n"
-            "is never stated.  The upstream repository does declare a licence, and\n"
-            "the vendored copy predates that declaration, so the intent is probably\n"
-            "permissive -- but intent is not a grant, and the notice as shipped\n"
-            "disclaims everything it does not expressly allow.\n"
+            "any tool can identify and states no permission this project can rely\n"
+            "on.  Nothing in it reads as a grant of rights, so the default of all\n"
+            "rights reserved stands until a person reads the text and records its\n"
+            "scope -- which is why the file is called out here rather than being\n"
+            "treated as absent.\n"
         ),
     }
     for entry in audit_libraries():

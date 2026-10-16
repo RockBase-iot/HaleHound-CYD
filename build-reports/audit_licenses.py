@@ -159,6 +159,28 @@ def scan_declarations(lib: pathlib.Path) -> str:
     return ""
 
 
+# The bare GPL/LGPL identifiers in SPDX mean "-only", because the version
+# tags carry the whole meaning.  A notice that offers "any later version"
+# grants something wider than that, so it has to be named differently -- an
+# -or-later library may be relicensed under the next version, which an -only
+# one may not.
+OR_LATER = {
+    "LGPL-2.1": "LGPL-2.1-or-later",
+    "LGPL-3.0": "LGPL-3.0-or-later",
+    "GPL-2.0": "GPL-2.0-or-later",
+    "GPL-3.0": "GPL-3.0-or-later",
+    "AGPL-3.0": "AGPL-3.0-or-later",
+}
+
+
+def or_later(text: str) -> bool:
+    """True when the notice offers the recipient the next version too."""
+    return re.search(
+        r"either\s+version\s+[0-9.]+\s+of\s+the\s+License,\s*"
+        r"or\s*\(?at\s+your\s+option\)?\s*any\s+later\s+version",
+        text, re.IGNORECASE | re.DOTALL) is not None
+
+
 def scan_headers(lib: pathlib.Path, max_files: int = 60) -> tuple[str, str, str]:
     """Some libraries ship no licence file but do carry a header notice."""
     checked = 0
@@ -168,8 +190,11 @@ def scan_headers(lib: pathlib.Path, max_files: int = 60) -> tuple[str, str, str]
         checked += 1
         if checked > max_files:
             break
-        spdx, kind = classify(read_text(path, limit=4096))
+        body = read_text(path, limit=4096)
+        spdx, kind = classify(body)
         if spdx != "UNKNOWN":
+            if or_later(body):
+                spdx = OR_LATER.get(spdx, spdx)
             return spdx, kind, path.relative_to(lib).as_posix()
     return "", "", ""
 
@@ -258,6 +283,24 @@ def audit_libraries() -> list[dict]:
         if name in seen:
             seen[name].update(spdx=spdx, kind=kind, evidence=evidence)
 
+    # Bespoke notices: no matcher names them, but the text does state a
+    # permission.  SmartRC's LICENSE.txt allows use, editing and distribution
+    # "with reference to the source" -- a real grant carrying a real
+    # condition, written in the author's own words instead of SPDX vocabulary.
+    # Reporting that as merely "unidentified" understates it in the direction
+    # that costs the most: a reader concludes the grant is unknown when it is
+    # in fact known and merely non-standard.  A LicenseRef is the SPDX way to
+    # say "a licence, not in the list"; the condition is printed as a NOTE.
+    BESPOKE = {
+        "SmartRC-CC1101-Driver-Lib": (
+            "LicenseRef-SmartRC-bespoke-permissive", "bespoke-permissive",
+            "LICENSE.txt (bespoke grant: free use/edit/distribution, "
+            "conditioned on referring to the source)"),
+    }
+    for name, (spdx, kind, evidence) in BESPOKE.items():
+        if name in seen:
+            seen[name].update(spdx=spdx, kind=kind, evidence=evidence)
+
     return sorted(seen.values(), key=lambda e: e["name"].lower())
 
 
@@ -340,6 +383,7 @@ def main() -> int:
     weak = [e for e in libs if e["kind"] == "weak-copyleft"]
     nogrant = [e for e in libs if e["kind"] == "no-grant"]
     unclear = [e for e in libs if e["kind"] == "unidentified"]
+    bespoke = [e for e in libs if e["kind"] == "bespoke-permissive"]
     okay = [e for e in libs if e["kind"] == "permissive"]
     print()
     print(f"strong copyleft : {len(blockers):2d}  "
@@ -349,6 +393,8 @@ def main() -> int:
     print(f"unclear grant   : {len(unclear):2d}  "
           f"{[e['name'] + ' (' + e['evidence'] + ')' for e in unclear]}")
     print(f"permissive      : {len(okay):2d}  {[e['name'] for e in okay]}")
+    print(f"bespoke grant   : {len(bespoke):2d}  "
+          f"{[e['name'] + ' (' + e['evidence'] + ')' for e in bespoke]}")
 
     verdicts = []
     gpl2 = any(e["spdx"].startswith("GPL-2") for e in blockers)
@@ -372,6 +418,22 @@ def main() -> int:
     print()
     for verdict in verdicts:
         print("VERDICT:", verdict)
+
+    # Conditions that do not block.  A bespoke grant that asks for attribution
+    # is satisfied by carrying the source reference -- which NOTICE.md and
+    # THIRD_PARTY_NOTICES.md do -- so it must not fail the gate, and must not
+    # silently vanish either.  Anything that is a condition but not a blocker
+    # belongs here rather than in `verdicts`.
+    notes = []
+    if bespoke:
+        notes.append(
+            f"{len(bespoke)} bespoke grant(s) permit use, modification and "
+            f"distribution on the condition that the source is referred to: "
+            f"{', '.join(e['name'] for e in bespoke)}.  NOTICE.md and "
+            f"THIRD_PARTY_NOTICES.md carry that reference, so this does not "
+            f"block distribution -- but it is a condition, not a courtesy.")
+    for note in notes:
+        print("NOTE:", note)
     print(f"\nwrote {out.relative_to(ROOT)}")
 
     # Non-zero when anything blocks distribution, so this can be the CI gate
@@ -379,8 +441,14 @@ def main() -> int:
     # currently non-compliant, so this fails today on purpose:
     #   strong copyleft  RF24 (GPL-2.0-only) + arduinoFFT (GPL-3.0)
     #   no grant         ESP32 BLE Keyboard
-    # Both have to be resolved before a firmware binary may be distributed
-    # again -- see docs/legal/COMPLIANCE_PLAN_zh.md, track A.
+    # Both *kinds* block, and neither is cured by fixing the other: the
+    # copyleft pair because GPL-2.0-only and GPL-3.0 cannot be combined under
+    # any single licence, the unlicensed library because compiling it in is
+    # redistribution without permission.  Replacing RF24 and arduinoFFT while
+    # leaving ESP32 BLE Keyboard in place would leave the firmware exactly as
+    # undistributable as it is today, which is why the gate keys on `verdicts`
+    # and not on the copyleft count alone.
+    # See docs/legal/LICENSE_REPLACEMENT_PLAN_zh.md for the way out.
     if verdicts:
         print("\nFAIL: the dependency set as built cannot be distributed.")
         return 1

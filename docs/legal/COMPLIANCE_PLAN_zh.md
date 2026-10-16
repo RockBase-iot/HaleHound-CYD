@@ -154,7 +154,7 @@ python build-reports/audit_licenses.py      # 打印表格；有阻断项则 exi
 | ESP32 Arduino core | 3.20017.241212 / 3.3.6 | LGPL-2.1-or-later（`package.json`） | 弱 copyleft | 🟡 保留 + 履行 relink 义务 |
 | rc-switch | 2.6.4 | LGPL-2.1-or-later（`RCSwitch.h` 头声明，文件按 "or later"） | 弱 copyleft | 🟡 同上，或自写（很小） |
 | TinyGPSPlus | 1.1.0 | LGPL-2.1-or-later（`TinyGPS++.h` 头声明） | 弱 copyleft | 🟡 同上，或自写 NMEA 解析 |
-| SmartRC-CC1101-Driver-Lib | 2.5.7 | ⚠️ **包内 `LICENSE.txt` 是无法识别的自定义文本**（"You can freely use, edit or distribute it with reference to the source. For everything else, the rights of the respective owners apply!"），而**上游仓库现声明 MIT** | 不明确 | 🟡 升级到随附 MIT 文本的版本，或取得书面确认 |
+| SmartRC-CC1101-Driver-Lib | 2.5.7 | **自定义宽松许可**（`LicenseRef-SmartRC-bespoke-permissive`）：包内 `LICENSE.txt` 允许 "freely use, edit or distribute it **with reference to the source**" —— 授权真实存在，但**附带指明来源的条件**；`library.json` / `library.properties` 均无 `license` 字段 | 宽松（附条件） | 🟢 保留：`LICENSES/` 存一手文本副本，条件由 `NOTICE.md` / `THIRD_PARTY_NOTICES.md` 满足 |
 | TFT_eSPI | 2.5.43 | MIT **AND** BSD-3-Clause（复合：自身条款 + 内嵌 Adafruit_GFX 部分） | 宽松 | 🟢 保留，随附声明 |
 | Adafruit PN532 | 1.3.4 | BSD-3-Clause（三条款齐全） | 宽松 | 🟢 保留 |
 | Adafruit BusIO | 1.17.4 | MIT | 宽松 | 🟢 保留 |
@@ -197,15 +197,20 @@ python build-reports/audit_licenses.py      # 打印表格；有阻断项则 exi
 
 | 编号 | 动作 | 方案 | 规模 | 依赖 |
 |---|---|---|---|---|
-| **A1** | 去掉 RF24（GPL-2.0-only） | ① 换 **RadioLib**（MIT，含 nRF24 模块）；② 按 Nordic 公开数据手册**自写** nRF24 寄存器级驱动（上游正是这么绕开的，但它的 `nrf24_raw.h` 是专有，**不能抄**） | M / M-L | 需要真机回归（2.4GHz 四件套） |
-| **A2** | 去掉 arduinoFFT（GPL-3.0） | ① 换 **ESP-DSP**（Apache-2.0，Espressif 官方，S3/C5 有硬件加速）② 换 kissfft（BSD-3）③ 自写 radix-2 FFT | S-M / M / S-M | 只被两台频谱仪使用 |
-| **A3** | 处理 ESP32 BLE Keyboard（无授权） | ① 向作者索取许可（MIT 是常态，但时间不可控）② 在已有 BLE 缝上自实现 HID-over-GATT（服务 `0x1812`，我们 U1 已经建好 `IBleCentral`）③ 以 ESP-IDF 的 NimBLE HID 示例为参照（IDF 示例为宽松许可） | S（索取）/ M（自实现） | `IBleCentral` 已就位 |
+| **A1** | 去掉 RF24（GPL-2.0-only） | **已定：换 RadioLib（MIT，2614★，官方含 nRF24 模块）+ 本仓适配层**。`SPItransfer()` 为 public ⇒ const carrier / CRC 长度 / `isPVariant` / `flush_tx` 四处缺口由我们按数据手册补，不 fork 库。~~自写寄存器层~~ 保留为备选（成本高且只能上机验证） | M | 需要真机回归（`X2`） |
+| **A2** | 去掉 arduinoFFT（GPL-3.0） | **已定：自写 radix-2**（零新依赖、保持 `double`、宿主可测）。实际 API 面只有 3 个方法 × **两套签名**（数组随调用传入 / 构造时绑定），两个使用文件各用一套。~~ESP-DSP~~ 只支持 `float32`，且会把 IDF 组件依赖铺进 `esp32-cyd`(2.0.17) 老环境 | S | 只被两台频谱仪使用；**建议先做** |
+| **A3** | 处理 ESP32 BLE Keyboard（无授权） | **已定：自写 HID 层**。耦合面只有 5 个方法（`begin/end/isConnected/press/release/write`），单一功能（BLE Ducky）。**实测 `h2zero/NimBLE-Arduino`（Apache-2.0）不提供 HID**（19 个示例无 HID、README 无相关词）⇒ `nm-cyd-c5`(NimBLE) 侧须自写 HID over GATT（服务 `0x1812` + Report/Report Map/Protocol Mode 等标准件）；`esp32-cyd`(Bluedroid) 侧可用 core 自带 `BLEHIDDevice`（LGPL-2.1-or-later，弱 copyleft）。**与 `C3` 的 T1 改名合并做** | M–L | 无（`IBleCentral` 与 BT host 判定均已在 `REMAINING_WORK §0.6` 取证） |
 | **A4** | 履行 LGPL-2.1 的静态链接义务 | Arduino core 无法替换，必须履约：随附库源码 + 我们的修改 + **可重新链接的手段**（对象文件或等价物）。仓库本就源码可见 ⇒ 补一份"如何重新链接"的构建说明，并声明按请求提供 `.o` | S | 无 |
 | **A5** | **立刻做、成本最低、收益最大** | 把 `flash_package/*.bin` 从 git 移除并纳入 ignore（`dist/` 已在 ignore，补 `flash_package/*.bin`）。**这一步直接把"我们在分发一个不可分发的二进制"这个事实从主线上去掉** | S | 无 |
-| **A6** | SmartRC 许可澄清 | 升级到随附 MIT 文本的版本（我们的 2.5.7 包内那份文本是 2021 年的旧自定义声明，早于上游改标 MIT），或向作者取书面确认 | S | 无 |
+| **A6** | SmartRC 许可澄清 | ✅ **本轮已落地**（= `TODO.md C10`）：分类改为 `bespoke-permissive`（SPDX `LicenseRef-SmartRC-bespoke-permissive`），`LICENSES/` 存包内文本**逐字节副本**，"指明来源"这项条件由 `NOTICE.md` / `THIRD_PARTY_NOTICES.md` 承担。审计以 **NOTE**（不阻断）打印，义务不再静默 | S | 无 |
 
 > A5 与 A1–A3 的关系：A5 是止血，A1–A3 才是治本。但 A5 可以今天做完，而且不做完 A1–A3
 > 的过程中仓库一直处于"持续再分发"状态。
+
+> **2026-10-16 更新：BOSS 已选定 D1 = A 路线（替换）**，A1/A2/A3/A6 的选型全部收敛（上表）。
+> 执行方案、耦合面实测数据、分阶段顺序与逐项验收标准见 **`docs/legal/LICENSE_REPLACEMENT_PLAN_zh.md`**。
+> 同时修正一处**判据错误**：A1–A3 是**三个并列的阻断项**，只清掉 copyleft 一类（A1+A2）而留下 A3，
+> 固件依然不可分发 —— 所以验收必须键在审计**退出码**上，而不是 `strong copyleft` 计数。
 
 ---
 
@@ -221,7 +226,8 @@ LICENSES/                                  ← 全部许可原文，逐字副本
   ├── HaleHound-CYD-MIT.txt                ← 上游 MIT 原文，逐字保留（换证前的证据）
   ├── RF24-GPL-2.0.txt / arduinoFFT-GPL-3.0.txt / ...  ← 依赖原文
   ├── framework-arduinoespressif32-LGPL-2.1-or-later.txt
-  └── *.LICENCE-UNRESOLVED.txt             ← 无授权/许可不明的**占位标记**（让缺口在树里可见）
+  ├── SmartRC-CC1101-Driver-Lib-bespoke-permissive.txt  ← 自定义宽松许可（附「指明来源」条件）
+  └── ESP32-BLE-Keyboard.LICENCE-UNRESOLVED.txt  ← 唯一剩余标记，对应**无授权**（让缺口在树里可见）
 build-reports/audit_licenses.py            ← 审计（可当 CI 门禁，有阻断项 exit 1）
 build-reports/collect_licenses.py          ← 按审计结果生成 LICENSES/，不誊抄
 ```
@@ -274,7 +280,7 @@ MIT 的归属义务是**分发条件**，不是礼貌：不保留声明，就等
 
 | # | 决策 | 为什么卡在这里 |
 |---|---|---|
-| **D1** | A1/A2/A3 三条依赖：**换库**还是**自写**？ | 决定 2.4GHz、频谱仪、BLE HID 三块的实现方式与工作量；换库快但引入新依赖，自写慢但彻底干净 |
+| **D1** | ~~A1/A2/A3：换库还是自写？~~ **已定：A 路线（替换）**，且范围由两项修正为**三项**（含 A3 的无授权库） | 2026-10-16 决定。混用策略：A2 自写、A1 用 RadioLib、A3 自写；顺序 A2 → A1 → A3 |
 | **D2** | 产品名最终定什么？ | §3 的 T1–T4 改名需要名字；反过来改名不做，商业分发就带商标风险 |
 | **D3** | 是否申请自有商标（中国 9/42 类）？ | 决定要不要在设计阶段就把标识固化下来 |
 | **D4** | 是否就"MIT 不可撤销性 + 上游专利"取一次外部意见？ | 我无法自查专利；这条影响能否商业化 |
@@ -285,7 +291,9 @@ MIT 的归属义务是**分发条件**，不是礼貌：不保留声明，就等
 
 ## 9. 本轮未做 / 未验证（诚实标注）
 
-- **未改任何源码**：T1–T7 的改名、A1–A3 的换库都**只出方案，未动手**（D1/D2 未定）。
+- **未改任何源码**：T1–T7 的改名、A1–A3 的换库都**只出方案，未动手**（D1 已定、D2 未定）。
+- **本轮新增交付**：`docs/legal/LICENSE_REPLACEMENT_PLAN_zh.md`（A 路线方案）、A6/C10 落地（SmartRC 分类 +
+  一手文本副本）、LGPL 标识符修正（`LGPL-2.1` → `LGPL-2.1-or-later`，仅对源文件头生效）。
 - **未删除任何文件**：`flash_package/*.bin` 仍在仓库中（D5 未定）。
 - **未跑测试**：本轮改动只有文档 + build-reports 工具脚本，不触及 `src/`、`include/`、`test/`，
   故未重跑 hostcheck 与语法检查。

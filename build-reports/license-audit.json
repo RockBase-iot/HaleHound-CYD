@@ -86,7 +86,7 @@
         "esp32-e32r35t",
         "nm-cyd-c5"
       ],
-      "spdx": "LGPL-2.1",
+      "spdx": "LGPL-2.1-or-later",
       "kind": "weak-copyleft",
       "evidence": "RCSwitch.cpp"
     },
@@ -116,9 +116,9 @@
         "esp32-e32r35t",
         "nm-cyd-c5"
       ],
-      "spdx": "UNIDENTIFIED",
-      "kind": "unidentified",
-      "evidence": "LICENSE.txt (unrecognised text)"
+      "spdx": "LicenseRef-SmartRC-bespoke-permissive",
+      "kind": "bespoke-permissive",
+      "evidence": "LICENSE.txt (bespoke grant: free use/edit/distribution, conditioned on referring to the source)"
     },
     {
       "name": "TFT_eSPI",
@@ -146,7 +146,7 @@
         "esp32-e32r35t",
         "nm-cyd-c5"
       ],
-      "spdx": "LGPL-2.1",
+      "spdx": "LGPL-2.1-or-later",
       "kind": "weak-copyleft",
       "evidence": "src/TinyGPS++.cpp"
     },

@@ -361,8 +361,8 @@ Pn532Protocol         主机帧编解码 + Table 13 状态码     ← test_pn532
 
 | ID | 事项 | 现状 | 还缺什么 | 依赖 | 级别 |
 |---|---|---|---|---|---|
-| **C1** | 依赖许可合规 | `nrf24/RF24@1.4.11`：`library.json` 声明 **`GPL-2.0-only`**；`kosme/arduinoFFT@2.0.4`：LICENSE 正文 **GPL v3**。两者不可组合，且都与专有分发不兼容 | **二选一**（同 `X6`）：替换 / 不发二进制。~~全 GPL~~ 2026-10-16 证伪 —— GPL-2.0-only 与 GPL-3.0 **互不相容**，不存在能覆盖整体二进制的许可。**替换路线需要给出替代实现与回归证据**（上游的 `nrf24_raw.h`、`halehound_fft.h` 是存在性证明，不是可搬运的代码） | BOSS | **P0** |
-| **C2** | 第三方声明与衍生声明 | 仓库**已有** `THIRD_PARTY_NOTICES.md` / `NOTICE.md` / `LICENSES/`（14 份逐字副本）；README 保留了 `By [JesseCHale]` / `HaleHound-CYD by [JesseCHale]` 与 CiferTech 引脚修正说明，但未按 LICENSE 建议形式声明「衍生关系 + 改了什么」 | ① ✅ 本轮完成（5 个「包内无 LICENSE 文件」的依赖已逐个留档：2 个补 SPDX 原文、2 个立占位标记、1 个记复合许可）② README 的归属行与修改摘要**未做**，随 `C3`/`C4` 一起 | `C1` | **P0** |
+| **C1** | 依赖许可合规（**A 路线已定**） | `nrf24/RF24@1.4.11`：`library.json` 声明 **`GPL-2.0-only`**；`kosme/arduinoFFT@2.0.4`：LICENSE 正文 **GPL v3**。两者不可组合，且都与专有分发不兼容 | **二选一**（同 `X6`）：替换 / 不发二进制。~~全 GPL~~ 2026-10-16 证伪 —— GPL-2.0-only 与 GPL-3.0 **互不相容**，不存在能覆盖整体二进制的许可。**替换路线需要给出替代实现与回归证据**（上游的 `nrf24_raw.h`、`halehound_fft.h` 是存在性证明，不是可搬运的代码）。**2026-10-16 收敛**：BOSS 选 A 路线，且范围由两项改为**三项**（`RF24` + `arduinoFFT` + **无授权的 `ESP32 BLE Keyboard`**）—— 后者的「无授权」是独立阻断原因，只清 copyleft 一类则二进制仍不可分发，故验收须键在审计**退出码**上。方案见 `docs/legal/LICENSE_REPLACEMENT_PLAN_zh.md` | BOSS → **A 路线已定** | **P0** |
+| **C2** | 第三方声明与衍生声明 | 仓库**已有** `THIRD_PARTY_NOTICES.md` / `NOTICE.md` / `LICENSES/`（14 份逐字副本）；README 保留了 `By [JesseCHale]` / `HaleHound-CYD by [JesseCHale]` 与 CiferTech 引脚修正说明，但未按 LICENSE 建议形式声明「衍生关系 + 改了什么」 | ① ✅ 已完成（5 个「包内无 LICENSE 文件」的依赖已逐个留档：2 个补 SPDX 原文、1 个立占位标记（无授权）、1 个记自定义宽松许可、1 个记复合许可）② README 的归属行与修改摘要**未做**，随 `C3`/`C4` 一起 | `C1` | **P0** |
 | **C3** | 商标与命名边界 | 对外物料使用 `HaleHound` 字样；`HaleHound™` 为上游商标 | 定稿保留/替换清单（同 `X7`），并落到 README、文档标题、未来的产品页 | BOSS | **P0（商品化前）** |
 | **C4** | v4.0 专有物料的搬运边界 | 本仓文档与上游大量同名（功能名、菜单名）；README 保留上游 ASCII 横幅 | 复核边界：功能名与菜单结构属功能性描述可保留；**逐字文案、美术资产、ASCII 横幅**不得进入对外销售物料；`README.txt` / `dist/` 内若有上游原文需标注来源与许可 | `C3` | P0 |
 | **C5** | 「无源码可审计」的自我约束 | 上游无源码、无二进制；本次全部上游行为描述均为**发布方自述** | 保持 `RELEASE_BRIEF_zh.md` 的标注口径，不把自述外推为已验证事实；将来若拿到实机行为，回填为 S1 | — | P2 |
@@ -370,7 +370,7 @@ Pn532Protocol         主机帧编解码 + Table 13 状态码     ← test_pn532
 | **C7** | LGPL-2.1 的静态链接义务 | Arduino core / IDF / `rc-switch` / `TinyGPSPlus` 均为 **LGPL-2.1-or-later**；LGPL 允许静态链接但要求接收方可**重新链接** | ① `LICENSES/` 已备 ② 写「如何重新链接」说明（工具链 + 完整 flag 可从 `build-reports/_syntax_*.rsp` 取真值）③ 声明按请求提供 `.o` ④ 或把后两者换成自写实现 | 无 | **P0** |
 | **C8** | 逐文件 SPDX 头 | 目前只有仓库级声明，而 MIT/BSD 的归属义务是**分发条件** | 自写文件加 `SPDX-License-Identifier` + 我方 `SPDX-FileCopyrightText`；**改自上游的文件必须保留上游著作权行**。政策见 `COMPLIANCE_PLAN_zh.md §6.2`。**单独一次提交**，避免千行 diff | `C2` | P1 |
 | **C9** | 依赖许可门禁进 CI | `audit_licenses.py` 已有「有阻断项即 `exit 1`」语义，但未接任何流程 | 接入 `K2` 的 CI 矩阵；新增依赖须同步更新 `LICENSES/` 与 `THIRD_PARTY_NOTICES.md` | `K2` | P1 |
-| **C10** | SmartRC 许可澄清 | 包内 `LICENSE.txt` 是 **2021 年的自定义文本**（授权范围未写明），**早于上游仓库改标 MIT** | 升级到随附 MIT 文本的版本，或向作者取书面确认；结论回填 `THIRD_PARTY_NOTICES.md` | 无 | P1 |
+| **C10** | SmartRC 许可澄清 | ✅ **已完成**：包内 `LICENSE.txt` 是自定义**宽松**授权（"freely use, edit or distribute it **with reference to the source**"），非"不明确" | 分类改 `bespoke-permissive`（SPDX `LicenseRef-SmartRC-bespoke-permissive`）+ `LICENSES/` 存一手副本 + 「指明来源」条件由 `NOTICE.md`/`THIRD_PARTY_NOTICES.md` 承担；审计以 NOTE（不阻断）打印 | 无 | ✅ P1 |
 
 > **2026-10-16 复核更正（本节据此重排）**：
 > ① `C1` 的选项由「三选一」改为「二选一」—— 见上，全 GPL 路线已被证伪；

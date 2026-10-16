@@ -126,9 +126,16 @@ both of them wrong:
   verbatim, so earliest-match alone reports a three-clause file as two-clause.
 
 Result on 2026-10-16: **2 strong copyleft that are incompatible with each other,
-1 with no licence at all, 2 weak copyleft, 5 permissive** — the firmware cannot
-be redistributed as built. Evidence, the trademark inventory and the plan are in
-`docs/legal/COMPLIANCE_PLAN_zh.md`.
+1 with no licence at all, 2 weak copyleft, 5 permissive, 1 bespoke permissive** —
+the firmware cannot be redistributed as built.
+
+The copyleft pair and the unlicensed library are *separate* reasons, so clearing
+one kind leaves the firmware just as undistributable; the gate therefore keys on
+this script's exit code rather than on the copyleft count. A bespoke grant is
+reported as a NOTE: it is a condition on distribution, satisfied here by
+`NOTICE.md` and `THIRD_PARTY_NOTICES.md`, not a blocker. Evidence, the trademark
+inventory and the plan are in `docs/legal/COMPLIANCE_PLAN_zh.md`; the execution
+plan for the replacement route is `docs/legal/LICENSE_REPLACEMENT_PLAN_zh.md`.
 
 ## `patch_*.py` — applied-and-verified source edits
 
@@ -136,6 +143,12 @@ Each script performs exact-string replacements with a match-count assertion, so 
 silent no-op cannot happen. They are kept for provenance; re-running one whose edit is
 already applied will abort harmlessly (`expected 1 match, found 0`). The table lists
 every tracked script, not only the recent ones.
+
+Two styles are in use, and the difference matters when re-running one. The
+one-shot patches abort harmlessly on a re-run (`expected 1 match, found 0`); the
+later ones are idempotent — an edit whose replacement text is already present is
+reported as applied and skipped, so a run that fails halfway can be repeated
+without reverting anything first.
 
 A second trap these scripts have to avoid: `Path.write_text()` without `newline=""`
 rewrites every line ending in the target file (`\n` → CRLF on Windows). With
@@ -176,6 +189,9 @@ that setting off. Read and write with `newline=""` and the file is left alone.
 | `patch_u2_docs.py` | U2 docs: `REMAINING_WORK.md` §0.7, the two stale claims in this file, the evidence doc §6 |
 | `patch_compliance_docs.py` | the licence/trademark pass: `REMAINING_WORK.md` §8 (the "full GPL" option deleted, C6-C10 added, the relicense window recorded), §1 X6 and §10 (the same correction), and this file's licence-audit section |
 | `patch_remaining_work_evidence.py` | `REMAINING_WORK.md` §0.8 (the seven facts that moved priorities), blockers X6-X9, and the new §8/§9 on compliance and the shared bus, written from the upstream field evidence |
+| `patch_smartrc_licence.py` | `audit_licenses.py` + `collect_licenses.py`: SmartRC moved from `unidentified` to a `bespoke-permissive` class with an SPDX `LicenseRef`, and its obligation is printed as a non-blocking NOTE |
+| `patch_lgpl_or_later.py` | `audit_licenses.py`: read the version tag out of a header notice, so `rc-switch` / `TinyGPSPlus` report `LGPL-2.1-or-later` instead of bare `LGPL-2.1` (which means `-only`). Applied to headers only -- licence texts mention "any later version" in their own appendix |
+| `patch_route_a_docs.py` | the A-route decision: `TODO.md` C1/C2/C10 and the §9/§10 tables, `COMPLIANCE_PLAN_zh.md` §4/§5/§6/§8/§9, `THIRD_PARTY_NOTICES.md`, `REMAINING_WORK.md` §8, and this file's audit summary and provenance note |
 
 > One script in this table edits a file outside the repository: `patch_skill_syntax_vacuity.py` writes
 > `~/.workbuddy/skills/esp32-platformio-syntax-check/SKILL.md`. It is kept here so that change is still
