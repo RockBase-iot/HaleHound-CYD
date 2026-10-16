@@ -218,7 +218,7 @@
 | **X3** | HID reader 服务 UUID 证据 | `0xFD40`(Signo) / `0xFFF0`(iCLASS SE) 映射无权威来源；`0xFFF0` 在 SIG 清单里是 Triones/ELK-BLEDOM 厂商服务，跨语境撞号 | 提供设备实测广告包、或厂商文档、或明确接受「凭经验映射」并注明来源等级 |
 | **X4** | 魔术卡后门证据 | 写 UID 后门命令未公开验证，已按证据门标 `UNSUPPORTED`（`docs/protocol-evidence/mifare-classic.md` §4） | 提供可复现的魔术卡型号 + 后门流程，否则保持 `UNSUPPORTED` |
 | **X5** | 其它密钥表来源 | KeeLoq 厂商密钥、iCLASS Corporate 1000 主密钥表 | 提供来源或明确不做 |
-| **X6** | 依赖许可合规（`C1`） | **`RF24` 是 GPL-2.0-only，`arduinoFFT` 是 GPL-3.0，二者互不相容**；本 fork 的 MIT 声明覆盖不了这个组合 ⟹ **分发二进制在许可上不成立** | 三选一：① 用自研/permissive 实现替换这两个库（照上游 clean-room 做法）② 接受整个固件按 GPL 分发并履行源码义务 ③ 明确永不分发二进制（仅自用） |
+| **X6** | 依赖许可合规（`C1`） | **`RF24` 是 GPL-2.0-only，`arduinoFFT` 是 GPL-3.0，二者互不相容**；本 fork 的 MIT 声明覆盖不了这个组合 ⟹ **分发二进制在许可上不成立** | **二选一**：① 用自研/permissive 实现替换这两个库（照上游 clean-room 做法，但**代码不可搬运**）或 ② 明确永不分发二进制（仅自用）。~~③ 接受整个固件按 GPL 分发~~ 2026-10-16 证伪 —— GPL-2.0-only 与 GPL-3.0 **互不相容**，不存在覆盖整体的许可。 |
 | **X7** | 商标与命名边界（`C3`） | `HaleHound™` 是上游商标，且上游许可禁止「声称作者」；本 fork 若要商品化（NM 系列 / WORKBUDDY 品牌），命名与物料必须划线 | 定稿：哪些位置保留**归属性**引用（说明来源），哪些位置必须改用本产品名 |
 | **X8** | PN532 总线决策（`H2`） | 上游/社区标准是 **SPI**，本 fork 只有 **I2C** ⟹ 本 fork 目前驱动不了社区那套接线；同时仓里还有一个孤儿 `Pn532I2cDriver` | 决策：① 本 fork 板另设计（I2C）→ 文档必须显式写出与上游接线的差异 ② 兼容社区接线（SPI）→ 补 SPI 链路（PN532 的 SPI 帧格式与 I2C 不同，不是换个 `Wire` 就行） |
 | **X9** | 上游 4 板型 vs 本 fork 2 环境（`H4`） | 上游 4 个构建目标；本 fork 只有 `esp32-cyd` / `nm-cyd-c5`，且 `nm-cyd-c5` **不是上游任何一板**（`ST7789_DRIVER=1`、`PART_16MB=1`、`BOARD_HAS_PSRAM=1`），而上游把 ST7789 归为「另一类 CYD」 | 明确目标板清单：只支持 nm-cyd-c5 + esp32-cyd（其余不做，并在文档写明），或补齐上游板型 |
@@ -361,11 +361,22 @@ Pn532Protocol         主机帧编解码 + Table 13 状态码     ← test_pn532
 
 | ID | 事项 | 现状 | 还缺什么 | 依赖 | 级别 |
 |---|---|---|---|---|---|
-| **C1** | 依赖许可合规 | `nrf24/RF24@1.4.11`：`library.json` 声明 **`GPL-2.0-only`**；`kosme/arduinoFFT@2.0.4`：LICENSE 正文 **GPL v3**。两者不可组合，且都与专有分发不兼容 | 三选一（同 `X6`）：替换 / 全 GPL / 不发二进制。**替换路线需要给出替代实现与回归证据**（上游的 `nrf24_raw.h`、`halehound_fft.h` 是存在性证明，不是可搬运的代码） | BOSS | **P0** |
-| **C2** | 第三方声明与衍生声明 | 仓库**无** `THIRD_PARTY_NOTICES`；README 保留了 `By [JesseCHale]` / `HaleHound-CYD by [JesseCHale]` 与 CiferTech 引脚修正说明，但未按 LICENSE 建议形式声明「衍生关系 + 改了什么」 | ① `THIRD_PARTY_NOTICES.md`：逐依赖 SPDX + 版本 + 出处（含 5 个「包内无 LICENSE 文件」的补证结果）② README 加 `Based on HaleHound-CYD by Jesse C. Hale` + 本 fork 修改摘要 | `C1` | **P0** |
+| **C1** | 依赖许可合规 | `nrf24/RF24@1.4.11`：`library.json` 声明 **`GPL-2.0-only`**；`kosme/arduinoFFT@2.0.4`：LICENSE 正文 **GPL v3**。两者不可组合，且都与专有分发不兼容 | **二选一**（同 `X6`）：替换 / 不发二进制。~~全 GPL~~ 2026-10-16 证伪 —— GPL-2.0-only 与 GPL-3.0 **互不相容**，不存在能覆盖整体二进制的许可。**替换路线需要给出替代实现与回归证据**（上游的 `nrf24_raw.h`、`halehound_fft.h` 是存在性证明，不是可搬运的代码） | BOSS | **P0** |
+| **C2** | 第三方声明与衍生声明 | 仓库**已有** `THIRD_PARTY_NOTICES.md` / `NOTICE.md` / `LICENSES/`（14 份逐字副本）；README 保留了 `By [JesseCHale]` / `HaleHound-CYD by [JesseCHale]` 与 CiferTech 引脚修正说明，但未按 LICENSE 建议形式声明「衍生关系 + 改了什么」 | ① ✅ 本轮完成（5 个「包内无 LICENSE 文件」的依赖已逐个留档：2 个补 SPDX 原文、2 个立占位标记、1 个记复合许可）② README 的归属行与修改摘要**未做**，随 `C3`/`C4` 一起 | `C1` | **P0** |
 | **C3** | 商标与命名边界 | 对外物料使用 `HaleHound` 字样；`HaleHound™` 为上游商标 | 定稿保留/替换清单（同 `X7`），并落到 README、文档标题、未来的产品页 | BOSS | **P0（商品化前）** |
 | **C4** | v4.0 专有物料的搬运边界 | 本仓文档与上游大量同名（功能名、菜单名）；README 保留上游 ASCII 横幅 | 复核边界：功能名与菜单结构属功能性描述可保留；**逐字文案、美术资产、ASCII 横幅**不得进入对外销售物料；`README.txt` / `dist/` 内若有上游原文需标注来源与许可 | `C3` | P0 |
 | **C5** | 「无源码可审计」的自我约束 | 上游无源码、无二进制；本次全部上游行为描述均为**发布方自述** | 保持 `RELEASE_BRIEF_zh.md` 的标注口径，不把自述外推为已验证事实；将来若拿到实机行为，回填为 S1 | — | P2 |
+| **C6** | 已提交的 `.bin` 移出仓库（**止血**） | `flash_package/*.bin`（10 个）+ `dist/*.bin` 共 **11 个、18.8 MB** 在 git 中；`dist/` 虽已 ignore，但文件在加 ignore 前已提交，仍被跟踪 | `git rm --cached flash_package/*.bin` + `.gitignore` 补该路径。**仓库公开 = 正在分发**，这些二进制同时带着 `C1` 的不可分发组合与 `C3` 的商标文件名 | 无（但需 BOSS 确认） | **P0** |
+| **C7** | LGPL-2.1 的静态链接义务 | Arduino core / IDF / `rc-switch` / `TinyGPSPlus` 均为 **LGPL-2.1-or-later**；LGPL 允许静态链接但要求接收方可**重新链接** | ① `LICENSES/` 已备 ② 写「如何重新链接」说明（工具链 + 完整 flag 可从 `build-reports/_syntax_*.rsp` 取真值）③ 声明按请求提供 `.o` ④ 或把后两者换成自写实现 | 无 | **P0** |
+| **C8** | 逐文件 SPDX 头 | 目前只有仓库级声明，而 MIT/BSD 的归属义务是**分发条件** | 自写文件加 `SPDX-License-Identifier` + 我方 `SPDX-FileCopyrightText`；**改自上游的文件必须保留上游著作权行**。政策见 `COMPLIANCE_PLAN_zh.md §6.2`。**单独一次提交**，避免千行 diff | `C2` | P1 |
+| **C9** | 依赖许可门禁进 CI | `audit_licenses.py` 已有「有阻断项即 `exit 1`」语义，但未接任何流程 | 接入 `K2` 的 CI 矩阵；新增依赖须同步更新 `LICENSES/` 与 `THIRD_PARTY_NOTICES.md` | `K2` | P1 |
+| **C10** | SmartRC 许可澄清 | 包内 `LICENSE.txt` 是 **2021 年的自定义文本**（授权范围未写明），**早于上游仓库改标 MIT** | 升级到随附 MIT 文本的版本，或向作者取书面确认；结论回填 `THIRD_PARTY_NOTICES.md` | 无 | P1 |
+
+> **2026-10-16 复核更正（本节据此重排）**：
+> ① `C1` 的选项由「三选一」改为「二选一」—— 见上，全 GPL 路线已被证伪；
+> ② 阻断项由 1 个变 **3 个**：新增 `ESP32 BLE Keyboard` **完全无授权**（原表只记了它「包内无 LICENSE 文件」，未意识到那意味着「无授权」），以及 `C6` 的「已提交二进制即分发行为」；
+> ③ **许可链已查清并修正**：本 fork 于 2026-03-16（`68bbfe6`）分叉，**在上游换证之前**（上游 v3.5.0 仍是 MIT、v3.6.2 已是专有）；本仓库带着上游 93 个提交的历史，`LICENSES/HaleHound-CYD-MIT.txt` 即那时的 MIT 原文；上游后来改写了历史，两边 `git merge-base` 为空。
+> 完整依据、商标分级（T1–T7）与处置矩阵见 `docs/legal/COMPLIANCE_PLAN_zh.md`。
 
 ---
 
@@ -384,7 +395,7 @@ Pn532Protocol         主机帧编解码 + Table 13 状态码     ← test_pn532
 > 旧版此节有两处编号 7、两处 8、两处 9（清单被追加过但没重排）。下面是按当前依赖关系重推的顺序，
 > **不是把旧列表抄一遍**。
 
-0. **先做合规决策，再写码**：`C3`（商标/命名）→ `X6`/`C1`（GPL 三选一）→ `C2`（第三方声明）。
+0. **先做合规决策，再写码**：`C3`（商标/命名）→ `X6`/`C1`（copyleft 二选一）→ `C2`（第三方声明 ✅ 已完成）→ `C6`（移出已提交的 `.bin`）。
    **理由**：`C1` 的结论决定「是否替换 RF24 / arduinoFFT」，而这两个库牵着 2.4GHz 与频谱仪两块的做法 —— 先写码再换库等于返工。
 1. **`U3`** `ChameleonUltra` 补 `FeatureId` + descriptor（P0，最小；菜单已在读 catalog，缺它即等于它不存在）
 2. **`D7`** 菜单分页/滚动（P1，但这是**本 fork 相对上游唯一变差的地方**；`MenuLayout` 与 `GattTreeView` 都有现成做法）

@@ -1,0 +1,15 @@
+ESP32 BLE Keyboard 0.3.2
+========================
+
+No licence was found for this library: it declares none in
+library.properties or library.json, ships no LICENSE/COPYING file,
+and carries no licence notice in its source headers.  GitHub reports
+no licence for the upstream repository either.
+
+Absent a grant, the default is all rights reserved, so this library
+may not be redistributed -- and it is compiled into the firmware,
+which makes the firmware a redistribution of it.
+
+This file exists so the gap is visible in the tree.  It is not a
+licence, and it is not a substitute for one: see
+docs/legal/COMPLIANCE_PLAN_zh.md, track A3.

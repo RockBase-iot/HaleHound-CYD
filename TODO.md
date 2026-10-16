@@ -2,8 +2,9 @@
 
 | 项 | 值 |
 |---|---|
-| 生成时间 | 2026-10-16 GMT+8 |
+| 生成时间 | 2026-10-16 GMT+8（Track A 于同日第二次重写，依据 `docs/legal/COMPLIANCE_PLAN_zh.md`） |
 | 上游证据来源 | `docs/upstream-analysis/USER_EVIDENCE_zh.md`（来源分级 S1 / S2 / S3，含复现命令） |
+| 合规依据 | `docs/legal/COMPLIANCE_PLAN_zh.md`（许可链 · 商标分级 · 依赖审计 · 声明体系） |
 | 缺口与级别来源 | `REMAINING_WORK.md`（§0.5 可达性走查 · §0.7 U2 落地遗留 · §0.8 外部证据复核 · §1 阻塞项 · §8 合规 · §9 硬件） |
 | 本文定位 | `REMAINING_WORK.md` 回答**「还缺什么、多急」**；**本文回答「下一步具体做什么、怎么算做完」** |
 | 维护约定 | 每完成一项：在 §9 勾状态并填「证据」列（测试名 / 命令 / 提交 sha），同时更新 `REMAINING_WORK.md` 对应行 |
@@ -26,43 +27,93 @@
 
 | 里程碑 | 达成定义 | 卡在哪 |
 |---|---|---|
-| **M0 决策闭合** | `C1`（GPL 三选一）与 `C3`（商标/命名边界）有结论并写进仓库 | **只有 BOSS 能定** |
+| **M0 决策闭合** | `C1`（copyleft 二选一）与 `C3`（商标/命名边界）有结论并写进仓库 | **只有 BOSS 能定** |
 | **M1 骨架可用** | 上电后每个菜单条目**要么能跑、要么诚实拒绝**；`U3` 已出现在菜单上 | `U3` `U5` `D8` |
 | **M2 可上机** | 沙箱外产出 `.bin`；蓝牙菜单在真机上可翻页、可返回、行高可读 | `X1` `X2` `D7` |
-| **M3 可发货** | 许可合规 + 第三方声明齐备 + 分区矩阵通过 + 说明书在 | `C1` `C2` `H4` `G1` |
+| **M3 可发货** | 许可合规 + 第三方声明齐备 + 分区矩阵通过 + 说明书在 | `C1` `C6` `C7` `H4` `G1` |
+
+> `C2`（第三方与衍生声明）已于本轮完成，故从 M3 的卡点中移除；`C6`（移出已提交的 `.bin`）
+> 与 `C7`（LGPL 重链接义务）补入 —— 前者是"停止持续分发"，后者是发货的必要条件。
 
 ---
 
 ## 2. Track A — 合规与许可（**先做决策，后写码**）
 
-### `C1` 依赖许可合规（P0 · S/M）
-- **目标**：让「分发固件二进制」在许可上成立。
-- **为什么（S1，本地可复跑）**：`nrf24/RF24@1.4.11` 的 `library.json` 声明 `"license": "GPL-2.0-only"`；`kosme/arduinoFFT@2.0.4` 的 LICENSE 正文是 GPL v3。**二者互不相容**，且本 fork 的 MIT 声明覆盖不了这个组合。上游正是靠自写 clean-room 的 `nrf24_raw.h` / `halehound_fft.h` 绕开同一问题，并在 LICENSE 里写成卖点（"zero GPL-licensed code"）。
-- **动作**：三选一，写进 `docs/compliance/`：
-  1. **替换** —— 自写最小 NRF24 寄存器层与 FFT，或换 permissive 替代库（上游实现**只作存在性证明，代码不可搬运**）；
-  2. **全 GPL** —— 接受整个固件按 GPL 分发，补源码义务与 `LICENSE`；
-  3. **不发二进制** —— 明确仅自用/内部，仓库不产出 `.bin`。
-- **验收**：`docs/compliance/dependency-licenses.md` 存在，逐依赖给出 SPDX + 证据文件路径 + 决策与理由；若走路线 1，替换实现须有宿主测试，且 2.4GHz 与频谱仪两条路径行为对齐（含回归）。
-- **依赖**：无。**但结论会决定 `F1`/`F3` 的实现方式**（先换库再写码，否则返工）。
+> 本节于 2026-10-16 依据 `docs/legal/COMPLIANCE_PLAN_zh.md` 重写。三条与上一版**不同的**结论：
+> ① `C1` 的「全 GPL」路线**已被证伪** —— GPL-2.0-only 与 GPL-3.0 互不相容，**不存在**一份能覆盖整体的许可；
+> ② 新增一个**独立**阻断项：`ESP32 BLE Keyboard` 完全无授权（原清单只记了它"包内无 LICENSE 文件"，
+> 没意识到"无文件"在这里意味着"无授权"）；
+> ③ 仓库里 11 个已提交的 `.bin` **本身就是分发行为**，这让 `C1` 从"潜在风险"变成"正在发生"。
 
-### `C2` `THIRD_PARTY_NOTICES` + 衍生声明（P0 · S）
-- **为什么**：本仓 `LICENSE` 的「ATTRIBUTION REQUIREMENTS」明列该义务；而现有第三方清单**列了 `RF24` 却没写它是 GPL-2.0-only**。
-- **动作**：① 生成 `THIRD_PARTY_NOTICES.md`（逐依赖：名称@版本 · SPDX · 出处 URL · 包内证据文件路径）② README 增加 `Based on HaleHound-CYD by Jesse C. Hale` + 本 fork 修改摘要。
-- **验收**：清单覆盖 `platformio.ini` 全部 9 项 `lib_deps` + 传递依赖；**5 个「包内无 LICENSE 文件」的依赖逐个补证留档**：`rc-switch`、`TinyGPSPlus`、`ESP32 BLE Keyboard`、`SmartRC-CC1101-Driver-Lib`、`TFT_eSPI`。
-- **依赖**：`C1`。
+### `C1` 断开 copyleft 依赖（P0 · M/L）
+- **目标**：让「链接出的固件二进制」在许可上成立。
+- **为什么（S1，可复跑 `python build-reports/audit_licenses.py`）**：
+  - `nrf24/RF24@1.4.11` 的 `library.json` 声明 **`GPL-2.0-only`**（`only` = 就是 v2，不含 or-later），随附 LICENSE 为 GPLv2 全文；
+  - `kosme/arduinoFFT@2.0.4` 的 LICENSE 正文是 **GPL v3**（`Version 3, 29 June 2007`）；
+  - 二者**互不相容**（FSF 相容性清单）⇒ **不存在**任何一份许可能覆盖整个二进制：
+    不能按 GPLv2 发（含 v3 部分），不能按 GPLv3 发（v2-only 部分不允许升版），更不能按我们的 MIT 发。
+- **动作**（**只剩两条路**）：
+  1. **替换** —— `RF24` → RadioLib（MIT，含 nRF24 模块）或按 Nordic 公开数据手册自写寄存器层；
+     `arduinoFFT` → ESP-DSP（Apache-2.0，S3/C5 有硬件加速）或 kissfft（BSD-3）或自写 radix-2。
+     上游的 `nrf24_raw.h` / `halehound_fft.h` 是**存在性证明，不是可搬运的代码**（专有许可）。
+  2. **不发二进制** —— 明确仅自用/内部，仓库不产出、不提交 `.bin`。
+- **验收**：`python build-reports/audit_licenses.py` 的 `strong copyleft` 计数归零且**退出码为 0**；
+  若走替换路线，2.4GHz 与频谱仪两条路径有宿主测试，且与替换前行为对齐（含回归）。
+- **依赖**：无。**结论决定 `F1`/`F3` 的实现方式**（先换库再写码，否则返工）。
 
-### `C3` 商标与命名边界（P0 · S · 需 BOSS）
-- **为什么**：`HaleHound™` 是上游商标；上游 v4.0 许可禁止「声称作者」与「改动 branding / attribution 声明」。本 fork 若要商品化（NM 系列 / WORKBUDDY 品牌），命名与物料必须划线。
-- **动作**：产出「保留 / 替换」清单 —— 哪些位置必须保留**归属性引用**（说明来源），哪些必须改用本产品名。
-- **验收**：清单落库；README / 文档标题 / 产品页按清单执行，且可用 `grep` 断言营销物料中不出现上游商标。
+### `C2` 第三方与衍生声明 ✅ 本轮已落地（P0 · S）
+- **交付物**：`THIRD_PARTY_NOTICES.md`（含 3 个阻断项 + 逐依赖处置）、`NOTICE.md`（派生链 / 修改摘要 / 商标 / 不关联声明）、`LICENSES/`（**14 份逐字副本**）、重写的 `LICENSE`，以及可复跑的 `build-reports/audit_licenses.py` + `build-reports/collect_licenses.py`。
+- **5 个「包内无 LICENSE 文件」的依赖已逐个留档**：`rc-switch` / `TinyGPSPlus` → SPDX 官方 LGPL-2.1 原文；`ESP32 BLE Keyboard` → **无授权**占位标记；`SmartRC-CC1101-Driver-Lib` → **许可不明确**占位标记；`TFT_eSPI` → 复合许可原文（`MIT AND BSD-3-Clause`）。
+- **验收（已满足）**：清单覆盖 `platformio.ini` 全部 9 项 `lib_deps` + Arduino core 与 IDF 两项传递依赖；`LICENSES/` 内容全部来自一手文件或 SPDX 原文，**无一处誊抄**；`LICENSES/HaleHound-CYD-MIT.txt` 与 `git show 56cf737:LICENSE` **逐字节一致**。
 
-### `C4` 不搬运 v4.0 专有物料（P0 · S）
-- **为什么**：上游 v4.0 的 SCOPE 明确含 `Documentation and README files` 与 `ASCII art and branding assets`。
-- **动作**：审计本仓文档与 `README.txt` / `dist/`，标出逐字取自上游的文件并注明来源与许可；对外销售物料只用功能性描述（功能名、菜单结构属功能性信息）。
+### `C3` 商标与命名边界（P0 · S · **需 BOSS 定名**）
+- **为什么**：MIT **不授予商标权**（通篇未提商标，沉默≠授权）；上游用同一牌子卖**同类**商品（固件 + 该固件的硬件在售）⇒ 混淆风险是实质性的。已核实的越界点按风险排序：
+  1. `src/legacy/bluetooth_attacks.cpp:9153`（根目录副本同在）—— `new BleKeyboard("HaleHound KB", "HaleHound", 100)`：**设备对附近所有手机广播商标名**（最高）；
+  2. `src/app/LegacyApp.inc:2782 / 4186 / 4199` —— `drawGlitchTitle(..., "HALEHOUND")`：屏幕品牌字；
+  3. `include/icon.h:1460-1464` —— `bitmap_halehound_splash[]`：上游**美术资产**编进固件；
+  4. `src/app/LegacyApp.inc:2527 / 2579` —— `tft.print("By: HaleHound (JMFH)")`：须改成归属声明形态；
+  5. `flash_package/` + `dist/` 的 11 个 `HaleHound-*.bin` **文件名**（与 `C6` 同一批处理）；
+  6. `README.md` / `LICENSE` 的项目层品牌；仓库名 `HaleHound-CYD`（属 fork 描述性命名，可暂留，但要与产品名切开）；
+  7. 85 个文件共 **4359 处**，绝大多数是颜色宏 `HALEHOUND_MAGENTA` / `HOTPINK` / `GUNMETAL` / `DARK`（内部标识符，低风险，机械重命名）。
+- **动作**：按上表产出「保留（指示性使用）/ 替换（自有品牌）」清单并执行；归属行统一为 `Based on HaleHound-CYD by Jesse C. Hale (MIT)`，另附不关联声明。
+- **验收**：`grep -rn "HaleHound" src/ include/` 只剩归属声明那几处；对外产物文件名、屏显文字、广播名不含该词。
+- **依赖**：**先定产品名**（§8 `D2`）。
+
+### `C4` 不搬运 v3.6.2+ 的专有物料（P0 · S）
+- **为什么（已更新）**：上游换证发生在 **v3.5.0 → v3.6.2 之间**（逐 tag 抓 LICENSE 全文比对确认：v3.5.0 = MIT 14991 字节，v3.6.2 = 专有 16575 字节）；v4.0 的 SCOPE 明确含 `Documentation and README files` 与 `ASCII art and branding assets`。我们分叉于 2026-03-16（v3.4.0 之后），**在换证之前**。
+- **动作**：文档与 `dist/` 逐文件标注来源与许可；对外销售物料只用功能性描述（功能名、菜单结构属功能性信息）。总则：**事实可读，表达不可抄**。
 - **验收**：审计表落库；`dist/` 内每个上游原文文件都有来源标注。
+- **依赖**：`C3`。
 
 ### `C5` 保持「上游行为 = 发布方自述」口径（P2 · S）
 - **验收**：`RELEASE_BRIEF_zh.md` 与 `USER_EVIDENCE_zh.md` 中每条上游行为都带来源级标记，**无一处被表述为「已验证」**。将来若拿到真机行为，回填为 S1。
+
+### `C6` 把已提交的 `.bin` 移出仓库（P0 · S · **止血，可今天做完**）
+- **为什么**：`flash_package/*.bin`（10 个）与 `dist/*.bin` 共 **11 个、18.8 MB** 已在 git 中；`dist/` 虽在 `.gitignore`，但文件在加那条 ignore **之前**就已提交，仍被跟踪。**仓库公开 = 正在分发**，而这些二进制同时带着 `C1` 的不可分发组合、`C3` 的商标文件名。不做这步，`C1`/`C3` 的整个周期里仓库都处于「持续再分发」状态。
+- **动作**：`git rm --cached flash_package/*.bin`；`.gitignore` 补 `flash_package/*.bin`（`dist/` 已有）。
+- **验收**：`git ls-files | grep -c '\.bin$'` 归零；`.gitignore` 同时覆盖两条路径；权威产物改由发布页 / `scripts/package_firmware.ps1` 提供。
+- **依赖**：无。**但涉及移除已提交文件，等 BOSS 确认**（§8 `D5`）。
+
+### `C7` 履行 LGPL-2.1 的静态链接义务（P0 · S）
+- **为什么**：Arduino core、ESP-IDF 预编译库、`rc-switch`、`TinyGPSPlus` 均为 **LGPL-2.1-or-later**（core 与 IDF 由 `package.json` 声明，另两个由源文件头声明）。LGPL **允许**静态链接，但要求接收方**能够重新链接**到修改后的库版本。
+- **动作**：① `LICENSES/` 已备（含 LGPL-2.1 原文）；② 写一节「如何重新链接」的构建说明（工具链版本 + 完整 flag，可从 `build-reports/_syntax_*.rsp` 取真值）；③ 声明按请求提供 `.o`；④ 或把 `rc-switch` / `TinyGPSPlus` 换成自写实现以缩小义务面。
+- **验收**：文档里有可复现的重链接步骤，照文档能由公开源重建出等价固件。
+
+### `C8` 逐文件 SPDX 头（P1 · S/M）
+- **为什么**：MIT/BSD 的归属义务是**分发条件**，目前只有仓库级声明。政策已定于 `docs/legal/COMPLIANCE_PLAN_zh.md §6.2`。
+- **动作**：自写文件写 `SPDX-License-Identifier: MIT` + 我方 `SPDX-FileCopyrightText`；**改自上游的文件必须保留上游著作权行**；第三方原样引入的文件不动。
+- **验收**：可复查脚本 —— `src/`、`include/` 下每个文件含 SPDX 行，或出现在显式豁免清单里。
+- **注**：**单独一次提交**，避免千行 diff 淹没许可改动。
+
+### `C9` 依赖许可门禁进 CI（P1 · S）
+- **为什么**：`audit_licenses.py` 现在**有阻断项就 `exit 1`**，可直接当门禁；但没接进任何流程，靠人记得跑就等于没有。
+- **动作**：接入 `K2` 的 CI 矩阵；新增依赖必须同时更新 `LICENSES/` 与 `THIRD_PARTY_NOTICES.md`。
+- **验收**：故意加一个 GPL 依赖时 CI 变红，且红灯输出能直接定位到依赖名与许可。
+
+### `C10` SmartRC 许可澄清（P1 · S）
+- **为什么**：包内 `SmartRC-CC1101-Driver-Lib@2.5.7/LICENSE.txt` 是 **2021 年的自定义文本**（"You can freely use, edit or distribute it with reference to the source. For everything else, the rights of the respective owners apply!"），**早于上游仓库改标 MIT**（现行 LICENSE 为 MIT，`Copyright (c) 2026 Little Satan`）。⇒ 我们分发的是**授权范围未被写明**的那一版。
+- **动作**：升级到随附 MIT 文本的版本，或向作者取书面确认；结论回填 `THIRD_PARTY_NOTICES.md`。
+- **验收**：`audit_licenses.py` 中该行不再是 `UNIDENTIFIED`，且 `LICENSES/` 中不再有该库的 `LICENCE-UNRESOLVED.txt`。
 
 ---
 
@@ -151,7 +202,7 @@
 | ID | 一句话 | 验收标准（可执行） |
 |---|---|---|
 | **`K1`** | `.bin` 一致性：`PART_16MB` 与 4 MB 两种产物 | 两种产物都能生成、尺寸在预算内、SHA256 留档进 `build-reports/` |
-| **`K2`** | CI 构建矩阵（`W5` 的落地形态） | 每次推送自动跑：两端语法检查 + 宿主全量 + 分区矩阵；红灯能定位到文件 |
+| **`K2`** | CI 构建矩阵（`W5` 的落地形态） | 每次推送自动跑：两端语法检查 + 宿主全量 + 分区矩阵 + **`C9` 的许可审计**；红灯能定位到文件 |
 | **`K3`** | 版本号单一来源（`W4`） | 固件 / 菜单 About / 构建产物 / README 四处版本号来自同一处，并有断言防漂移 |
 | **`K4`** | 固件体积预算 | 超阈值即 fail，并输出各模块占用 |
 | **`K5`** | OTA 路径验证（`/firmware`） | SD 内 `.bin` 能被识别并校验（`/firmware` 已在 `PathPolicy` 定义） |
@@ -172,9 +223,10 @@
 
 | 项 | 理由 |
 |---|---|
-| 同步上游源码 | 上游**没有**源码（专有许可，仓库只有 README + LICENSE）→ 只能按文档独立实现 |
+| 从上游「再取代码」 | 上游 v3.6.2 起为**专有**（禁止衍生 / 再分发 / 改署名）。**口径更正**：上游当前 `main` 确实只有 README + LICENSE，但**它的历史曾有源码**，而我们这份 fork 已于 2026-03-16（换证前）拿到那份 MIT 源码；且上游改写过历史，两边 `git merge-base` 为空 ⇒ 既无法「同步」，也不需要「按文档独立实现」来替代 —— **我们缺的只是 v3.6.2 之后的新功能，那部分只能自己写**（`C4`） |
 | 发布上游 `.bin` / 镜像 | 上游许可禁止再分发与镜像，且我们也没有其二进制 |
 | 用 `HaleHound™` 做本 fork 的产品名 | 商标边界（`C3`） |
+| 把整个固件改为 GPL 后分发 | **已证伪**：GPL-2.0-only 与 GPL-3.0 互不相容，这条路物理上不存在（`C1`） |
 | 追求「条目数对齐上游 v4.0」 | 上游 v4.0 的 Drone RID Spoof 上线即崩（#189 未关闭）—— 条目数 ≠ 成熟度 |
 | 嵌套 / 硬嵌套 MIFARE 攻击 | `REMAINING_WORK §2 R7` 已定为「只做诚实报告，不做攻击」 |
 
@@ -184,11 +236,16 @@
 
 | ID | 状态 | 证据（测试名 / 命令 / sha） |
 |---|---|---|
-| `C1` | ⬜ 未开始 | |
-| `C2` | ⬜ 未开始 | |
-| `C3` | ⬜ 未开始 | |
-| `C4` | ⬜ 未开始 | |
+| `C1` | ⬜ 未开始 | `audit_licenses.py` 当前输出 `strong copyleft: 2 [arduinoFFT (GPL-3.0), RF24 (GPL-2.0)]`，exit=1 |
+| `C2` | ✅ 已完成 | `THIRD_PARTY_NOTICES.md` / `NOTICE.md` / `LICENSES/`（14 份）/ `LICENSE`；`audit_licenses.py` + `collect_licenses.py` 可复跑；`LICENSES/HaleHound-CYD-MIT.txt` 与 `git show 56cf737:LICENSE` 逐字节一致 |
+| `C3` | ⬜ 未开始（等命名） | 越界点 T1–T7 已落 `docs/legal/COMPLIANCE_PLAN_zh.md §3.2` |
+| `C4` | 🟡 部分 | 换证时间点已钉死（v3.5.0 MIT → v3.6.2 专有）；逐文件来源标注未做 |
 | `C5` | ⬜ 未开始 | |
+| `C6` | ⬜ 未开始（等 BOSS 确认） | `git ls-files \| grep -c '\.bin$'` 当前为 **11** |
+| `C7` | 🟡 部分 | `LICENSES/` 已备 LGPL-2.1 原文；「如何重新链接」说明未写 |
+| `C8` | ⬜ 未开始 | |
+| `C9` | ⬜ 未开始 | `audit_licenses.py` 已具备 exit 1 语义，未接 CI |
+| `C10` | ⬜ 未开始 | `LICENSES/SmartRC-CC1101-Driver-Lib.LICENCE-UNRESOLVED.txt` |
 | `H1` | ⬜ 未开始 | |
 | `H2` | ⬜ 未开始 | |
 | `H3` | ⬜ 未开始 | |
@@ -208,5 +265,18 @@
 
 ---
 
-**生成依据**：`docs/upstream-analysis/USER_EVIDENCE_zh.md`（本轮外部取证 + 来源分级）与 `REMAINING_WORK.md`（§0.5 / §0.7 / §0.8 / §8 / §9）。
+## 10. 只有 BOSS 能定的决策（阻塞 Track A）
+
+| # | 决策 | 为什么卡在这里 |
+|---|---|---|
+| **D1** | `C1` 的两条依赖：**换库**还是**自写**？ | 决定 2.4GHz、频谱仪两块怎么写；换库快但引入新依赖，自写慢但彻底干净 |
+| **D2** | 产品名最终定什么？ | `C3` 的 T1–T4 改名需要名字；不改名则商业分发带商标风险 |
+| **D3** | 是否为自有品牌申请商标？ | 决定要不要在设计阶段就固化标识 |
+| **D4** | 是否就「MIT 不可撤销性 + 上游专利」取一次外部法律意见？ | 仓库无法自查专利；这条影响能否商业化 |
+| **D5** | `flash_package/*.bin` 与 `dist/*.bin` 是否现在移出仓库？（`C6`） | 低风险高收益，但涉及移除已提交文件 |
+| **D6** | `LICENSE` 的著作权主体写哪个法律实体？ | 现暂填 GitHub 组织名 `RockBase-iot`，出货前应替换为实际主体 |
+
+---
+
+**生成依据**：`docs/upstream-analysis/USER_EVIDENCE_zh.md`（外部取证 + 来源分级）、`docs/legal/COMPLIANCE_PLAN_zh.md`（许可链 / 商标 / 依赖审计）与 `REMAINING_WORK.md`（§0.5 / §0.7 / §0.8 / §8 / §9）。
 **本文只写「做什么、怎么算做完」；级别与缺口定义以 `REMAINING_WORK.md` 为准。**

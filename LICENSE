@@ -1,54 +1,36 @@
-              _                                                   _
-         .k$$$$$g,                                           ,g$$$$$k.
-      .k$$$$$$$$$$$a.                                     .a$$$$$$$$$$$k.
-    .J$$$$$?'   `?$?^?,                                 ,?^?$?`   `?$$$$$L.
-   JS$$SI!a,  _.JS$   ?,                               ,?   $SL._  ,a$!IS$$SL
-  k$$$SI!:?$$$$$$$$$xu$$j                              j$$ux$$$$$$$$$?:!IS$$$k
- :I$$SI:J$$?*"$$$$4^?*?:                               :?*?^4$$$$"*?$$L:iIS$$I:
- :IS$$SiJ?`  _.'$?`/'   ':                           :'    '/'?$'._  `?LiS$$SI:
-  ?ISSik? _        ',    `                              .    ,'       _ ?kiSSI?
-    ?i$?` _   k$        .                               :.        $k   _ `?$i?
-      '?I:-?z$$I   _._.'                                  ._._   I$$z?-:I?'
-     '*?- '?$$a louSxuS?                               ?xuSxuol a$$?' -?*'
-           i$$$$$$$$$$$S                               S$$$$$$$$$$$i
-              ?$$$?-                                       -?$$$?
+===============================================================================
+  NM-CYD-C5 FIRMWARE  --  LICENCE
+===============================================================================
 
-     ██░ ██  ▄▄▄       ██▓    ▓█████  ██░ ██  ▒█████   █    ██  ███▄    █ ▓█████▄
-    ▓██░ ██▒▒████▄    ▓██▒    ▓█   ▀ ▓██░ ██▒▒██▒  ██▒ ██  ▓██▒ ██ ▀█   █ ▒██▀ ██▌
-    ▒██▀▀██░▒██  ▀█▄  ▒██░    ▒███   ▒██▀▀██░▒██░  ██▒▓██  ▒██░▓██  ▀█ ██▒░██   █▌
-    ░▓█ ░██ ░██▄▄▄▄██ ▒██░    ▒▓█  ▄ ░▓█ ░██ ▒██   ██░▓▓█  ░██░▓██▒  ▐▌██▒░▓█▄   ▌
-    ░▓█▒░██▓ ▓█   ▓██▒░██████▒░▒████▒░▓█▒░██▓░ ████▓▒░▒▒█████▓ ▒██░   ▓██░░▒████▓
-     ▒ ░░▒░▒ ▒▒   ▓▒█░░ ▒░▓  ░░░ ▒░ ░ ▒ ░░▒░▒░ ▒░▒░▒░ ░▒▓▒ ▒ ▒ ░ ▒░   ▒ ▒  ▒▒▓  ▒
-     ▒ ░▒░ ░  ▒   ▒▒ ░░ ░ ▒  ░ ░ ░  ░ ▒ ░▒░ ░  ░ ▒ ▒░ ░░▒░ ░ ░ ░ ░░   ░ ▒░ ░ ▒  ▒
-     ░  ░░ ░  ░   ▒     ░ ░      ░    ░  ░░ ░░ ░ ░ ▒   ░░░ ░ ░    ░   ░ ░  ░ ░  ░
-     ░  ░  ░      ░  ░    ░  ░   ░  ░ ░  ░  ░    ░ ░     ░              ░    ░
+Licence structure
+-----------------
 
-              _                                                   _
-         .k$$$$$g,                                           ,g$$$$$k.
-      .k$$$$$$$$$$$a.                                     .a$$$$$$$$$$$k.
-    .J$$$$$?'   `?$?^?,                                 ,?^?$?`   `?$$$$$L.
-   JS$$SI!a,  _.JS$   ?,                               ,?   $SL._  ,a$!IS$$SL
-  k$$$SI!:?$$$$$$$$$xu$$j                              j$$ux$$$$$$$$$?:!IS$$$k
- :I$$SI:J$$?*"$$$$4^?*?:                              :?*?^4$$$$"*?$$L:iIS$$I:
- :IS$$SiJ?`  _.'$?`/'  ':                            :'    '/'?$'._  `?LiS$$SI:
-  ?ISSik? _        ',  .                                .    ,'       _ ?kiSSI?
-    ?i$?` _  k$        .:                              :.        $k   _ `?$i?
-      '?I:-?z$$I   _._.'                                  ._._   I$$z?-:I?'
-     '*?- '?$$a louSxuS?                               ?xuSxuol a$$?' -?*'
-           i$$$$$$$$$$$S                               S$$$$$$$$$$$i
-              ?$$$?-                                       -?$$$?
+This firmware is a derivative work of HaleHound-CYD:
 
-================================================================================
-               HALEHOUND-CYD FIRMWARE
-================================================================================
-  Repository:   https://github.com/JesseCHale/HaleHound-CYD
-  Author:       Jesse C. Hale (JesseCHale)
-  Website:      https://github.com/JesseCHale
-================================================================================
+  Upstream           HaleHound-CYD, https://github.com/JesseCHale/HaleHound-CYD
+  Upstream author    Jesse C. Hale (JesseCHale), building on ESP32-DIV by
+                     CiferTech
+  Forked from        upstream commit 68bbfe6, 2026-03-16 -- taken while the
+                     upstream was still distributed under the MIT licence
+  Modified by        RockBase-iot, from commit c9d7598, 2026-07-27 onward
 
+The upstream's MIT grant, exactly as received, is preserved verbatim in
+LICENSES/HaleHound-CYD-MIT.txt.  The upstream later replaced its licence with a
+proprietary text, somewhere between its v3.5.0 and v3.6.2 releases; that does
+not affect the grant already made for the code this fork is based on, and this
+project does not use material published under the later terms.
 
-                              MIT LICENSE
+Third-party libraries are listed in THIRD_PARTY_NOTICES.md with their licences,
+and every licence text is collected in LICENSES/.  Read those two alongside this
+file: this project's own licence says nothing about the components it links.
 
+------------------------------------------------------------------------------
+  MIT LICENCE
+  Applies to this project's own contributions.  The two upstream copyright
+  lines are carried forward because the MIT terms require it.
+------------------------------------------------------------------------------
+
+Copyright (c) 2026 RockBase-iot
 Copyright (c) 2026 Jesse C. Hale (HaleHound-CYD Edition)
 Copyright (c) 2023 CiferTech (original ESP32-DIV)
 
@@ -70,255 +52,38 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+------------------------------------------------------------------------------
+  THIRD-PARTY COMPONENTS
+------------------------------------------------------------------------------
 
-================================================================================
-                           PROJECT DESCRIPTION
-================================================================================
+This firmware is built against libraries that carry their own terms, including
+copyleft terms.  As of 2026-10-16 the dependency set cannot lawfully be
+redistributed as a compiled binary: one dependency is GPL-2.0-only, another is
+GPL-3.0, and those two are mutually incompatible, while a third grants no
+licence at all.  The audit, the evidence and the plan to resolve it are in
+docs/legal/COMPLIANCE_PLAN_zh.md.
 
-HaleHound-CYD is a multi-protocol offensive security toolkit built for the
-ESP32-2432S028 "Cheap Yellow Display" (CYD) platform. It ports the full
-ESP32-DIV HaleHound v2.5.0 firmware to the CYD's 2.8" touchscreen form
-factor, adding external CC1101 SubGHz, NRF24L01+PA+LNA 2.4GHz, and GPS
-radios via the CYD's breakout pins.
+This section exists so that the current state of the tree is not mistaken for a
+distributable release.  Do not redistribute a binary built from it until the
+blockers in that plan are closed.
 
-HALEHOUND-CYD FEATURES:
+------------------------------------------------------------------------------
+  TRADEMARK
+------------------------------------------------------------------------------
 
-  WiFi Attacks:
-    - Packet Monitor with real-time frame statistics
-    - Beacon Spammer with custom/random SSID flooding
-    - WiFi Deauther with network scan and tap-to-attack
-    - Probe Sniffer with Evil Twin auto-spawn chain
-    - WiFi Scanner with tap-to-Deauth/Clone handoff
-    - GARMR Captive Portal (Evil Twin credential harvest)
-    - Station Scanner with client enumeration
+"HaleHound" and any associated marks belong to their respective owner.  This
+project is not affiliated with, endorsed by, or sponsored by the HaleHound
+project, Jesse C. Hale, or CiferTech.  The name appears only where the origin of
+this work has to be identified -- an attribution required by the MIT terms, and
+nothing more.  No trademark rights are granted by this licence.
 
-  Bluetooth Attacks:
-    - BLE Jammer (advertisement channel flooding)
-    - BLE Spoofer (device identity cloning)
-    - BLE Beacon (custom advertisement broadcast)
-    - BLE Sniffer (passive traffic analysis)
-    - BLE Scanner (device discovery)
+------------------------------------------------------------------------------
+  RESPONSIBLE USE
+------------------------------------------------------------------------------
 
-  2.4GHz NRF24 Attacks:
-    - Channel Scanner
-    - Spectrum Analyzer with visual RF display
-    - WLAN Jammer (broadband 2.4GHz disruption)
-    - Proto Kill (multi-protocol attack suite)
-
-  SubGHz CC1101 Attacks:
-    - Signal Replay Attack (record and replay)
-    - Brute Force (automated code generation)
-    - SubGHz Jammer (wideband disruption)
-    - Spectrum Analyzer
-    - Saved Profile management
-
-  SIGINT Operations:
-    - EAPOL/PMKID Capture (WPA handshake harvesting)
-    - Karma Attack (auto-respond probe requests)
-    - Wardriving (GPS-tagged AP scanning)
-    - Saved Captures browser
-
-  Tools:
-    - UART Serial Monitor (hardware hacking terminal)
-    - OTA Firmware Update from SD card
-    - Touch Calibration utility
-    - GPS satellite view with live NMEA data
-
-  Hardware Support:
-    - ESP32-2432S028 CYD 2.8" (primary, fully tested)
-    - ESP32-3248S035 CYD 3.5" (pin defines ready, untested)
-    - Full touchscreen navigation
-    - CC1101 SubGHz radio (external)
-    - NRF24L01+PA+LNA 2.4GHz radio (external)
-    - GT-U7 / NEO-6M GPS module (external)
-    - MicroSD card (built-in slot)
-    - All radios at maximum TX power
-
-
-================================================================================
-                            SCOPE OF LICENSE
-================================================================================
-
-This license applies to all contents of this repository, including but not
-limited to:
-
-  - All firmware source code (.cpp, .h, .ino files)
-  - Configuration files and build scripts
-  - Documentation and README files
-  - Hardware pin mappings and schematics references
-  - Menu definitions and UI assets
-  - Supporting libraries developed for this project
-  - ASCII art and branding assets
-
-THIRD-PARTY COMPONENTS:
-This project builds upon and includes components from various open-source
-projects. Where applicable, individual files or directories may contain
-their own licensing terms. Notable dependencies include:
-
-  - ESP32 Arduino Core (LGPL)
-  - TFT_eSPI library
-  - RCSwitch library
-  - RF24 library
-  - TinyGPSPlus library
-  - ArduinoJson library
-  - SmartRC-CC1101-Driver-Lib
-  - Various ESP32 peripheral libraries
-
-Users are responsible for compliance with all applicable third-party licenses.
-
-
-================================================================================
-                        ATTRIBUTION REQUIREMENTS
-================================================================================
-
-When using, modifying, or distributing this software, the following
-attribution requirements apply:
-
-HALEHOUND-CYD ATTRIBUTION:
-  - Jesse C. Hale (JesseCHale) developed the HaleHound-CYD Edition
-  - HaleHound-CYD: https://github.com/JesseCHale/HaleHound-CYD
-
-FOR DIRECT USE:
-  - Retain this LICENSE file in any distribution
-  - Maintain copyright notices in source files
-
-FOR MODIFICATIONS AND FORKS:
-  - Include original copyright notice
-  - Clearly indicate modifications made
-  - Suggested attribution format:
-
-    "Based on HaleHound-CYD by Jesse C. Hale"
-    "https://github.com/JesseCHale/HaleHound-CYD"
-
-FOR DERIVATIVE WORKS:
-  - You may create derivative works under the same MIT license
-  - Original attribution chain must be preserved
-  - You may add your own copyright for your modifications
-
-
-================================================================================
-                          CONTRIBUTION TERMS
-================================================================================
-
-By submitting contributions to this repository (via pull requests, issues,
-or other means), you agree to the following:
-
-  1. Your contributions are provided under the same MIT License
-  2. You have the right to submit the contribution
-  3. You grant the project maintainer rights to use, modify, and distribute
-     your contribution as part of this project
-  4. Contributions become part of the collective work and are subject to
-     this license
-
-Contributions are welcome and encouraged. Please ensure your submissions:
-  - Follow the existing code style and structure
-  - Include appropriate documentation
-  - Are tested on compatible hardware when possible
-  - Do not introduce regressions in existing functionality
-
-
-================================================================================
-                     DISCLAIMER & RESPONSIBLE USE
-================================================================================
-
-IMPORTANT: READ THIS SECTION CAREFULLY
-
-This firmware and associated tools are provided strictly for:
-
-  [+] AUTHORIZED PENETRATION TESTING
-      Use only on networks and systems you own or have explicit written
-      permission to test.
-
-  [+] SECURITY RESEARCH
-      For studying wireless vulnerabilities and developing defensive
-      measures in controlled environments.
-
-  [+] EDUCATIONAL PURPOSES
-      Learning about wireless security, RF protocols, and ethical
-      hacking methodologies.
-
-  [+] PROFESSIONAL SECURITY ASSESSMENTS
-      Conducted by qualified professionals with proper authorization
-      and scope agreements.
-
-  [+] HAM RADIO AND RF EXPERIMENTATION
-      In compliance with local regulations and licensing requirements.
-
-THE FOLLOWING USES ARE PROHIBITED:
-
-  [-] Unauthorized access to wireless networks or systems
-  [-] Disruption of legitimate wireless communications
-  [-] Jamming or interfering with emergency services or aviation
-  [-] Any activity that violates local, state, federal, or international law
-  [-] Malicious attacks against individuals or organizations
-  [-] Use against systems without explicit written authorization
-
-REGULATORY NOTICE:
-  - Certain functions may be restricted or prohibited in your jurisdiction
-  - RF transmission capabilities must comply with local regulations
-  - Users are responsible for obtaining necessary licenses (e.g., HAM radio)
-  - Some features may violate FCC Part 15 or equivalent regulations
-
-LEGAL NOTICE:
-Unauthorized access to computer systems and wireless networks is a crime in
-most jurisdictions. Jamming or interfering with wireless communications may
-violate federal law (e.g., 47 U.S.C. § 333). Users are solely responsible
-for ensuring compliance with all applicable laws and regulations.
-
-The author(s) assume NO LIABILITY for any misuse, damage, or legal
-consequences arising from the use of this software or hardware.
-
-By using this software, you acknowledge that:
-  - You understand the legal implications of wireless security testing
-  - You will obtain proper authorization before any testing
-  - You accept full responsibility for your actions
-  - The authors bear no responsibility for unauthorized use
-  - You will comply with all applicable RF and wireless regulations
-
-
-================================================================================
-                         HARDWARE DISCLAIMER
-================================================================================
-
-This firmware is designed for specific ESP32-based hardware configurations.
-Improper use may result in:
-
-  - Damage to your ESP32 device or connected peripherals
-  - RF interference with nearby devices
-  - Violation of radio frequency regulations
-  - Voiding of hardware warranties
-
-The authors provide no warranty for hardware compatibility or safety.
-Users assume all risk when flashing and operating this firmware.
-
-SUPPORTED HARDWARE:
-  - ESP32-2432S028 (CYD 2.8" - primary, fully tested)
-  - ESP32-3248S035 (CYD 3.5" - pin defines ready, untested)
-  - CC1101 HW-863 SubGHz module
-  - NRF24L01+PA+LNA 2.4GHz module
-  - GT-U7 / NEO-6M GPS module
-  - MicroSD card (built-in CYD slot)
-
-Always verify pin mappings and hardware compatibility before use.
-
-
-================================================================================
-                              CONTACT
-================================================================================
-
-  GitHub:       https://github.com/JesseCHale
-  Repository:   https://github.com/JesseCHale/HaleHound-CYD
-  Issues:       https://github.com/JesseCHale/HaleHound-CYD/issues
-
-
-================================================================================
-                           HALEHOUND-CYD
-================================================================================
-
-     "Security Through Understanding, Protection Through Knowledge"
-
-           Part of the HaleHound Security Research Collection
-
-    HaleHound-CYD - Full CYD Touchscreen Offensive Security Toolkit
-
-================================================================================
+This firmware is a wireless security toolkit.  Several of its functions transmit
+and several disrupt other people's traffic.  Use it only on equipment you own or
+have written authorisation to test, and only where the local radio regulations
+allow it.  Jamming and unauthorised interception are criminal offences in most
+jurisdictions.  See NOTICE.md.
+===============================================================================

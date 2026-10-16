@@ -1,0 +1,13 @@
+SmartRC-CC1101-Driver-Lib 2.5.7
+===============================
+
+This library does ship a licence file, but the text names no licence
+any tool can identify: it is a bespoke permission notice whose scope
+is never stated.  The upstream repository does declare a licence, and
+the vendored copy predates that declaration, so the intent is probably
+permissive -- but intent is not a grant, and the notice as shipped
+disclaims everything it does not expressly allow.
+
+This file exists so the gap is visible in the tree.  It is not a
+licence, and it is not a substitute for one: see
+docs/legal/COMPLIANCE_PLAN_zh.md, track A3.

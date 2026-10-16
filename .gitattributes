@@ -1,0 +1,7 @@
+# Licence texts under LICENSES/ are evidence, not prose: they are the exact
+# bytes a distribution has to carry, and some of them are compared against
+# upstream blobs to prove that a grant was received (see NOTICE.md §2).  Letting
+# `core.autocrlf` rewrite their line endings on checkout would make that
+# comparison fail on a fresh clone for reasons that have nothing to do with the
+# licence.  `-text` disables all conversion for these paths.
+LICENSES/** -text

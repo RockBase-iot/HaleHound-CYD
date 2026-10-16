@@ -96,6 +96,40 @@ Two things it does that are easy to get wrong:
 Result on 2026-10-16: **49/49 suites, 446 test cases green** (`test/native/` holds 50
 directories; `support/` is a header-only test double and has no suite).
 
+## `audit_licenses.py` / `collect_licenses.py` — the licence audit
+
+What this firmware links against, and what may be shipped alongside it.
+
+`audit_licenses.py` reads each installed dependency's licence from the most
+specific source that exists — a `library.properties` / `library.json` /
+`package.json` declaration, a `LICENSE` / `COPYING` file, or a source header —
+classifies it, prints a table and writes `license-audit.json`. It **exits
+non-zero while any dependency blocks distribution**, so it works as a gate rather
+than as a report somebody has to remember to read. It exits non-zero today.
+
+`collect_licenses.py` turns that result into `LICENSES/`: the exact texts a
+distribution has to carry, copied byte for byte from the installed library where
+one is shipped, and from the canonical SPDX text where a library names a licence
+without shipping it. Libraries that grant nothing get a marker file instead, so
+the gap is visible in the tree. One file there is not generated — see `PRESERVED`
+in that script, and the warning attached to it.
+
+Two classification traps are handled explicitly, because the obvious rule gets
+both of them wrong:
+
+- Match on the **earliest** occurrence in the text, not on pattern order. The
+  canonical GPLv2 text closes by suggesting "the GNU *Lesser* General Public
+  License", and GPLv3's section 13 names the "GNU *Affero* General Public
+  License" — so scanning in pattern order reports RF24 as LGPL and arduinoFFT as
+  AGPL. Both are plain GPL.
+- Test the **distinguishing** clause for BSD. BSD-3 contains BSD-2's first clause
+  verbatim, so earliest-match alone reports a three-clause file as two-clause.
+
+Result on 2026-10-16: **2 strong copyleft that are incompatible with each other,
+1 with no licence at all, 2 weak copyleft, 5 permissive** — the firmware cannot
+be redistributed as built. Evidence, the trademark inventory and the plan are in
+`docs/legal/COMPLIANCE_PLAN_zh.md`.
+
 ## `patch_*.py` — applied-and-verified source edits
 
 Each script performs exact-string replacements with a match-count assertion, so a
@@ -140,6 +174,8 @@ that setting off. Read and write with `newline=""` and the file is left alone.
 | `patch_patch_inventory.py` | this table: the 19 tracked-but-unlisted scripts above, and the note below |
 | `patch_u2_wiring.py` | U2: `LegacyApp.inc`'s ten-case Bluetooth switch -> catalog dispatch, the policy store moved to `src/core/PolicyService.cpp`, the catalog-derived submenu arrays |
 | `patch_u2_docs.py` | U2 docs: `REMAINING_WORK.md` §0.7, the two stale claims in this file, the evidence doc §6 |
+| `patch_compliance_docs.py` | the licence/trademark pass: `REMAINING_WORK.md` §8 (the "full GPL" option deleted, C6-C10 added, the relicense window recorded), §1 X6 and §10 (the same correction), and this file's licence-audit section |
+| `patch_remaining_work_evidence.py` | `REMAINING_WORK.md` §0.8 (the seven facts that moved priorities), blockers X6-X9, and the new §8/§9 on compliance and the shared bus, written from the upstream field evidence |
 
 > One script in this table edits a file outside the repository: `patch_skill_syntax_vacuity.py` writes
 > `~/.workbuddy/skills/esp32-platformio-syntax-check/SKILL.md`. It is kept here so that change is still
