@@ -100,7 +100,14 @@ directories; `support/` is a header-only test double and has no suite).
 
 Each script performs exact-string replacements with a match-count assertion, so a
 silent no-op cannot happen. They are kept for provenance; re-running one whose edit is
-already applied will abort harmlessly (`expected 1 match, found 0`).
+already applied will abort harmlessly (`expected 1 match, found 0`). The table lists
+every tracked script, not only the recent ones.
+
+A second trap these scripts have to avoid: `Path.write_text()` without `newline=""`
+rewrites every line ending in the target file (`\n` → CRLF on Windows). With
+`core.autocrlf=true` the diff still shows only the intended lines, because git
+normalises before comparing — so the rewrite stays invisible until someone commits with
+that setting off. Read and write with `newline=""` and the file is left alone.
 
 | Script | What it changed |
 |---|---|
@@ -111,5 +118,29 @@ already applied will abort harmlessly (`expected 1 match, found 0`).
 | `patch_hostcheck_archive.py` | `run_host_tests.py`: archive shared objects before linking |
 | `patch_hostcheck_fixes.py` | the nine latent defects from the first host run (see DEVELOPMENT_PLAN.md §5.5) |
 | `patch_plan_hostcheck.py` | DEVELOPMENT_PLAN.md §5.4 / §5.5 / §7 / §9 |
+| `patch_gatt_names.py` | B4: `GattNameTable` made SIG-verbatim -- 13 wrong names corrected (0x2A31 was pointing at the Scan Parameters *service*), 7 unassigned entries deleted |
+| `patch_gatt_names_union.py` | B4: `GattNameTable::kServices` grown to the union of the two BLE service tables, so the legacy 73-row copy could be deleted without losing coverage |
+| `patch_gatt_names_accessors.py` | B4: index accessors on `GattNameTable`, so a test can prove every service name clamps to the legacy panel's 14-character budget |
+| `patch_gatt_names_test.py` | `test_gatt_names` updated for the B4 union |
+| `patch_ble_database_services.py` | B4: deleted `include/ble_database.h`'s dead 73-row service table (its only caller used `lookupCompanyName`; 0x1822 was labelled HTTP Proxy where the SIG assigns that number to Pulse Oximeter) |
+| `patch_pn532_transport.py` | `Pn532Transport.cpp`: I2C timing after a write, and UID bookkeeping |
+| `patch_pn532_transport_test.py` | three defects in `test_pn532_transport` before its first run: a reply helper that takes an initializer_list, a test that re-called `transceive` against an unscripted fake, a wrong comment about where the status byte goes |
+| `patch_mifare_driver_test.py` | three wrong expectations in `test_mifare_classic_driver`: the ATQA the NTAG row needs, and `unknownBlockCount()` counting every unrecovered block |
+| `patch_hid_write_ref.py` | the HID reader picks its write target from the discovered GATT properties, instead of writing commands to the notify characteristic |
+| `patch_chameleon_rearm.py` | the Chameleon receiver now looks for a frame start inside a rejected window -- a real frame whose SOF landed in the doomed header window used to be consumed and lost |
+| `patch_chameleon_slot_enabled.py` | `ChameleonSlot` grows `enabled`, so GET_ENABLED_SLOTS' per-slot flag pair has somewhere to land instead of the answer being discarded |
+| `patch_chameleon_frame_test.py` | two `test_chameleon_frame` assumptions: this shim has no `TEST_ASSERT_EQUAL_MEMORY`, and `TEST_ASSERT_*` may not expand inside a non-void function |
+| `patch_hostcheck_support.py` | `run_host_tests.py`: `test/native/support` added to the include path so suites can share scripted test doubles |
+| `patch_plan_remaining.py` | `DEVELOPMENT_PLAN.md` after the 2026-10-15 RFID/BLE model-layer session |
+| `patch_remaining_work_rfid.py` | `REMAINING_WORK.md` after the PN532 driver layer landed: four new suites, R3/R4/R5/R7 done at the driver layer, R1 demoted to P1 by instruction |
+| `patch_remaining_work_deps.py` | three `REMAINING_WORK.md` dependency cells the driver layer made stale: R2 -> W1, R8 unblocked, R10 unblocked |
+| `patch_remaining_work.py` | `REMAINING_WORK.md` after closing B1-B3 and the host half of B5 |
+| `patch_release_brief.py` | `docs/upstream-analysis/RELEASE_BRIEF_zh.md`: the stale gap matrix and its statistics, the module/suite inventories, and two verification rows that still claimed native tests cannot run |
+| `patch_skill_syntax_vacuity.py` | **targets a file outside this repo**: the `esp32-platformio-syntax-check` skill gained the "-fsyntax-only PASS that compiled nothing" subsection |
+| `patch_patch_inventory.py` | this table: the 19 tracked-but-unlisted scripts above, and the note below |
 | `patch_u2_wiring.py` | U2: `LegacyApp.inc`'s ten-case Bluetooth switch -> catalog dispatch, the policy store moved to `src/core/PolicyService.cpp`, the catalog-derived submenu arrays |
 | `patch_u2_docs.py` | U2 docs: `REMAINING_WORK.md` §0.7, the two stale claims in this file, the evidence doc §6 |
+
+> One script in this table edits a file outside the repository: `patch_skill_syntax_vacuity.py` writes
+> `~/.workbuddy/skills/esp32-platformio-syntax-check/SKILL.md`. It is kept here so that change is still
+> traceable from the repo. Every other script touches only tracked source, tests and docs.
