@@ -98,6 +98,50 @@ void test_an_unset_uuid_is_not_valid_and_a_short_buffer_refuses() {
     TEST_ASSERT_FALSE(known.write(tooSmall, 0));
 }
 
+void test_a_printed_uuid_round_trips_through_the_parser() {
+    const BleUuid original = BleUuid::fromShort(0x180F);
+    char text[37] = {};
+    TEST_ASSERT_TRUE(original.write(text, sizeof(text)));
+
+    BleUuid parsed;
+    TEST_ASSERT_TRUE(BleUuid::fromText(text, parsed));
+    TEST_ASSERT_TRUE(parsed == original);
+
+    // The hyphen-free and lower-case spellings are the same UUID.
+    TEST_ASSERT_TRUE(BleUuid::fromText("0000180f00001000800000805f9b34fb", parsed));
+    TEST_ASSERT_TRUE(parsed == original);
+    // As is the bare short form, with or without the 0x.
+    TEST_ASSERT_TRUE(BleUuid::fromText("180F", parsed));
+    TEST_ASSERT_TRUE(parsed == original);
+    TEST_ASSERT_TRUE(BleUuid::fromText("0x180F", parsed));
+    TEST_ASSERT_TRUE(parsed == original);
+
+    // A vendor UUID survives the round trip without collapsing to a short form,
+    // which is the whole point on the Chameleon link.
+    const uint8_t nus[16] = {0x6E, 0x40, 0x00, 0x01, 0xB5, 0xA3, 0xF3, 0x93,
+                             0xE0, 0xA9, 0xE5, 0x0E, 0x24, 0xDC, 0xCA, 0x9E};
+    TEST_ASSERT_TRUE(BleUuid::fromText("6e400001-b5a3-f393-e0a9-e50e24dcca9e", parsed));
+    TEST_ASSERT_TRUE(parsed == BleUuid::fromBytes(nus));
+    TEST_ASSERT_FALSE(parsed.isShort());
+}
+
+void test_a_malformed_uuid_is_refused_and_leaves_the_output_alone() {
+    const BleUuid sentinel = BleUuid::fromShort(0x180F);
+    BleUuid out = sentinel;
+
+    // A wrong length is a different UUID, not one to pad or truncate into.
+    TEST_ASSERT_FALSE(BleUuid::fromText("180F1", out));
+    TEST_ASSERT_FALSE(BleUuid::fromText("0000180F-0000-1000-8000-00805F9B34F", out));
+    TEST_ASSERT_FALSE(BleUuid::fromText("", out));
+    TEST_ASSERT_FALSE(BleUuid::fromText(nullptr, out));
+    // A non-hex digit must not be skipped: silently dropping it would turn a
+    // typo into a confident, wrong UUID.
+    TEST_ASSERT_FALSE(BleUuid::fromText("0000180G-0000-1000-8000-00805F9B34FB", out));
+
+    // Every refusal left the value exactly as it was.
+    TEST_ASSERT_TRUE(out == sentinel);
+}
+
 void test_an_advertisement_reports_the_services_it_lists() {
     BleAdvertisement advertisement;
     advertisement.serviceCount = 2;
@@ -181,7 +225,7 @@ void test_an_unset_characteristic_reference_is_rejected() {
 
 // ─── The fake's contract ───────────────────────────────────────────────────
 
-void test_scan_results_are_capped_and_counted() {
+void test_scan_results_drain_and_then_report_nothing_left() {
     FakeBleCentral fake;
     fake.addAdvertisement("AA:00:00:00:00:01", -40, "one");
     fake.addAdvertisement("AA:00:00:00:00:02", -50, "two");
@@ -199,10 +243,27 @@ void test_scan_results_are_capped_and_counted() {
     TEST_ASSERT_EQUAL_INT8(-40, results[0].rssi);
     TEST_ASSERT_TRUE(results[0].connectable);
 
-    // The result count is capped by the caller's capacity, not the scan list.
+    // The list drains: this is what lets a caller loop until it sees zero, and a
+    // transport that re-served the same page for ever would hang that loop.
+    TEST_ASSERT_EQUAL_UINT8(0, fake.scanResults(results, 8));
+
+    // Capacity pages the stream rather than dropping the tail.
+    TEST_ASSERT_EQUAL(BleStatus::Ok, fake.stopScan());
+    TEST_ASSERT_EQUAL(BleStatus::Ok, fake.startScan(0, false));
     TEST_ASSERT_EQUAL_UINT8(2, fake.scanResults(results, 2));
+    TEST_ASSERT_EQUAL_STRING("one", results[0].name);
+    TEST_ASSERT_EQUAL_UINT8(1, fake.scanResults(results, 2));
+    TEST_ASSERT_EQUAL_STRING("three", results[0].name);
+    TEST_ASSERT_EQUAL_UINT8(0, fake.scanResults(results, 2));
+
+    // Degenerate calls are refused rather than answered with the first page.
     TEST_ASSERT_EQUAL_UINT8(0, fake.scanResults(results, 0));
     TEST_ASSERT_EQUAL_UINT8(0, fake.scanResults(nullptr, 4));
+
+    // A fresh scan starts a fresh stream, so the cursor is not left at the end.
+    TEST_ASSERT_EQUAL(BleStatus::Ok, fake.stopScan());
+    TEST_ASSERT_EQUAL(BleStatus::Ok, fake.startScan(0, false));
+    TEST_ASSERT_EQUAL_UINT8(3, fake.scanResults(results, 8));
 
     TEST_ASSERT_EQUAL(BleStatus::Ok, fake.stopScan());
     TEST_ASSERT_FALSE(fake.scanning());
@@ -415,12 +476,14 @@ int main(int, char**) {
     RUN_TEST(test_a_sig_short_uuid_expands_to_its_base_form);
     RUN_TEST(test_a_128_bit_vendor_uuid_is_not_collapsed_to_its_offset);
     RUN_TEST(test_an_unset_uuid_is_not_valid_and_a_short_buffer_refuses);
+    RUN_TEST(test_a_printed_uuid_round_trips_through_the_parser);
+    RUN_TEST(test_a_malformed_uuid_is_refused_and_leaves_the_output_alone);
     RUN_TEST(test_an_advertisement_reports_the_services_it_lists);
     RUN_TEST(test_an_unset_address_is_not_valid);
     RUN_TEST(test_an_address_prints_in_the_order_every_tool_uses);
     RUN_TEST(test_the_address_type_is_part_of_the_identity);
     RUN_TEST(test_an_unset_characteristic_reference_is_rejected);
-    RUN_TEST(test_scan_results_are_capped_and_counted);
+    RUN_TEST(test_scan_results_drain_and_then_report_nothing_left);
     RUN_TEST(test_connecting_to_an_unset_address_is_not_found);
     RUN_TEST(test_discovery_requires_a_connection);
     RUN_TEST(test_overfilling_the_fixed_arrays_is_marked_not_dropped);

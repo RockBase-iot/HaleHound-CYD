@@ -231,6 +231,13 @@ void SkeletonSession::onConnectFailed(const char* reason) {
     lastError_ = reason == NULL ? "connect failed" : reason;
 }
 
+void SkeletonSession::onDiscoverFailed(const char* reason) {
+    state_ = SkeletonState::Failed;
+    tree_.services.clear();
+    discoveryComplete_ = false;
+    lastError_ = reason == NULL ? "discovery failed" : reason;
+}
+
 void SkeletonSession::onDiscoverComplete(const SkeletonTree& tree) {
     tree_ = tree;
     // Resolve names as the tree lands, not at render time: the SD dump and the
@@ -251,7 +258,12 @@ bool SkeletonSession::canWriteFullDump() const {
     // A dump needs a *live, fully discovered* session. Checking the tree alone
     // is not enough: requestStop() leaves the tree in place while moving to
     // Idle, so a stopped session would otherwise still claim it could write.
-    return state_ == SkeletonState::Ready && discoveryComplete_ && !tree_.services.empty();
+    //
+    // And "fully discovered" has to mean the whole tree: a discovery that ran
+    // out of room mid-peer is a partial tree, so it is refused rather than
+    // written to the card under the name "full dump".
+    return state_ == SkeletonState::Ready && discoveryComplete_ &&
+           !tree_.services.empty() && !tree_.truncated;
 }
 
 namespace {

@@ -71,6 +71,15 @@ struct BleUuid {
     // From 16 bytes already in printed (big-endian) order.
     static BleUuid fromBytes(const uint8_t* sixteen);
 
+    // Parses a printed UUID back to its bytes. Accepts the canonical
+    // `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`, the same 32 hex digits with the
+    // hyphens left out, and the bare 4-hex-digit short form (`180F` or `0x180F`).
+    // Case-insensitive. False for anything else -- including a 12- or 20-digit
+    // string, which is a different UUID, not a near-miss to be padded into one --
+    // and `out` is left untouched so a caller cannot mistake a refusal for a
+    // partly-written value.
+    static bool fromText(const char* text, BleUuid& out);
+
     // False for an all-zero UUID, which is what an unset struct holds and is
     // never a real service.
     bool valid() const;
@@ -231,9 +240,16 @@ public:
     virtual BleStatus stopScan() = 0;
     virtual bool scanning() const = 0;
 
-    // Copies up to `capacity` results into `out` and returns how many were
-    // written. A session can poll this every frame without the list growing.
-    virtual uint8_t scanResults(BleAdvertisement* out, uint8_t capacity) const = 0;
+    // Drains up to `capacity` results that arrived since the previous drain, and
+    // returns how many were written. Zero means the scan has nothing left to
+    // hand over *right now*.
+    //
+    // Draining rather than re-reading the whole list is the contract that lets a
+    // UI poll this every frame: a stack that returns the same page for ever
+    // would spin a caller that loops until it sees zero. A controller is free to
+    // hold results back until after this call -- a scan callback delivers over
+    // time -- so the caller must treat "zero" as "not yet", not "found nothing".
+    virtual uint8_t scanResults(BleAdvertisement* out, uint8_t capacity) = 0;
 
     virtual BleStatus connect(const BleAddress& address, uint32_t timeoutMs) = 0;
     virtual BleStatus disconnect() = 0;

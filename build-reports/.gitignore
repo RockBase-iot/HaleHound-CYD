@@ -12,6 +12,10 @@ _digest.txt
 # Object files emitted by syntax_env_check.py (real-toolchain -fsyntax-only).
 xtensa-check/
 
+# Scratch objects from hand-run compiler probes. Regenerate by re-running the
+# probe; committing .o files would only make the tree look verified.
+tmpcheck/
+
 # Bluetooth SIG assigned-numbers YAML, fetched by verify_gatt_names.py.
 # Re-download rather than commit: the SIG revises the list.
 sig/

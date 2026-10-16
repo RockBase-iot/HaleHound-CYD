@@ -43,7 +43,14 @@ struct ChameleonSlot {
     uint8_t index = 0;
     ChameleonSlotKind kind = ChameleonSlotKind::Empty;
     std::string nickname;
+    // True when a card has been read or written into this slot. A loaded slot
+    // the device is not currently emulating is still loaded, which is why this
+    // and `enabled` are separate answers rather than one flag.
     bool loaded = false;
+    // True when the slot is switched on for emulation. The device reports this
+    // per frequency (enabled_hf / enabled_lf); a slot enabled for either counts
+    // as enabled, since the panel asks "is this slot live", not "on which band".
+    bool enabled = false;
 };
 
 struct Mfkey32Progress {

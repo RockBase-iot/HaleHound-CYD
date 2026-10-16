@@ -90,6 +90,7 @@ void ChameleonSession::begin() {
         slots_[index].kind = ChameleonSlotKind::Empty;
         slots_[index].nickname.clear();
         slots_[index].loaded = false;
+        slots_[index].enabled = false;
     }
 }
 
@@ -128,6 +129,7 @@ bool ChameleonSession::setSlot(uint8_t index, ChameleonSlotKind kind, const std:
     slots_[index].kind = kind;
     slots_[index].nickname = nickname;
     slots_[index].loaded = kind != ChameleonSlotKind::Empty;
+    slots_[index].enabled = kind != ChameleonSlotKind::Empty;
     return true;
 }
 
@@ -139,6 +141,7 @@ bool ChameleonSession::clearSlot(uint8_t index) {
     slots_[index].kind = ChameleonSlotKind::Empty;
     slots_[index].nickname.clear();
     slots_[index].loaded = false;
+    slots_[index].enabled = false;
     return true;
 }
 

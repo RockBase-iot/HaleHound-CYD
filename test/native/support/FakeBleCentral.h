@@ -95,6 +95,52 @@ public:
         reads_.push_back(std::move(response));
     }
 
+    // ---- scripting a request/response peer -------------------------------
+    //
+    // A Chameleon Ultra (and any device with a UART-over-GATT link) answers on
+    // its notify characteristic when it is written to. Scripting that as "the
+    // Nth write produces these notifications" is what makes a client's
+    // command/response exchange testable, instead of the test having to know
+    // when the client is listening.
+    //
+    // Each exchange is consumed by one write, in the order it was queued, so two
+    // commands on the same write characteristic do not steal each other's reply.
+    // Several chunks produce several notifications for that one write, which is
+    // how a frame longer than the MTU actually arrives.
+    void queueExchange(const BleCharacteristicRef& writeRef,
+                       const BleCharacteristicRef& notifyRef,
+                       std::initializer_list<std::vector<uint8_t>> chunks) {
+        ScriptedExchange exchange;
+        exchange.writeRef = writeRef;
+        exchange.notifyRef = notifyRef;
+        exchange.chunks.assign(chunks.begin(), chunks.end());
+        exchanges_.push_back(std::move(exchange));
+    }
+
+    void queueReply(const BleCharacteristicRef& writeRef, const BleCharacteristicRef& notifyRef,
+                    std::initializer_list<uint8_t> bytes) {
+        std::vector<uint8_t> chunk(bytes.begin(), bytes.end());
+        queueExchange(writeRef, notifyRef, {chunk});
+    }
+
+    // For a reply already built as a vector, which is what a frame encoder
+    // returns. Braced initialiser lists still prefer the overload above.
+    void queueReply(const BleCharacteristicRef& writeRef, const BleCharacteristicRef& notifyRef,
+                    const std::vector<uint8_t>& bytes) {
+        queueExchange(writeRef, notifyRef, {bytes});
+    }
+
+    // How many scripted exchanges a write has not consumed yet.
+    std::size_t pendingExchangeCount() const {
+        std::size_t pending = 0;
+        for (const ScriptedExchange& exchange : exchanges_) {
+            if (!exchange.consumed) {
+                ++pending;
+            }
+        }
+        return pending;
+    }
+
     // ---- building a discovered peer -------------------------------------
     //
     // Counting is the fake's job, not the test's: writing straight into
@@ -193,6 +239,11 @@ public:
     int writeCalls = 0;
     int unscriptedReads = 0;
     int undeliveredNotifications = 0;
+    // Whether a scan asked the peer to identify itself. A "passive" tool that
+    // silently requests scan responses is doing the opposite of what its label
+    // says, and only the transport can tell the two apart.
+    int activeScanRequests = 0;
+    int passiveScanRequests = 0;
 
     // The peer discovery returns. Mutate it in a test, e.g.
     //   fake.peer().services[0].uuid = 0xFFF0;
@@ -216,6 +267,7 @@ public:
         subscriptions_.clear();
         reads_.clear();
         readIndex_ = 0;
+        scanCursor_ = 0;
     }
 
     bool ready() const override { return readyResult; }
@@ -224,12 +276,19 @@ public:
 
     BleStatus startScan(uint32_t durationMs, bool active) override {
         (void)durationMs;
-        (void)active;
         ++startScanCalls;
+        if (active) {
+            ++activeScanRequests;
+        } else {
+            ++passiveScanRequests;
+        }
         if (scanning_) {
             return BleStatus::Busy;
         }
         scanning_ = true;
+        // A new scan starts a new stream: without this, a second scan would
+        // report an empty list because the cursor was already at the end.
+        scanCursor_ = 0;
         return BleStatus::Ok;
     }
 
@@ -241,15 +300,20 @@ public:
 
     bool scanning() const override { return scanning_; }
 
-    uint8_t scanResults(BleAdvertisement* out, uint8_t capacity) const override {
+    uint8_t scanResults(BleAdvertisement* out, uint8_t capacity) override {
         if (out == nullptr || capacity == 0U) {
             return 0;
         }
-        const uint8_t count =
-            static_cast<uint8_t>(std::min<std::size_t>(advertisements_.size(), capacity));
+        // A cursor, not a fresh copy of the list: a scan drains over time, and a
+        // caller that loops until it sees zero must be able to reach zero. The
+        // cursor is reset by startScan(), the way a new scan starts a new stream.
+        const std::size_t remaining = advertisements_.size() - scanCursor_;
+        const uint8_t count = static_cast<uint8_t>(
+            std::min<std::size_t>(remaining, capacity));
         for (uint8_t index = 0; index < count; ++index) {
-            out[index] = advertisements_[index];
+            out[index] = advertisements_[scanCursor_ + index];
         }
+        scanCursor_ += count;
         return count;
     }
 
@@ -336,6 +400,20 @@ public:
             record.data.assign(data, data + length);
         }
         writes_.push_back(std::move(record));
+        // The peer answers *before* the caller learns the status, so a client can
+        // read the reply as soon as its write returns. That is the scripting
+        // contract; a real stack delivers it a moment later, and nothing above
+        // this line depends on which.
+        for (ScriptedExchange& exchange : exchanges_) {
+            if (!exchange.consumed && exchange.writeRef == ref) {
+                exchange.consumed = true;
+                for (const std::vector<uint8_t>& chunk : exchange.chunks) {
+                    deliver(exchange.notifyRef, chunk.data(),
+                            static_cast<uint16_t>(chunk.size()));
+                }
+                break;
+            }
+        }
         if (!connected_) {
             return BleStatus::Disconnected;
         }
@@ -392,11 +470,20 @@ private:
         void* context = nullptr;
     };
 
+    struct ScriptedExchange {
+        BleCharacteristicRef writeRef;
+        BleCharacteristicRef notifyRef;
+        std::vector<std::vector<uint8_t>> chunks;
+        bool consumed = false;
+    };
+
     std::vector<BleAdvertisement> advertisements_;
     std::vector<ReadResponse> reads_;
     std::vector<WriteRecord> writes_;
     std::vector<Subscription> subscriptions_;
+    std::vector<ScriptedExchange> exchanges_;
     std::size_t readIndex_ = 0;
+    std::size_t scanCursor_ = 0;
     BleDiscoveredPeer peer_{};
     BleAddress connectedAddress_{};
     bool connected_ = false;

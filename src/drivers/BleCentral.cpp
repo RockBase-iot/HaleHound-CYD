@@ -68,6 +68,70 @@ BleUuid BleUuid::fromBytes(const uint8_t* sixteen) {
     return uuid;
 }
 
+namespace {
+
+int hexNibble(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    return -1;
+}
+
+}  // namespace
+
+bool BleUuid::fromText(const char* text, BleUuid& out) {
+    if (text == nullptr) {
+        return false;
+    }
+    // Collapse to nibbles first, tolerating hyphens wherever they fall and a
+    // leading `0x`. Anything that is not hex or a hyphen is a refusal, not a
+    // digit to skip -- skipping it would turn a typo into a different UUID.
+    uint8_t nibbles[32] = {};
+    int count = 0;
+    const char* cursor = text;
+    if (cursor[0] == '0' && (cursor[1] == 'x' || cursor[1] == 'X')) {
+        cursor += 2;
+    }
+    for (; *cursor != '\0'; ++cursor) {
+        if (*cursor == '-' || *cursor == ':') {
+            continue;
+        }
+        const int value = hexNibble(*cursor);
+        if (value < 0) {
+            return false;
+        }
+        if (count >= 32) {
+            // Longer than any UUID this seam carries; refusing beats truncating.
+            return false;
+        }
+        nibbles[count++] = static_cast<uint8_t>(value);
+    }
+
+    if (count == 4) {
+        const uint16_t shortValue =
+            static_cast<uint16_t>((nibbles[0] << 12) | (nibbles[1] << 8) |
+                                  (nibbles[2] << 4) | nibbles[3]);
+        out = fromShort(shortValue);
+        return true;
+    }
+    if (count != 32) {
+        return false;
+    }
+    BleUuid parsed;
+    for (uint8_t index = 0; index < 16; ++index) {
+        parsed.bytes[index] = static_cast<uint8_t>((nibbles[index * 2] << 4) |
+                                                   nibbles[index * 2 + 1]);
+    }
+    out = parsed;
+    return true;
+}
+
 bool BleUuid::valid() const {
     for (uint8_t index = 0; index < 16; ++index) {
         if (bytes[index] != 0) {

@@ -63,10 +63,20 @@ struct SkeletonService {
     std::string uuid;
     std::string name;
     std::vector<SkeletonCharacteristic> characteristics;
+    // True when this service offered more characteristics than the discovery
+    // array could hold. Kept per service rather than folded into the tree flag
+    // so the panel can mark the row that is actually short, instead of
+    // declaring the whole peer partial.
+    bool truncated = false;
 };
 
 struct SkeletonTree {
     std::vector<SkeletonService> services;
+    // True when the peer offered more services or characteristics than the
+    // discovery arrays could hold. A partial tree presented as complete is what
+    // this flag exists to prevent: it must never reach the SD card as a full
+    // dump.
+    bool truncated = false;
     uint16_t characteristicCount() const;
     uint16_t readableCount() const;
     uint16_t writableCount() const;
@@ -125,6 +135,10 @@ public:
     void onScanComplete(uint16_t deviceCount);
     void onConnectStarted();
     void onConnectFailed(const char* reason);
+    // A discovery that came back empty or refused is its own failure: reporting
+    // it through onConnectFailed would leave the state machine's error text
+    // blaming a connection that in fact succeeded.
+    void onDiscoverFailed(const char* reason);
     void onDiscoverComplete(const SkeletonTree& tree);
     void onSendComplete();
 
