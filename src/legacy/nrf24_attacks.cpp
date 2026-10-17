@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD NRF24 Attack Modules Implementation
+// SPANDECK NRF24 Attack Modules Implementation
 // FULL IMPLEMENTATIONS - Ported from ESP32-DIV v2.5 HaleHound Edition
 // Created: 2026-02-06
 // Updated: 2026-02-07 - Full implementation port
@@ -3523,7 +3523,7 @@ static void mjTxTask(void* param) {
             payload = st->customString;
             break;
         default:
-            payload = "echo HaleHound";
+            payload = "echo SPANDECK";
             break;
     }
 

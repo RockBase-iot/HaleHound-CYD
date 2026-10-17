@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD WiFi Attack Modules Implementation
+// SPANDECK WiFi Attack Modules Implementation
 // Packet Monitor & Beacon Spammer - Adapted for CYD Touch Interface
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════
@@ -508,7 +508,7 @@ void setup() {
     initPalette();
 
     // Load saved channel
-    preferences.begin("halehound_pm", false);
+    preferences.begin("spandeck_pm", false);
     currentChannel = preferences.getUInt("channel", 1);
     preferences.end();
 
@@ -661,7 +661,7 @@ void setChannel(int channel) {
     }
 
     // Save to preferences
-    preferences.begin("halehound_pm", false);
+    preferences.begin("spandeck_pm", false);
     preferences.putUInt("channel", currentChannel);
     preferences.end();
 
@@ -743,7 +743,7 @@ static const char* ssidList[] = {
     "LookMaNoCables", "Router?IHardlyKnewHer", "ShutUpAndConnect", "Mom_UseThisOne",
     "Not_for_You", "OopsAllSSID", "ItsOver9000", "Bob's_Wifi_Burgers",
     "Overclocked_Toaster", "Pikachu_Used_WiFi", "Cheese_Bandit", "Quantum_Tunnel",
-    "Meme_LANd", "HaleHound_Was_Here", "Fenrir_Network", "DRAUGR_AP"
+    "Meme_LANd", "SPANDECK_Was_Here", "Fenrir_Network", "DRAUGR_AP"
 };
 static const int ssidCount = sizeof(ssidList) / sizeof(ssidList[0]);
 
@@ -1659,7 +1659,7 @@ static void initAttackMode() {
     // Configure hidden AP so WIFI_IF_AP is actually active for raw frame TX
     // Without this, esp_wifi_80211_tx(WIFI_IF_AP, ...) silently fails
     wifi_config_t ap_config = {};
-    strncpy((char*)ap_config.ap.ssid, "HaleHound", sizeof(ap_config.ap.ssid));
+    strncpy((char*)ap_config.ap.ssid, "SPANDECK", sizeof(ap_config.ap.ssid));
     ap_config.ap.ssid_len = 9;
     ap_config.ap.ssid_hidden = 1;
     ap_config.ap.max_connection = 0;
@@ -2823,7 +2823,7 @@ static bool afInitAttackMode(uint8_t targetChannel) {
 
         // Configure hidden AP — required for esp_wifi_80211_tx(WIFI_IF_AP, ...)
         wifi_config_t ap_config = {};
-        strncpy((char*)ap_config.ap.ssid, "HaleHound", sizeof(ap_config.ap.ssid));
+        strncpy((char*)ap_config.ap.ssid, "SPANDECK", sizeof(ap_config.ap.ssid));
         ap_config.ap.ssid_len = 9;
         ap_config.ap.ssid_hidden = 1;
         ap_config.ap.max_connection = 0;

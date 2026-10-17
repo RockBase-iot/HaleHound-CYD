@@ -2,7 +2,7 @@
 #define BLUETOOTH_ATTACKS_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Bluetooth Attack Modules
+// SPANDECK Bluetooth Attack Modules
 // COMPLETE HALEHOUND BLUETOOTH ATTACK SUITE - Adapted for CYD Touch Interface
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

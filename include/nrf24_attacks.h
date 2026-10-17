@@ -2,7 +2,7 @@
 #define NRF24_ATTACKS_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD NRF24 Attack Modules
+// SPANDECK NRF24 Attack Modules
 // STUB IMPLEMENTATIONS - CYD does not have NRF24 hardware
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

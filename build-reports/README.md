@@ -192,6 +192,7 @@ that setting off. Read and write with `newline=""` and the file is left alone.
 | `patch_smartrc_licence.py` | `audit_licenses.py` + `collect_licenses.py`: SmartRC moved from `unidentified` to a `bespoke-permissive` class with an SPDX `LicenseRef`, and its obligation is printed as a non-blocking NOTE |
 | `patch_lgpl_or_later.py` | `audit_licenses.py`: read the version tag out of a header notice, so `rc-switch` / `TinyGPSPlus` report `LGPL-2.1-or-later` instead of bare `LGPL-2.1` (which means `-only`). Applied to headers only -- licence texts mention "any later version" in their own appendix |
 | `patch_route_a_docs.py` | the A-route decision: `TODO.md` C1/C2/C10 and the §9/§10 tables, `COMPLIANCE_PLAN_zh.md` §4/§5/§6/§8/§9, `THIRD_PARTY_NOTICES.md`, `REMAINING_WORK.md` §8, and this file's audit summary and provenance note |
+| `patch_rename_spandeck.py` | Applies the `HaleHound` -> `SPANDECK` rename to the user-visible surfaces only | `C3` / `D2` 
 
 > One script in this table edits a file outside the repository: `patch_skill_syntax_vacuity.py` writes
 > `~/.workbuddy/skills/esp32-platformio-syntax-check/SKILL.md`. It is kept here so that change is still

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Wardriving Screen
+// SPANDECK Wardriving Screen
 // Full-screen wardriving UI with WiFi + BLE scan, GPS, and SD logging
 // Created: 2026-02-16
 // Updated: 2026-02-24 — BLE scanning, faster interval, redesigned display

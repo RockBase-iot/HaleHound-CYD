@@ -1,4 +1,4 @@
-# 授权与商标合规方案（HaleHound-CYD fork / NM-CYD-C5）
+# 授权与商标合规方案（SPANDECK / HaleHound-CYD fork / NM-CYD-C5）
 
 > 状态：2026-10-16 起草，事实全部来自本仓库与上游一手材料（commit、LICENSE 原文、GitHub API、
 > 已装依赖的许可文件），取证命令与结果见 `docs/upstream-analysis/USER_EVIDENCE_zh.md` 与
@@ -17,7 +17,7 @@
 | 问题 | 结论 |
 |---|---|
 | **授权问题怎么规避** | 上游换证**不追溯**我们手上这份副本——我们拿到的就是 MIT。但 MIT 只解决"版权许可"，它在**商标、专利、归属声明**三处留了缺口，而且我们**当前产出的固件二进制在许可上根本不可分发**（见 §4）。所以"规避"= ① 停止把不可分发的二进制放进仓库；② 补上归属与第三方声明；③ 断掉 copyleft 依赖。 |
-| **HaleHound 商标怎么办** | MIT **不授予商标权**（它对此完全沉默，沉默≠授权）。可以做的是"指示性使用"——在归属说明里写"基于 HaleHound-CYD"。不可以做的是把它当产品名/广播名/包装名。当前有 **4 处用户可见或对外广播的商标使用**必须改（§3），其中 `BleKeyboard("HaleHound KB", "HaleHound")` 最严重——那是对着附近所有手机广播。 |
+| **HaleHound 商标怎么办** | MIT **不授予商标权**（它对此完全沉默，沉默≠授权）。可以做的是"指示性使用"——在归属说明里写"基于 HaleHound-CYD"。不可以做的是把它当产品名/广播名/包装名。当时有 **4 处用户可见或对外广播的商标使用**必须改（§3），其中 `BleKeyboard("HaleHound KB", "HaleHound")` 最严重——那是对着附近所有手机广播。**已处置**：产品名定为 **`SPANDECK`**，§3.2 的处置列逐条标了状态。 |
 | **依赖许可合规** | 审计结果：**2 个强 copyleft 互不相容（RF24 GPL-2.0-only + arduinoFFT GPL-3.0）**、**1 个完全无授权（ESP32 BLE Keyboard）**、**2 个弱 copyleft 需履行 relink 义务**、3 个许可文本不明确/不标准。⇒ **当前依赖集产出的 `.bin` 任何人都不可以分发**，我们自己的 MIT 也无济于事。 |
 
 三件事的先后关系是硬的：**必须先断 copyleft 依赖，才谈得上给用户发许可**——因为在
@@ -107,17 +107,23 @@ GPL-2.0-only ⊕ GPL-3.0 的组合下，**没有**任何一份许可能覆盖整
 
 | # | 位置 | 形态 | 风险 | 处置 |
 |---|---|---|---|---|
-| **T1** | `src/legacy/bluetooth_attacks.cpp:9153`（根目录副本同在）<br>`new BleKeyboard("HaleHound KB", "HaleHound", 100)` | **对外广播的设备名与厂商名** | **最高**——设备对附近所有手机自称 HaleHound，这是把商标用作商品标识 | 改为自有产品名（NM 系列） |
-| **T2** | `src/app/LegacyApp.inc:2782 / 4186 / 4199`<br>`drawGlitchTitle(..., "HALEHOUND")` | 开机/标题画面**屏幕文字** | 高——买家第一眼看到的品牌 | 改为自有产品名 |
-| **T3** | `include/icon.h:1460-1464`<br>`bitmap_halehound_splash[] PROGMEM` | 上游**美术资产**编进固件 | 高——商标图形的载体 | 换自有启动图；原图仅留在取证档案 |
-| **T4** | `src/app/LegacyApp.inc:2527 / 2579`<br>`tft.print("By: HaleHound (JMFH)")` | About 画面署名 | 中——可保留但**必须改写成归属声明形态** | 改为 "Based on HaleHound-CYD by Jesse C. Hale (MIT)" |
-| **T5** | `flash_package/` 与 `dist/` 共 **11 个已跟踪 `.bin`**（18.8 MB），文件名 `HaleHound-*.bin` | 分发物**文件名** | 中高——且见 §4，这些文件本身就不该在仓库里 | 从仓库移除（§4 A5） |
-| **T6** | `README.md`（23 处）、`LICENSE`（16 处，整份是上游品牌文档）、仓库名 `HaleHound-CYD` | 项目层品牌 | 中 | README/LICENSE 重写（§6）；仓库名属 fork 描述性命名，可暂留但要与产品名切开 |
-| **T7** | 85 个文件共 **4359 处**，绝大多数是颜色宏 `HALEHOUND_MAGENTA` / `HOTPINK` / `GUNMETAL` / `DARK` | **内部标识符** | 低（不可见、不对外） | 机械重命名，随 §4 的改动一起做 |
+| **T1** | `src/legacy/bluetooth_attacks.cpp:9153`（根目录副本同在）<br>`new BleKeyboard("HaleHound KB", "HaleHound", 100)` | **对外广播的设备名与厂商名** | **最高**——设备对附近所有手机自称 HaleHound，这是把商标用作商品标识 | **已改** → `"SPANDECK"`：5 处 `BLEDevice::init` + `BleKeyboard` 设备名/厂商名 |
+| **T2** | `src/app/LegacyApp.inc:2782 / 4186 / 4199`<br>`drawGlitchTitle(..., "HALEHOUND")` | 开机/标题画面**屏幕文字** | 高——买家第一眼看到的品牌 | **已改** → `"SPANDECK"`（3 处） |
+| **T3** | `include/icon.h:1460-1464`<br>`bitmap_halehound_splash[] PROGMEM` | 上游**美术资产**编进固件 | 高——商标图形的载体 | **已删** → 该数组全仓**无任何引用**（死资产），直接移除 |
+| **T4** | `src/app/LegacyApp.inc:2527 / 2579`<br>`tft.print("By: HaleHound (JMFH)")` | About 画面署名 | 中——可保留但**必须改写成归属声明形态** | **已改** → 屏上 `"By: JMFH / RockBase-iot"`（240px 放不下长句，长句留在 README/NOTICE） |
+| **T5** | `flash_package/` 与 `dist/` 共 **11 个已跟踪 `.bin`**（18.8 MB），文件名 `HaleHound-*.bin` | 分发物**文件名** | 中高——且见 §4，这些文件本身就不该在仓库里 | 待 `C6`（`D5` 未定）；屏幕提示文字已改为 `SPANDECK-*.bin` |
+| **T6** | `README.md`（23 处）、`LICENSE`（16 处，整份是上游品牌文档）、仓库名 `HaleHound-CYD` | 项目层品牌 | 中 | **已改** → README 标题/署名/产物名、`LICENSE` 商标段；**仓库名 `HaleHound-CYD` 仍待定** |
+| **T7** | 85 个文件共 **4359 处**，绝大多数是颜色宏 `HALEHOUND_MAGENTA` / `HOTPINK` / `GUNMETAL` / `DARK` | **内部标识符** | 低（不可见、不对外） | **不做** → 7478 处绝大多数是颜色宏；内部标识不构成商标使用，且本沙箱无法 `pio run` 验证 7k 行改动，收益为零、风险不为零 |
 
 ### 3.3 命名与声明模板
 
-- 产品名：使用自有品牌（NM 系列 / WORKBUDDY），**不含 HaleHound**。
+- 产品名：**`SPANDECK`**（2026-10-17 定）。`span` 是频谱分析仪的「扫描跨度」术语，`deck` 是手持仪表台；
+  合起来是"一台横跨全段的仪表"，与上游的动物隐喻（`Hound`）彻底脱钩，与 `HaleHound` **无任何字符或词根重叠**。
+  8 个字符——实测屏宽最长的既有标题 `WHISPERPAIR` 是 11 字符，故无需改版式；BLE GAP 名也放得下。
+  落选记录：`NM-CYD`（只描述外壳型号，把所有频段都藏了）、`HHound-CYD`（保留 `Hound` 词根 = 变体近似，
+  且因与在先使用近似而**无法登记**）、`OMNIBAND`（GitHub 已有 12 个同名仓库）、`BANDDECK`（英文语境里
+  "band deck" 已被滑板与乐队占用）、`OCTAVE`（与 GNU Octave 同属 NICE 第 9 类软件，检索与注册双输）。
+  **待定**：GitHub 仓库名（现为 `HaleHound-CYD`）与本地目录名。
 - 必带的归属行（固件 About 页、README、发布页、包装）： 
 
   > Based on HaleHound-CYD by Jesse C. Hale (MIT). HaleHound-CYD itself derives from

@@ -2,7 +2,7 @@
 #define WARDRIVING_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Wardriving Module
+// SPANDECK Wardriving Module
 // WiGLE-compatible WiFi + BLE network logging with GPS
 // Created: 2026-02-07
 // Updated: 2026-02-24 — BLE logging, open network count, WiGLE v1.6
@@ -16,7 +16,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #define WARDRIVING_LOG_DIR          "/wardriving"
-#define WARDRIVING_FILE_PREFIX      "halehound_"
+#define WARDRIVING_FILE_PREFIX      "spandeck_"
 #define WARDRIVING_MAX_NETWORKS     500     // Max unique WiFi networks per session
 #define WARDRIVING_MAX_BLE_DEVICES  200     // Max unique BLE devices per session (200 x 6 = 1200 bytes)
 

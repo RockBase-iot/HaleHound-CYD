@@ -2,7 +2,7 @@
 #define NRF24_CONFIG_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD NRF24L01+PA+LNA Configuration
+// SPANDECK NRF24L01+PA+LNA Configuration
 // 2.4GHz Radio for Mouse Jacker, BLE Spam, and Wireless Attacks
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

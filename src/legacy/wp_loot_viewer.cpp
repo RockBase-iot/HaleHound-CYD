@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD WhisperPair Loot Viewer
+// SPANDECK WhisperPair Loot Viewer
 // SD card browser for /wp_loot/ directory (CVE-2025-36911 attack reports)
 // Created: 2026-03-10
 //

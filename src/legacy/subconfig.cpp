@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD SubGHz Configuration Implementation
+// SPANDECK SubGHz Configuration Implementation
 // SavedProfile stub implementation
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Jamming Detection Module
+// SPANDECK Jamming Detection Module
 // Defensive RF spectrum monitoring — WiFi + CC1101 + NRF24
 // Created: 2026-03-02
 // ═══════════════════════════════════════════════════════════════════════════

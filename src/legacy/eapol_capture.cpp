@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD EAPOL/PMKID Capture Module
+// SPANDECK EAPOL/PMKID Capture Module
 // 4-way handshake capture with on-device PMKID extraction
 // Outputs: hashcat .hc22000 + standard PCAP to SD card
 // Created: 2026-02-16

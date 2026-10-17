@@ -2,7 +2,7 @@
 #define SERIAL_MONITOR_H
 
 // =============================================================================
-// HaleHound-CYD UART Serial Terminal
+// SPANDECK UART Serial Terminal
 // Hardware UART passthrough for target device debug ports
 // No laptop needed - read router/IoT/camera UART output on CYD screen
 // Created: 2026-02-15

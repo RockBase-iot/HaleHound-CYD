@@ -2,7 +2,7 @@
 #define KARMA_ATTACK_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Karma Attack Module
+// SPANDECK Karma Attack Module
 // Probe request listener + rogue AP responder
 // Created: 2026-02-16
 // ═══════════════════════════════════════════════════════════════════════════

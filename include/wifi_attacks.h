@@ -2,7 +2,7 @@
 #define WIFI_ATTACKS_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD WiFi Attack Modules
+// SPANDECK WiFi Attack Modules
 // COMPLETE HALEHOUND WIFI ATTACK SUITE - Adapted for CYD Touch Interface
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

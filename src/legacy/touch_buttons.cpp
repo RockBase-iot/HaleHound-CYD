@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Touch Button Implementation
+// SPANDECK Touch Button Implementation
 // Replaces PCF8574 I2C button expander with touchscreen zones
 // Uses SOFTWARE BIT-BANGED SPI (CYD28_TouchscreenR by Piotr Zapart / hexefx.com)
 // to avoid VSPI conflict with NRF24/CC1101 radios. Proven working approach.

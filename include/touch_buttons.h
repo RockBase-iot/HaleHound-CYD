@@ -2,7 +2,7 @@
 #define TOUCH_BUTTONS_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Touch Button Handler
+// SPANDECK Touch Button Handler
 // Replaces PCF8574 I2C button expander with touchscreen zones
 // Uses SOFTWARE BIT-BANGED SPI (CYD28_TouchscreenR by Piotr Zapart / hexefx.com)
 // to avoid conflict with NRF24/CC1101 on hardware VSPI

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Unified Loot Manager
+// SPANDECK Unified Loot Manager
 // Central hub for all attack loot on the SD card
 // Created: 2026-03-11
 //
@@ -386,10 +386,11 @@ static void drawWDFileRow(int screenRow, int fileIdx, bool selected) {
     tft.setTextSize(1);
     tft.setTextColor(selected ? TFT_WHITE : HALEHOUND_MAGENTA);
 
-    // Display name: strip "halehound_" prefix and ".csv" suffix for cleaner look
+    // Display name: strip "spandeck_" (or the legacy "halehound_") prefix
+    // and the ".csv" suffix for a cleaner look
     char displayName[24];
     const char* src = f.name;
-    if (strncasecmp(src, "halehound_", 10) == 0) src += 10;
+    if (strncasecmp(src, "spandeck_", 9) == 0) src += 9; else if (strncasecmp(src, "halehound_", 10) == 0) src += 10;
     strncpy(displayName, src, 23);
     displayName[23] = '\0';
     char* dot = strrchr(displayName, '.');
@@ -605,7 +606,7 @@ static void drawWDDetail() {
     // Title: strip prefix/suffix for clean display
     char titleBuf[20];
     const char* src = f.name;
-    if (strncasecmp(src, "halehound_", 10) == 0) src += 10;
+    if (strncasecmp(src, "spandeck_", 9) == 0) src += 9; else if (strncasecmp(src, "halehound_", 10) == 0) src += 10;
     strncpy(titleBuf, src, 19);
     titleBuf[19] = '\0';
     char* dot = strrchr(titleBuf, '.');

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Wardriving Module Implementation
+// SPANDECK Wardriving Module Implementation
 // WiGLE-compatible WiFi + BLE network logging with GPS
 // Created: 2026-02-07
 // Updated: 2026-02-24 — BLE logging, open network count, WiGLE v1.6
@@ -136,7 +136,7 @@ static String generateFilename() {
                 return String(buf);
             }
         }
-        return String(WARDRIVING_LOG_DIR "/halehound_overflow.csv");
+        return String(WARDRIVING_LOG_DIR "/spandeck_overflow.csv");
     }
 }
 
@@ -216,7 +216,7 @@ bool wardrivingStart() {
     }
 
     // WiGLE v1.6 CSV header — pre-header line + column header
-    logFile.println("WigleWifi-1.6,appRelease=HaleHound-CYD,model=ESP32-CYD,release=3.0.0,device=HaleHound,display=CYD,board=ESP32,brand=JesseCHale,star=Sol,body=3,subBody=0");
+    logFile.println("WigleWifi-1.6,appRelease=SPANDECK-CYD,model=ESP32-CYD,release=3.0.0,device=SPANDECK,display=CYD,board=ESP32,brand=RockBase-iot,star=Sol,body=3,subBody=0");
     logFile.println("MAC,SSID,AuthMode,FirstSeen,Channel,Frequency,RSSI,CurrentLatitude,CurrentLongitude,AltitudeMeters,AccuracyMeters,RCOIs,MfgrId,Type");
     logFile.flush();
 

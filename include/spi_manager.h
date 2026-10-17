@@ -2,7 +2,7 @@
 #define SPI_MANAGER_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD SPI Bus Manager
+// SPANDECK SPI Bus Manager
 // Manages shared VSPI bus between SD Card, CC1101, NRF24L01, and PN532
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

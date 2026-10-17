@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD SubGHz Attack Modules Implementation
+// SPANDECK SubGHz Attack Modules Implementation
 // CC1101 Signal Capture & Replay with RMT Hardware Timing
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

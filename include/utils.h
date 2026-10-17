@@ -2,7 +2,7 @@
 #define UTILS_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Utility Functions
+// SPANDECK Utility Functions
 // Button handling, display helpers, common utilities
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

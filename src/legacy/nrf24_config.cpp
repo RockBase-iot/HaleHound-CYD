@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD NRF24L01+PA+LNA Implementation
+// SPANDECK NRF24L01+PA+LNA Implementation
 // 2.4GHz Radio for Mouse Jacker, BLE Spam, and Wireless Attacks
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

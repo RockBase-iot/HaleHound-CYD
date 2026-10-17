@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Radio Test Tool
+// SPANDECK Radio Test Tool
 // Interactive SPI radio hardware verification (NRF24L01+ and CC1101)
 // Tap a radio name to run its test. Results show inline as PASS/FAIL.
 // Includes wiring reference diagrams.

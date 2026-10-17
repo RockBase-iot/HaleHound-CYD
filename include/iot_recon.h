@@ -2,7 +2,7 @@
 #define IOT_RECON_H
 
 // =============================================================================
-// HaleHound-CYD IoT Recon Module
+// SPANDECK IoT Recon Module
 // Automated LAN Attack Suite — Subnet Scanner + Credential Brute Force
 // Cameras (RTSP/HTTP), MQTT Brokers, Telnet, Modbus
 // Created: 2026-03-01

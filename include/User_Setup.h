@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD User_Setup.h
+// SPANDECK User_Setup.h
 // TFT_eSPI Configuration for Cheap Yellow Display Boards
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════
@@ -26,7 +26,7 @@
 // USER DEFINED SETTINGS - TFT_eSPI Library Configuration
 // ═══════════════════════════════════════════════════════════════════════════
 
-#define USER_SETUP_INFO "HaleHound-CYD"
+#define USER_SETUP_INFO "SPANDECK-CYD"
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SECTION 1: DISPLAY DRIVER SELECTION

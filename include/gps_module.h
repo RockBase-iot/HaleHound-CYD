@@ -2,7 +2,7 @@
 #define GPS_MODULE_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD GPS Module
+// SPANDECK GPS Module
 // NEO-6M GPS Support with TinyGPSPlus
 // Created: 2026-02-07
 // ═══════════════════════════════════════════════════════════════════════════

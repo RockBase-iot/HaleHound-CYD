@@ -2,7 +2,7 @@
 #define RADIO_TEST_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Radio Test Tool
+// SPANDECK Radio Test Tool
 // Interactive SPI radio hardware verification (NRF24L01+ and CC1101)
 // Created: 2026-02-19
 // ═══════════════════════════════════════════════════════════════════════════

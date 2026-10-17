@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Karma Attack Module
+// SPANDECK Karma Attack Module
 // Probe request listener + rogue AP responder
 // HaleHound Karma implementation
 // Created: 2026-02-16

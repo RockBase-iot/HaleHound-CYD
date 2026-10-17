@@ -116,9 +116,15 @@ What is not allowed:
 - letting a device broadcast or display it as its own identity;
 - implying a relationship, approval, or common origin beyond the attribution.
 
-See `docs/legal/COMPLIANCE_PLAN_zh.md` §3 for the specific sites in the tree that
-currently violate this, including one where the device announces itself to nearby
-phones under the upstream's name.
+This project's own mark is **SPANDECK**.  It is what the device announces itself as
+over GAP, what the boot screen draws, what the captive port's access point asserts,
+and what the artefacts are named.  `HaleHound` now survives only in the attribution
+above, in factual references to the upstream's own history, and in the
+`HALEHOUND_*` colour constants -- internal identifiers that are never presented as a
+mark to anyone using the device.
+
+`docs/legal/COMPLIANCE_PLAN_zh.md` §3.2 keeps the list of the sites that had to
+change, with what each says now.
 
 ---
 

@@ -2,7 +2,7 @@
 #define GPS_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD GPS Module Interface
+// SPANDECK GPS Module Interface
 // Hardware: NEO-6M GPS Module via Software Serial
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

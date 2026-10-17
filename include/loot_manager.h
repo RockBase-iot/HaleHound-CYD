@@ -2,7 +2,7 @@
 #define LOOT_MANAGER_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Unified Loot Manager
+// SPANDECK Unified Loot Manager
 // Central hub for all attack loot: Wardriving, EAPOL, WhisperPair, IoT, Creds
 // Created: 2026-03-11
 //

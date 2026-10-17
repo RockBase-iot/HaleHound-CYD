@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Main Firmware
+// SPANDECK Main Firmware
 // ESP32 Cheap Yellow Display Edition
 // v3.4.0 — Replace CYD 3.5" with E32R35T, fix touch, scale GPS for 320x480
 // Created: 2026-02-06
@@ -23,7 +23,7 @@
 #include <SD.h>
 #include <esp_arduino_version.h>
 
-// HaleHound-CYD modules
+// SPANDECK modules
 #include "cyd_config.h"
 #include "shared.h"
 #include "utils.h"
@@ -2524,7 +2524,7 @@ void displayDeviceInfo() {
     y += 18;
     tft.setCursor(10, y); tft.print("Version: " FW_FULL_VERSION);
     y += 18;
-    tft.setCursor(10, y); tft.print("By: HaleHound (JMFH)");
+    tft.setCursor(10, y); tft.print("By: JMFH / RockBase-iot");
     y += 18;
     tft.setCursor(10, y); tft.print("Based on ESP32-DIV (forked)");
     y += 18;
@@ -2576,7 +2576,7 @@ void displayDeviceInfo() {
                 y += 18;
                 tft.setCursor(10, y); tft.print("Version: " FW_FULL_VERSION);
                 y += 18;
-                tft.setCursor(10, y); tft.print("By: HaleHound (JMFH)");
+                tft.setCursor(10, y); tft.print("By: JMFH / RockBase-iot");
                 y += 18;
                 tft.setCursor(10, y); tft.print("Based on ESP32-DIV (forked)");
                 y += 18;
@@ -2779,7 +2779,7 @@ void handleAboutPage() {
     tft.drawLine(0, 36, SCREEN_WIDTH, 36, HALEHOUND_HOTPINK);
 
     // Glitch title — chromatic aberration effect
-    drawGlitchTitle(58, "HALEHOUND");
+    drawGlitchTitle(58, "SPANDECK");
 
     // Subtitle — shows CYD or CYD-HAT
     drawGlitchStatus(80, FW_EDITION, HALEHOUND_MAGENTA);
@@ -2844,7 +2844,7 @@ void handleAboutPage() {
     my += 10;
 
     // Author — this is my firmware
-    drawCenteredText(my, "By: JMFH (HaleHound)", HALEHOUND_MAGENTA, 1);
+    drawCenteredText(my, "By: JMFH / RockBase-iot", HALEHOUND_MAGENTA, 1);
     my += 14;
     drawCenteredText(my, "github.com/JesseCHale", HALEHOUND_VIOLET, 1);
 
@@ -4183,7 +4183,7 @@ void showSplash() {
 
 #ifdef CYD_35
     // Title — glitch effect (scaled for 480px height)
-    drawGlitchTitle(120, "HALEHOUND");
+    drawGlitchTitle(120, "SPANDECK");
 
     // Subtitle — shows CYD or CYD-HAT so user knows which firmware they flashed
     drawGlitchStatus(170, FW_EDITION, HALEHOUND_MAGENTA);
@@ -4196,7 +4196,7 @@ void showSplash() {
     drawCenteredText(215, CYD_BOARD_NAME, HALEHOUND_HOTPINK, 1);
 #else
     // Title — glitch effect
-    drawGlitchTitle(80, "HALEHOUND");
+    drawGlitchTitle(80, "SPANDECK");
 
     // Subtitle — shows CYD or CYD-HAT so user knows which firmware they flashed
     drawGlitchStatus(110, FW_EDITION, HALEHOUND_MAGENTA);
@@ -4527,15 +4527,15 @@ void legacySetup() {
             drawCenteredText(160, "Flash the correct binary:", HALEHOUND_HOTPINK, 1);
 
             #ifdef NMRF_HAT
-            drawCenteredText(180, "HaleHound-CYD.bin", HALEHOUND_BRIGHT, 1);
+            drawCenteredText(180, "SPANDECK-CYD.bin", HALEHOUND_BRIGHT, 1);
             drawCenteredText(195, "(standard CYD without hat)", HALEHOUND_MAGENTA, 1);
             #elif defined(CYD_E32R28T)
-            drawCenteredText(180, "HaleHound-CYD.bin", HALEHOUND_BRIGHT, 1);
+            drawCenteredText(180, "SPANDECK-CYD.bin", HALEHOUND_BRIGHT, 1);
             drawCenteredText(195, "(if you have a standard CYD)", HALEHOUND_MAGENTA, 1);
             #else
-            drawCenteredText(180, "HaleHound-E32R28T.bin", HALEHOUND_BRIGHT, 1);
+            drawCenteredText(180, "SPANDECK-E32R28T.bin", HALEHOUND_BRIGHT, 1);
             drawCenteredText(195, "(if you have a QDtech E32R28T)", HALEHOUND_MAGENTA, 1);
-            drawCenteredText(215, "HaleHound-CYD-HAT.bin", HALEHOUND_BRIGHT, 1);
+            drawCenteredText(215, "SPANDECK-CYD-HAT.bin", HALEHOUND_BRIGHT, 1);
             drawCenteredText(230, "(if you have the NM-RF-Hat)", HALEHOUND_MAGENTA, 1);
             #endif
 

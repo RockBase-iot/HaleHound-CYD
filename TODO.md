@@ -74,7 +74,7 @@
 - **5 个「包内无 LICENSE 文件」的依赖已逐个留档**：`rc-switch` / `TinyGPSPlus` → SPDX 官方 LGPL-2.1 原文；`ESP32 BLE Keyboard` → **无授权**占位标记；`SmartRC-CC1101-Driver-Lib` → **自定义宽松许可**（要求指明来源；一手文本副本，非占位）；`TFT_eSPI` → 复合许可原文（`MIT AND BSD-3-Clause`）。
 - **验收（已满足）**：清单覆盖 `platformio.ini` 全部 9 项 `lib_deps` + Arduino core 与 IDF 两项传递依赖；`LICENSES/` 内容全部来自一手文件或 SPDX 原文，**无一处誊抄**；`LICENSES/HaleHound-CYD-MIT.txt` 与 `git show 56cf737:LICENSE` **逐字节一致**。
 
-### `C3` 商标与命名边界（P0 · S · **需 BOSS 定名**）
+### `C3` 商标与命名边界（P0 · S · **已定名 `SPANDECK` · 已执行**）
 - **为什么**：MIT **不授予商标权**（通篇未提商标，沉默≠授权）；上游用同一牌子卖**同类**商品（固件 + 该固件的硬件在售）⇒ 混淆风险是实质性的。已核实的越界点按风险排序：
   1. `src/legacy/bluetooth_attacks.cpp:9153`（根目录副本同在）—— `new BleKeyboard("HaleHound KB", "HaleHound", 100)`：**设备对附近所有手机广播商标名**（最高）；
   2. `src/app/LegacyApp.inc:2782 / 4186 / 4199` —— `drawGlitchTitle(..., "HALEHOUND")`：屏幕品牌字；
@@ -85,7 +85,7 @@
   7. 85 个文件共 **4359 处**，绝大多数是颜色宏 `HALEHOUND_MAGENTA` / `HOTPINK` / `GUNMETAL` / `DARK`（内部标识符，低风险，机械重命名）。
 - **动作**：按上表产出「保留（指示性使用）/ 替换（自有品牌）」清单并执行；归属行统一为 `Based on HaleHound-CYD by Jesse C. Hale (MIT)`，另附不关联声明。
 - **验收**：`grep -rn "HaleHound" src/ include/` 只剩归属声明那几处；对外产物文件名、屏显文字、广播名不含该词。
-- **依赖**：**先定产品名**（§8 `D2`）。
+- **依赖**：已闭合 —— §10 `D2` 定为 `SPANDECK`。
 
 ### `C4` 不搬运 v3.6.2+ 的专有物料（P0 · S）
 - **为什么（已更新）**：上游换证发生在 **v3.5.0 → v3.6.2 之间**（逐 tag 抓 LICENSE 全文比对确认：v3.5.0 = MIT 14991 字节，v3.6.2 = 专有 16575 字节）；v4.0 的 SCOPE 明确含 `Documentation and README files` 与 `ASCII art and branding assets`。我们分叉于 2026-03-16（v3.4.0 之后），**在换证之前**。
@@ -259,7 +259,7 @@
 |---|---|---|
 | `C1` | 🟡 A 路线已定，代码未改 | `audit_licenses.py` 当前输出 `strong copyleft: 2` + `no grant at all: 1`，exit=1；方案见 `docs/legal/LICENSE_REPLACEMENT_PLAN_zh.md`（三项、分三阶段） |
 | `C2` | ✅ 已完成 | `THIRD_PARTY_NOTICES.md` / `NOTICE.md` / `LICENSES/`（14 份）/ `LICENSE`；`audit_licenses.py` + `collect_licenses.py` 可复跑；`LICENSES/HaleHound-CYD-MIT.txt` 与 `git show 56cf737:LICENSE` 逐字节一致 |
-| `C3` | ⬜ 未开始（等命名） | 越界点 T1–T7 已落 `docs/legal/COMPLIANCE_PLAN_zh.md §3.2` |
+| `C3` | ✅ 已执行（T1–T4/T6 已改、T3 已删、T7 不做、T5 随 `C6`） | 越界点 T1–T7 已落 `docs/legal/COMPLIANCE_PLAN_zh.md §3.2` |
 | `C4` | 🟡 部分 | 换证时间点已钉死（v3.5.0 MIT → v3.6.2 专有）；逐文件来源标注未做 |
 | `C5` | ⬜ 未开始 | |
 | `C6` | ⬜ 未开始（等 BOSS 确认） | `git ls-files \| grep -c '\.bin$'` 当前为 **11** |
@@ -291,7 +291,7 @@
 | # | 决策 | 为什么卡在这里 |
 |---|---|---|
 | **D1** | ~~两条依赖换库还是自写~~ **已定：A 路线（替换，三项）** | 2026-10-16 BOSS 决定。范围由两项修正为三项（含无授权的 BLE Keyboard）；混用策略：FFT 自写、RF24 用 RadioLib、BLE HID 自写 |
-| **D2** | 产品名最终定什么？ | `C3` 的 T1–T4 改名需要名字；不改名则商业分发带商标风险 |
+| **D2** | ✅ 已定：`SPANDECK`（`span`=频谱仪的扫描跨度，`deck`=手持仪表台） | `C3` 的 T1–T4 改名需要名字；不改名则商业分发带商标风险 |
 | **D3** | 是否为自有品牌申请商标？ | 决定要不要在设计阶段就固化标识 |
 | **D4** | 是否就「MIT 不可撤销性 + 上游专利」取一次外部法律意见？ | 仓库无法自查专利；这条影响能否商业化 |
 | **D5** | `flash_package/*.bin` 与 `dist/*.bin` 是否现在移出仓库？（`C6`） | 低风险高收益，但涉及移除已提交文件 |

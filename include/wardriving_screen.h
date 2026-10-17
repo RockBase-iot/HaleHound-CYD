@@ -2,7 +2,7 @@
 #define WARDRIVING_SCREEN_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Wardriving Screen
+// SPANDECK Wardriving Screen
 // Full-screen wardriving UI with scan, log, and GPS status
 // Created: 2026-02-16
 // ═══════════════════════════════════════════════════════════════════════════

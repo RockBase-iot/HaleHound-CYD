@@ -2,7 +2,7 @@
 #define SAVED_CAPTURES_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Saved Captures Browser
+// SPANDECK Saved Captures Browser
 // SD card file browser for /eapol/ directory (.hc22000, .pcap)
 // Created: 2026-02-16
 // ═══════════════════════════════════════════════════════════════════════════

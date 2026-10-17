@@ -1,56 +1,25 @@
 ```
-              _                                                   _
-         .k$$$$$g,                                           ,g$$$$$k.
-      .k$$$$$$$$$$$a.                                     .a$$$$$$$$$$$k.
-    .J$$$$$?'   `?$?^?,                                 ,?^?$?`   `?$$$$$L.
-   JS$$SI!a,  _.JS$   ?,                               ,?   $SL._  ,a$!IS$$SL
-  k$$$SI!:?$$$$$$$$$xu$$j                              j$$ux$$$$$$$$$?:!IS$$$k
- :I$$SI:J$$?*"$$$$4^?*?:                               :?*?^4$$$$"*?$$L:iIS$$I:
- :IS$$SiJ?`  _.'$?`/'   ':                           :'    '/'?$'._  `?LiS$$SI:
-  ?ISSik? _        ',    `                              .    ,'       _ ?kiSSI?
-    ?i$?` _   k$        .                               :.        $k   _ `?$i?
-      '?I:-?z$$I   _._.'                                  ._._   I$$z?-:I?'
-     '*?- '?$$a louSxuS?                               ?xuSxuol a$$?' -?*'
-           i$$$$$$$$$$$S                               S$$$$$$$$$$$i
-              ?$$$?-                                       -?$$$?
+ ███████╗██████╗  █████╗ ███╗   ██╗██████╗ ███████╗ ██████╗██╗  ██╗
+ ██╔════╝██╔══██╗██╔══██╗████╗  ██║██╔══██╗██╔════╝██╔════╝██║ ██╔╝
+ ███████╗██████╔╝███████║██╔██╗ ██║██║  ██║█████╗  ██║     █████╔╝
+ ╚════██║██╔═══╝ ██╔══██║██║╚██╗██║██║  ██║██╔══╝  ██║     ██╔═██╗
+ ███████║██║     ██║  ██║██║ ╚████║██████╔╝███████╗╚██████╗██║  ██╗
+ ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝
 
-     ██░ ██  ▄▄▄       ██▓    ▓█████  ██░ ██  ▒█████   █    ██  ███▄    █ ▓█████▄
-    ▓██░ ██▒▒████▄    ▓██▒    ▓█   ▀ ▓██░ ██▒▒██▒  ██▒ ██  ▓██▒ ██ ▀█   █ ▒██▀ ██▌
-    ▒██▀▀██░▒██  ▀█▄  ▒██░    ▒███   ▒██▀▀██░▒██░  ██▒▓██  ▒██░▓██  ▀█ ██▒░██   █▌
-    ░▓█ ░██ ░██▄▄▄▄██ ▒██░    ▒▓█  ▄ ░▓█ ░██ ▒██   ██░▓▓█  ░██░▓██▒  ▐▌██▒░▓█▄   ▌
-    ░▓█▒░██▓ ▓█   ▓██▒░██████▒░▒████▒░▓█▒░██▓░ ████▓▒░▒▒█████▓ ▒██░   ▓██░░▒████▓
-     ▒ ░░▒░▒ ▒▒   ▓▒█░░ ▒░▓  ░░░ ▒░ ░ ▒ ░░▒░▒░ ▒░▒░▒░ ░▒▓▒ ▒ ▒ ░ ▒░   ▒ ▒  ▒▒▓  ▒
-     ▒ ░▒░ ░  ▒   ▒▒ ░░ ░ ▒  ░ ░ ░  ░ ▒ ░▒░ ░  ░ ▒ ▒░ ░░▒░ ░ ░ ░ ░░   ░ ▒░ ░ ▒  ▒
-     ░  ░░ ░  ░   ▒     ░ ░      ░    ░  ░░ ░░ ░ ░ ▒   ░░░ ░ ░    ░   ░ ░  ░ ░  ░
-     ░  ░  ░      ░  ░    ░  ░   ░  ░ ░  ░  ░    ░ ░     ░              ░    ░
-
-              _                                                   _
-         .k$$$$$g,                                           ,g$$$$$k.
-      .k$$$$$$$$$$$a.                                     .a$$$$$$$$$$$k.
-    .J$$$$$?'   `?$?^?,                                 ,?^?$?`   `?$$$$$L.
-   JS$$SI!a,  _.JS$   ?,                               ,?   $SL._  ,a$!IS$$SL
-  k$$$SI!:?$$$$$$$$$xu$$j                              j$$ux$$$$$$$$$?:!IS$$$k
- :I$$SI:J$$?*"$$$$4^?*?:                              :?*?^4$$$$"*?$$L:iIS$$I:
- :IS$$SiJ?`  _.'$?`/'  ':                            :'    '/'?$'._  `?LiS$$SI:
-  ?ISSik? _        ',  .                                .    ,'       _ ?kiSSI?
-    ?i$?` _  k$        .:                              :.        $k   _ `?$i?
-      '?I:-?z$$I   _._.'                                  ._._   I$$z?-:I?'
-     '*?- '?$$a louSxuS?                               ?xuSxuol a$$?' -?*'
-           i$$$$$$$$$$$S                               S$$$$$$$$$$$i
-              ?$$$?-                                       -?$$$?
+   300 MHz - 2.5 GHz  |  SubGHz · 433 · nRF24 · BLE · WiFi · NFC · IR
 ```
 
-# HaleHound-CYD
+# SPANDECK
 
-**ESP32-DIV HaleHound Edition for Cheap Yellow Display**
+**A 300 MHz - 2.5 GHz multi-band wireless field terminal for the ESP32 "Cheap Yellow Display"**
 
-Version **v3.4.0 CYD Edition** | By [JesseCHale](https://github.com/JesseCHale) | [HaleHound.com](https://halehound.com)
+Version **v3.4.0 CYD Edition** | Maintained by RockBase-iot | Based on [HaleHound-CYD](https://github.com/JesseCHale/HaleHound-CYD) by Jesse C. Hale (JMFH), MIT
 
 ---
 
 ## Overview
 
-HaleHound-CYD is a multi-protocol offensive security toolkit built for the ESP32 "Cheap Yellow Display" (CYD) platform. Supports the 2.8" (ESP32-2432S028), QDtech E32R28T (2.8"), and QDtech E32R35T (3.5") boards. External CC1101 SubGHz, NRF24L01+PA+LNA 2.4GHz, PN532 NFC/RFID, and GPS modules connect via the CYD's breakout pins.
+SPANDECK is a multi-protocol offensive security toolkit built for the ESP32 "Cheap Yellow Display" (CYD) platform. Supports the 2.8" (ESP32-2432S028), QDtech E32R28T (2.8"), and QDtech E32R35T (3.5") boards. External CC1101 SubGHz, NRF24L01+PA+LNA 2.4GHz, PN532 NFC/RFID, and GPS modules connect via the CYD's breakout pins.
 
 Every attack module from the original ESP32-DIV is present, plus CYD-exclusive features: full touchscreen navigation, EAPOL/PMKID capture, Karma attacks, wardriving with GPS logging, PN532 RFID card scanning/cloning/brute force, defensive jam detection, NRF24 promiscuous sniffer with MouseJack keystroke injection, AirTag attack suite (Phantom Flood, AirTag Replay, Find You), BLE HID keyboard injection (BLE Ducky), UART serial monitor for hardware hacking, and OTA firmware updates from SD card.
 
@@ -673,14 +642,14 @@ Stealth AirTag clone using pre-generated P-224 elliptic curve keypairs. Keys rot
 
 #### BLE Ducky — BLE HID Keyboard Injection
 
-ESP32 acts as a BLE HID keyboard using the ESP32-BLE-Keyboard library. Target device pairs with "HaleHound KB", then the ESP32 injects keystroke payloads. Pre-built payloads include reverse shell (PowerShell/bash), Rick Roll, and custom string entry.
+ESP32 acts as a BLE HID keyboard using the ESP32-BLE-Keyboard library. Target device pairs with "SPANDECK KB", then the ESP32 injects keystroke payloads. Pre-built payloads include reverse shell (PowerShell/bash), Rick Roll, and custom string entry.
 
 ```
 ┌──────────────────────────────────────────────┐
 │  ATTACK FLOW                                 │
 │                                              │
 │  1. Init BLE HID keyboard (ESP32-BLE-KB)     │
-│  2. Advertise as "HaleHound KB"              │
+│  2. Advertise as "SPANDECK KB"              │
 │  3. Wait for target to pair                  │
 │  4. User selects payload from menu           │
 │  5. Inject keystrokes at 50ms timing         │
@@ -1044,8 +1013,8 @@ One firmware binary works on every CYD board regardless of LCD panel orientation
 
 | File | Flash Address | Description |
 |------|---------------|-------------|
-| `HaleHound-CYD-FULL.bin` | `0x0` | Complete image — single file, easiest method |
-| `HaleHound-CYD.bin` | `0x10000` | Firmware only — requires 3 shared boot files |
+| `SPANDECK-CYD-FULL.bin` | `0x0` | Complete image — single file, easiest method |
+| `SPANDECK-CYD.bin` | `0x10000` | Firmware only — requires 3 shared boot files |
 
 If your display is upside-down or sideways after flashing, go to **Settings > Rotation** and select the correct orientation. Touch recalibrates automatically. No reflashing needed.
 
@@ -1055,19 +1024,19 @@ Two flash methods are available. If one doesn't work, try the other.
 
 | Method | Files | Notes |
 |--------|-------|-------|
-| **Single File** | `HaleHound-CYD-FULL.bin` at `0x0` | One file, works for most boards |
-| **Four File** | `bootloader.bin` + `partitions.bin` + `boot_app0.bin` + `HaleHound-CYD.bin` | Works on ALL boards including DIO/QIO incompatible ones |
+| **Single File** | `SPANDECK-CYD-FULL.bin` at `0x0` | One file, works for most boards |
+| **Four File** | `bootloader.bin` + `partitions.bin` + `boot_app0.bin` + `SPANDECK-CYD.bin` | Works on ALL boards including DIO/QIO incompatible ones |
 
 ### Flash with ESP Web Flasher (No Install)
 
 1. Open [esp.huhn.me](https://esp.huhn.me) in **Chrome**, **Edge**, or **Opera** (Firefox/Safari not supported)
 2. Click **Connect** and select your CYD's serial port
-3. **Single file method:** Set address `0x0`, select `HaleHound-CYD-FULL.bin`
+3. **Single file method:** Set address `0x0`, select `SPANDECK-CYD-FULL.bin`
 4. **Four file method:** Add all four entries:
    - `0x1000` → `bootloader.bin`
    - `0x8000` → `partitions.bin`
    - `0xe000` → `boot_app0.bin`
-   - `0x10000` → `HaleHound-CYD.bin`
+   - `0x10000` → `SPANDECK-CYD.bin`
 5. Click **Program** and wait for completion
 6. Power cycle the CYD (unplug and replug USB)
 
@@ -1075,14 +1044,14 @@ Two flash methods are available. If one doesn't work, try the other.
 
 ```bash
 # Single file method
-esptool.py --chip esp32 --baud 115200 write_flash 0x0 HaleHound-CYD-FULL.bin
+esptool.py --chip esp32 --baud 115200 write_flash 0x0 SPANDECK-CYD-FULL.bin
 
 # Four file method
 esptool.py --chip esp32 --baud 115200 write_flash \
   0x1000 bootloader.bin \
   0x8000 partitions.bin \
   0xe000 boot_app0.bin \
-  0x10000 HaleHound-CYD.bin
+  0x10000 SPANDECK-CYD.bin
 ```
 
 ### First Boot
@@ -1267,7 +1236,7 @@ Three devices share the VSPI bus (GPIO 18/19/23). The `spi_manager` module handl
 ## Project Structure
 
 ```
-HaleHound-CYD/
+SPANDECK/
 ├── HaleHound-CYD.ino ......... Main firmware, menus, setup/loop
 ├── cyd_config.h ............... Master pin configuration
 ├── shared.h ................... Color palette, state variables
@@ -1339,11 +1308,11 @@ Managed by PlatformIO (`lib_deps` in `platformio.ini`):
 
 ## Credits
 
-**HaleHound-CYD** by [JesseCHale](https://github.com/JesseCHale)
+**SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **SPANDECK** maintained by RockBase-iot.  Based on **HaleHound-CYD** by [JesseCHale](https://github.com/JesseCHale) (MIT). (MIT). (MIT). (MIT). (MIT). (MIT). (MIT). (MIT). (MIT). (MIT).
 
 Based on the ESP32-DIV project. HaleHound-CYD is a ground-up rewrite with 30+ attack modules, hardware pin corrections (CC1101 TX/RX swap fix), full touchscreen support, SIGINT suite, NRF24 promiscuous sniffer, MouseJack keystroke injection, AirTag attack suite, BLE HID injection, PN532 RFID/NFC, jam detection, and the CYD hardware port.
 
-GitHub: [github.com/JesseCHale/HaleHound-CYD](https://github.com/JesseCHale/HaleHound-CYD)
+Upstream: [github.com/JesseCHale/HaleHound-CYD](https://github.com/JesseCHale/HaleHound-CYD) (proprietary since v3.6.2; this project forked at MIT v3.4.0)
 
 ### Community Contributors
 

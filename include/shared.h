@@ -2,7 +2,7 @@
 #define SHARED_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Shared Definitions
+// SPANDECK Shared Definitions
 // Color palette and shared state variables
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

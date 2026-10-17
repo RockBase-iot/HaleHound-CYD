@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD GPS Module Implementation
+// SPANDECK GPS Module Implementation
 // GT-U7 (UBLOX 7) GPS Support with TinyGPSPlus
 // Created: 2026-02-07
 // Updated: 2026-02-19 — Tactical instrument panel (compass, speed arc,

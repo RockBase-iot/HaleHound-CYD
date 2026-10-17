@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Utility Functions Implementation
+// SPANDECK Utility Functions Implementation
 // Button handling, display helpers, common utilities
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

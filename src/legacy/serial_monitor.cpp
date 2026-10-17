@@ -1,5 +1,5 @@
 // =============================================================================
-// HaleHound-CYD UART Serial Terminal
+// SPANDECK UART Serial Terminal
 // Hardware UART passthrough for target device debug ports
 // Pattern: Same as gps_module.cpp - standalone functions, own screen loop
 // Created: 2026-02-15

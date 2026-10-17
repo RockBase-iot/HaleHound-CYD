@@ -1,5 +1,5 @@
 // =============================================================================
-// HaleHound-CYD IoT Recon Module
+// SPANDECK IoT Recon Module
 // Automated LAN Attack Suite — Subnet Scanner + Credential Brute Force
 // Created: 2026-03-01
 // =============================================================================

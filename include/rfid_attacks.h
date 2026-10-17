@@ -2,7 +2,7 @@
 #define RFID_ATTACKS_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD RFID/NFC Attack Module
+// SPANDECK RFID/NFC Attack Module
 // PN532 13.56 MHz — Scanner, Reader, Clone, Brute Force, Emulation
 // Created: 2026-03-02
 // ═══════════════════════════════════════════════════════════════════════════

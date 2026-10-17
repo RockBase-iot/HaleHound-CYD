@@ -2,7 +2,7 @@
 #define SUBCONFIG_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD SubGHz Configuration
+// SPANDECK SubGHz Configuration
 // CC1101 Radio + RCSwitch for SubGHz attacks
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

@@ -2,7 +2,7 @@
 #define SUBGHZ_ATTACKS_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD SubGHz Attack Modules
+// SPANDECK SubGHz Attack Modules
 // CC1101 Signal Capture & Replay with RMT Hardware Timing
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════

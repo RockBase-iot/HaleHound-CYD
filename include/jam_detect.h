@@ -2,7 +2,7 @@
 #define JAM_DETECT_H
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Jamming Detection Module
+// SPANDECK Jamming Detection Module
 // Defensive RF spectrum monitoring — all 3 radios
 // Created: 2026-03-02
 // ═══════════════════════════════════════════════════════════════════════════

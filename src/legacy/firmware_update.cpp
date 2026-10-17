@@ -1,5 +1,5 @@
 // =============================================================================
-// HaleHound-CYD SD Card Firmware Update
+// SPANDECK SD Card Firmware Update
 // I flash new firmware.bin from my SD card - no laptop needed
 // My pattern: same as my serial_monitor.cpp / gps_module.cpp
 // Created: 2026-02-15

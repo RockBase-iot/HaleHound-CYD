@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HaleHound-CYD Bluetooth Attack Modules Implementation
+// SPANDECK Bluetooth Attack Modules Implementation
 // BLE Spoofer - Apple Device Popup Spam
 // Created: 2026-02-06
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1286,7 +1286,7 @@ void setup() {
 
     // Initialize BLE — must wait for controller to be fully ready before setting TX power
     releaseClassicBtMemory();
-    BLEDevice::init("HaleHound");
+    BLEDevice::init("SPANDECK");
     delay(150);  // BLE controller needs time to finish internal init
 
     esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
@@ -1448,7 +1448,7 @@ void cleanup() {
 
 void bleInit() {
     releaseClassicBtMemory();
-    BLEDevice::init("HaleHound");
+    BLEDevice::init("SPANDECK");
 }
 
 void bleCleanup() {
@@ -2165,7 +2165,7 @@ void setup() {
 
     // Initialize BLE — wait for controller ready before TX power
     releaseClassicBtMemory();
-    BLEDevice::init("HaleHound");
+    BLEDevice::init("SPANDECK");
     delay(150);  // BLE controller needs time to finish internal init
 
     esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
@@ -4340,7 +4340,7 @@ void setup() {
     delay(200);
 
     releaseClassicBtMemory();
-    BLEDevice::init("HaleHound");
+    BLEDevice::init("SPANDECK");
     delay(150);
 
     esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
@@ -5064,7 +5064,7 @@ static void startReplay() {
 
     // Re-init for advertising
     releaseClassicBtMemory();
-    BLEDevice::init("HaleHound");
+    BLEDevice::init("SPANDECK");
     delay(150);
 
     esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
@@ -8171,7 +8171,7 @@ static void wpSaveLoot() {
     f.println("========================================");
     f.println("  WHISPERPAIR ATTACK REPORT");
     f.println("  CVE-2025-36911 Exploit Chain");
-    f.println("  HaleHound Edition");
+    f.println("  SPANDECK Edition");
     f.println("========================================");
     f.println();
     f.printf("Target:  %s\n", d.name);
@@ -8994,7 +8994,7 @@ static void injectPayload() {
             break;
 
         default:
-            payload = "echo HaleHound";
+            payload = "echo SPANDECK";
             break;
     }
 
@@ -9044,7 +9044,7 @@ static void drawBdDisplay() {
     // Device name
     tft.setTextColor(HALEHOUND_MAGENTA, TFT_BLACK);
     tft.setCursor(10, y);
-    tft.print("Name: HaleHound KB");
+    tft.print("Name: SPANDECK KB");
     y += 14;
 
     tft.drawLine(10, y, SCREEN_WIDTH - 10, y, HALEHOUND_HOTPINK);
@@ -9150,7 +9150,7 @@ void setup() {
     // Initialize BLE Keyboard
     // ESP32-BLE-Keyboard calls BLEDevice::init() internally in begin()
     if (bleKb) { delete bleKb; bleKb = nullptr; }
-    bleKb = new BleKeyboard("HaleHound KB", "HaleHound", 100);
+    bleKb = new BleKeyboard("SPANDECK KB", "SPANDECK", 100);
     bleKb->begin();
     delay(150);  // Settle time before TX power set
 
@@ -9163,7 +9163,7 @@ void setup() {
     bdUiDrawn = true;
 
     #if CYD_DEBUG
-    Serial.println("[BLE_DUCKY] Setup complete, advertising as 'HaleHound KB'");
+    Serial.println("[BLE_DUCKY] Setup complete, advertising as 'SPANDECK KB'");
     Serial.printf("[BLE_DUCKY] Free heap: %u\n", ESP.getFreeHeap());
     #endif
 }
